@@ -75,7 +75,7 @@ FloatSoda は、Flutter の3つの木(ウィジェット、Element、RenderObjec
 | `FontWeight.w700` | `FontWeight = 700`(`int`) | 列挙型を持たない | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
 | `Matrix4` | `Matrix3x2`(2次元のアフィン変換だけ) | 3次元の変換を持たない | [Transform](../../samples/FloatSoda.Samples.Transform/README.md) |
 | `addListener` | 通知元ごとの `event`(`AnimationController` は `Changed`、`INotifyPropertyChanged` は `PropertyChanged`。`+=` で登録し、`-=` で解除する) | C# の標準の仕組みを使う方針 | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
-| `SizedBox.square()`、`SizedBox.expand()` | `square()` は `Width` と `Height` に同じ値を指定して書く(`expand()` に当たる名前付きの手段はなく、省略すると親の制約に従う) | 名前付きコンストラクタを持たない | [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) |
+| `SizedBox.square()`、`SizedBox.expand()` | `square()` は `Width` と `Height` に同じ値を指定して書く。`expand()` に当たる手段はない。`Width` と `Height` を省略すると、親の制約がそのまま子に渡るだけで、親の制約が緩いときは領域いっぱいに広がらない(`BoxConstraints.TightFor(null, null)`) | 名前付きコンストラクタを持たない | [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) |
 | `Padding` の `EdgeInsets.only(left: 48)` | `new EdgeInsets(Left: 48)` | 名前付きコンストラクタを持たない | [Padding](../../samples/FloatSoda.Samples.Padding/README.md) |
 
 <!-- ※要確認: 「addListener は event」の根拠は再編前の docs/APIDesign.md の 3.6。再編後の置き場所をこのページから辿れる形にできていないため、CONTRIBUTING.md を詳細の列に置いた。CONTRIBUTING.md 側に該当の記述があるかは確かめていない。改名の一覧に漏れがないかも未確認(作例のない型の改名は README から拾えない) -->
