@@ -130,16 +130,17 @@ function linkedRels(homeRel, homeDir) {
 
 /**
  * docs/Home.md の「ページ一覧」表の行を、表に現れる順で返す。
- * 行の形は `| [Name](Name.md) | 内容 | 対象読者 |`。docs/ 直下のページだけが対象
+ * 行の形は `| [Name](Name.md) | 内容 | 対象読者 |` か `| [Name](tab/Home.md) | 内容 | 対象読者 |`。
+ * リンク先は docs/ からの相対パス(rel)に直し、docs/ に実在するページだけを返す
  */
 function homeTableRows() {
-  const names = new Set(listDocs().filter((doc) => doc.dir === "").map((doc) => doc.name));
+  const rels = new Set(listDocs().map((doc) => doc.rel));
   const rows = [];
-  const row = /^\|\s*\[[^\]]+\]\(([A-Za-z0-9_-]+)\.md\)\s*\|([^|\n]*)\|([^|\n]*)\|/gm;
+  const row = /^\|\s*\[[^\]]+\]\(((?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+)\.md\)\s*\|([^|\n]*)\|([^|\n]*)\|/gm;
   for (const match of readDoc(HOME).matchAll(row)) {
-    const name = match[1];
-    if (names.has(name) && !rows.some((r) => r.name === name)) {
-      rows.push({ name, summary: match[2].trim(), audience: match[3].trim() });
+    const rel = path.posix.normalize(match[1]);
+    if (rels.has(rel) && !rows.some((r) => r.rel === rel)) {
+      rows.push({ rel, summary: match[2].trim(), audience: match[3].trim() });
     }
   }
   return rows;
@@ -150,7 +151,7 @@ function homeTableRows() {
  * 人手で書かれた要約なので、ページの description(SEO と llms.txt の索引)にそのまま使う。
  */
 export function homeSummaries() {
-  return new Map(homeTableRows().map((row) => [row.name, row.summary.replace(/[*_`]/g, "")]));
+  return new Map(homeTableRows().map((row) => [row.rel, row.summary.replace(/[*_`]/g, "")]));
 }
 
 /**
@@ -248,15 +249,15 @@ export function sidebarGroups() {
 
   const topLevel = docs.filter((doc) => doc.dir === "" && doc.name !== HOME);
   if (topLevel.length > 0) {
-    const rows = homeTableRows();
+    const rows = homeTableRows().filter((row) => !row.rel.includes("/"));
     for (const row of rows) {
       // 「利用者 / コントリビュータ」は先頭の読者。Markdown 装飾は落とし、空セルは「その他」へ
       const audience = row.audience.split("/")[0].replace(/[*_`]/g, "").trim();
-      if (audience) push(AUDIENCE_KEYS[audience] ?? "other", `${audience}向け`, row.name);
-      else push("other", "その他", row.name);
+      if (audience) push(AUDIENCE_KEYS[audience] ?? "other", `${audience}向け`, row.rel);
+      else push("other", "その他", row.rel);
     }
     for (const doc of topLevel) {
-      if (!rows.some((row) => row.name === doc.name)) push("other", "その他", doc.rel);
+      if (!rows.some((row) => row.rel === doc.rel)) push("other", "その他", doc.rel);
     }
   }
 
