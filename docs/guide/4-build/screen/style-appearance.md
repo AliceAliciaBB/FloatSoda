@@ -2,59 +2,26 @@
 
 # 見た目を整える
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この手順でできること
 
-## 設計シート
+文字の色や大きさ、背景、角丸、余白は、すべて C# のコードで指定します。見た目は、C# のウィジェットで指定します。シーンやプレハブを編集する手順は要りません。AI に頼むときも、自分で直すときも、同じコードの同じ場所を直せば、見た目が変わります。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / VRChatter、Booth クリエイター、uGUI を避けたいエンジニア。最初のオーバーレイは動かし終えている / 何を知っている / `Align` や `SizedBox` で画面を組める。色や文字をどこで指定するかは知らない / 読んで何をしたい / 色、文字、角丸、余白を指定して、自分の画面の見た目を整えたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: 色、文字、背景、角丸、余白をコードで指定して、画面の見た目を整える手順
-- 依頼の解釈: 「テーマ」(`CreamTheme` など)を使う手順は含めない。デザインシステムの層は提供前のため、素のウィジェットで整える手順に決めた
-- テーマファイル: how-to
-- Why(目的): 色や文字の指定がすべて C# のコードで済むと知り、AI に頼むときも自分で直すときも、同じ場所を直せるようにする
-- What(目標・結果): 背景、角丸、文字の色と大きさ、余白を指定した画面が HMD の中に出る
-- How(手段): 見た目の要素ごとに、使うウィジェットとプロパティを1つずつ足す。文字 → 背景と角丸 → 余白 → 子孫全体の文字書式、の順
-- 要素:
-  - 文字の色・大きさ・太さは `TextStyle`(`Color`、`FontSize`、`FontWeight`)で指定する(`src/FloatSoda/Painting/TextStyle.cs`、`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - 単色の背景は `ColoredBox`、角丸・ボーダーつきの背景は `DecoratedBox` と `BoxDecoration` を使う(`README.md` の「描画系」、`src/FloatSoda/Painting/BoxDecoration.cs`)
-  - 角を丸める見た目は `ClipRoundRect` と `BorderRadius.All(Radius.Circular(...))` でも作れる(`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - 余白は `Padding` と `EdgeInsets` で取る(`README.md` の「レイアウト系」)
-  - 子孫の `Text` にまとめて文字書式を渡すには `DefaultTextStyle` を使う。優先順位は、明示指定、`DefaultTextStyle`、既定値の順(`src/FloatSoda/Widgets/DefaultTextStyle.cs`)
-  - 色は `SkiaSharp` の `SKColors` と `SKColor` で指定する(`samples/FloatSoda.Samples.GettingStarted/Program.cs`)
-  - 見た目をまとめて切り替える仕組みは今ない。デザインシステムは未提供で、解除の条件は Phase 5(`README.md` の「開発ステータス」、追跡: #219)
-- 見出し:
-  - この手順でできること
-  - 前提条件
-  - 手順1: 文字の色と大きさを指定する
-  - 手順2: 背景色を付けて、角を丸める
-  - 手順3: 余白を取る
-  - 手順4: 画面全体の文字書式を1か所で決める
-  - 結果を確かめる
-  - うまくいかないとき
-- ※要確認:
-  - `DecoratedBox` と `BoxDecoration` で角丸と背景色を同時に指定するコードが、今の公開 API でコンパイルできるか(コード例を取り出してビルドして確かめる)
-  - `Container` が配置・装飾・余白を1つにまとめる使い方が、今の公開 API で動くか(`AGENTS.md` に「`Container` は `Padding` をまだ合成しない」とあるため)
-  - 日本語のフォントを指定する方法(`TextStyle` のプロパティを `samples/FloatSoda.Samples.Text` で確かめる)
+この手順では、4つを順に足して、1枚のカードを作ります。終わると、HMD の中に、角が丸く、白い縁取りの付いた青紫色のカードが出ます。カードの中には、大きな太字のタイトルと、説明の文字が並びます。
 
-## ト書き
+1. 文字の色と大きさを指定する
+2. 背景色を付けて、角を丸める
+3. 余白を取る
+4. 画面全体の文字書式を1か所で決める
 
-### この手順でできること
+## 前提条件
 
-- 読み手が持って来るもの: 動くオーバーレイと「見た目を整えたい」という目的
-- このページが渡すもの: 完成した画面の画像1枚と、手順の数(4つ)
-- 読み手がすること: 画像を見て、自分の画面に足したい要素を選ぶ
-- 次へ進む先: 「前提条件」
+- [最初のオーバーレイを作る](../../../tutorials/first-overlay.md)を終え、ウィジェットを `Align` や `SizedBox` で組めること
+- ソースの先頭に `using SkiaSharp;` があること
+- ソースの先頭に、`FloatSoda.Painting`、`FloatSoda.Geometrics`、`FloatSoda.Widgets`、`FloatSoda.Widgets.Layout`、`FloatSoda.Widgets.Paint` の `using` があること
 
-### 前提条件
+## 手順1: 文字の色と大きさを指定する
 
-- 読み手が持って来るもの: 自分のプロジェクト
-- このページが渡すもの: 要るもの(チュートリアルを終えていること、色の型 `SKColors` が使えること)
-- 読み手がすること: 確かめて、足りなければチュートリアルへ戻る
-- 次へ進む先: 手順1
-
-### 手順1: 文字の色と大きさを指定する
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 文字を出しているコード
 - このページが渡すもの: `TextStyle` の指定方法と、`RichText` / `Text` のどちらで書くか
@@ -63,7 +30,42 @@
 - 次へ進む先: 手順2
 - 【未決】`Text` と `RichText` のどちらで書くか。見本の `CounterWidget.cs` は `RichText` を使うが、`Text` のほうが短い
 
-### 手順2: 背景色を付けて、角を丸める
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+文字は `Text` ウィジェットで出します。色、大きさ、太さは、`Style` に渡す `TextStyle` で指定します。
+
+```csharp
+new Text("タイトル")
+{
+    Style = new TextStyle
+    {
+        Color = SKColors.WhiteSmoke,
+        FontSize = 56,
+        FontWeight = 700,
+    },
+}
+```
+
+`FontWeight` は数値で、太字は 700 です。指定を省くと、大きさは 30、色は黒になります。色は `SKColors` の名前のほか、`new Color(124, 205, 255)` のように、赤、緑、青の値でも指定できます。
+
+日本語の文字が出ないときは、`Font` にフォントの名前を指定します。`SystemFontProvider` は、`FloatSoda.Core.Providers` の名前空間にあります。
+
+```csharp
+Style = new TextStyle { Font = new SystemFontProvider("Meiryo") }
+```
+
+<!-- ※要確認: 日本語のフォントの指定が必要になる条件と、指定したフォントで日本語が出ること。samples/FloatSoda.Samples.Text で確かめる。実機で確かめる -->
+
+**できた?** HMD の中で、文字の色と大きさが変わっていれば、手順1は完了です。
+
+<!-- ※要確認: HMD の中で文字の色と大きさが変わること。実機で確かめる -->
+
+</details>
+
+## 手順2: 背景色を付けて、角を丸める
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 手順1のコード
 - このページが渡すもの: `ColoredBox` で単色の背景を付ける方法と、角丸の付け方
@@ -72,32 +74,119 @@
 - 次へ進む先: 手順3
 - 【未決】角丸を `ClipRoundRect` で作るか、`DecoratedBox` で作るか。どちらか1つに決めて書く
 
-### 手順3: 余白を取る
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: 手順2のコード
-- このページが渡すもの: `Padding` と `EdgeInsets` の指定方法
-- 読み手がすること: 文字と背景の縁のあいだに余白を取る
-- できた?: 文字が背景の縁に張り付かない
-- 次へ進む先: 手順4
+背景と角丸は、`DecoratedBox` と `BoxDecoration` でまとめて指定します。`BoxDecoration` には、背景の色(`Color`)、角の丸み(`BorderRadius`)、縁取り(`Border`)を渡せます。
 
-### 手順4: 画面全体の文字書式を1か所で決める
+```csharp
+new DecoratedBox
+{
+    Decoration = new BoxDecoration
+    {
+        Color = SKColors.SlateBlue,
+        BorderRadius = BorderRadius.All(Radius.Circular(24)),
+        Border = Border.All(new BorderSide { Color = SKColors.White, Width = 4 }),
+    },
+    Child = new Text("タイトル"),
+}
+```
 
-- 読み手が持って来るもの: 文字が複数ある画面
-- このページが渡すもの: `DefaultTextStyle` で子孫の `Text` に書式を渡す方法。見た目をまとめて切り替える仕組みは今ないこと(追跡: #219)
-- 読み手がすること: 画面の外側を `DefaultTextStyle` で包む
-- できた?: 複数の文字の書式が1か所の指定で揃った
-- 次へ進む先: 「結果を確かめる」
+角丸が要らず、単色の背景だけでよいときは、`ColoredBox { Color = ... }` が短く書けます。子の中身ごと角丸で切り抜きたいときは、`ClipRoundRect` を使います。
 
-### 結果を確かめる
+**できた?** 文字の後ろに色が付き、角が丸くなっていれば、手順2は完了です。
 
-- 読み手が持って来るもの: 手順を終えたコード
-- このページが渡すもの: 画面全体の見た目が指定どおりかを、HMD で確かめる観点
-- 読み手がすること: HMD で見る。HMD を被らずに確かめたいときは、「HMD を被らずに確かめる」へ進む
-- 次へ進む先: 「アニメーションを付ける」
+<!-- ※要確認: DecoratedBox の角丸と縁取りが HMD で期待どおりに描かれること。コードのコンパイルは確かめた。表示は実機で確かめる -->
 
-### うまくいかないとき
+</details>
 
-- 読み手が持って来るもの: 見た目が指定と違う、または文字が出ない
-- このページが渡すもの: ガイドの「5. 困ったとき」の「レイアウトの考え方」と「エラーを読んで直す」へのリンク
-- 読み手がすること: 症状に合うページへ進む
-- 止まる箇所: なし
+## 手順3: 余白を取る
+
+文字と背景の縁のあいだの余白は、`Padding` と `EdgeInsets` で取ります。次のコードの `decoration` には、手順2で作った `BoxDecoration` を渡します。`Padding` の余白は、`Spacing` に渡します。`DecoratedBox` の `Child` を `Padding` で包みます。
+
+```csharp
+new DecoratedBox
+{
+    Decoration = decoration,
+    Child = new Padding
+    {
+        Spacing = EdgeInsets.Symmetric(vertical: 24, horizontal: 48),
+        Child = new Text("タイトル"),
+    },
+}
+```
+
+四方向に同じ余白を取るなら `EdgeInsets.All(24)`、縦と横で変えるなら `EdgeInsets.Symmetric(vertical: 24, horizontal: 48)` です。
+
+**できた?** 文字が背景の縁に張り付かず、余白が空いていれば、手順3は完了です。
+
+## 手順4: 画面全体の文字書式を1か所で決める
+
+`DefaultTextStyle` で画面の外側を包むと、子孫の `Text` すべてに、同じ文字書式が渡ります。文字が複数ある画面で、色や大きさを1か所で揃えられます。次のコードの `card` は、手順3までに組んだカードのウィジェットです。
+
+```csharp
+new DefaultTextStyle
+{
+    Style = new TextStyle { Color = SKColors.WhiteSmoke, FontSize = 36 },
+    Child = card,
+}
+```
+
+`Text` の `Style` を個別に指定すると、その指定が優先されます。優先順位は、`Text` に書いた指定、`DefaultTextStyle`、既定値の順です。指定は項目ごとに引き継がれるので、タイトルだけ大きくしたいときは、そのタイトルの `Text` にだけ `FontSize = 56` を書きます。色は `DefaultTextStyle` の値になります。
+
+ここまでを合わせたカード全体は、次のとおりです。
+
+```csharp
+public record Card : StatelessWidget
+{
+    public override Widget Build(IBuildContext context) => new DefaultTextStyle
+    {
+        Style = new TextStyle { Color = SKColors.WhiteSmoke, FontSize = 36 },
+        Child = new Align
+        {
+            Alignment = Alignment.Center,
+            Child = new DecoratedBox
+            {
+                Decoration = new BoxDecoration
+                {
+                    Color = SKColors.SlateBlue,
+                    BorderRadius = BorderRadius.All(Radius.Circular(24)),
+                    Border = Border.All(new BorderSide { Color = SKColors.White, Width = 4 }),
+                },
+                Child = new Padding
+                {
+                    Spacing = EdgeInsets.Symmetric(vertical: 24, horizontal: 48),
+                    Child = new Column
+                    {
+                        Children =
+                        {
+                            new Text("タイトル") { Style = new TextStyle { FontSize = 56, FontWeight = 700 } },
+                            new Text("説明の文章"),
+                        },
+                    },
+                },
+            },
+        },
+    };
+}
+```
+
+組み込みの、見た目をまとめて切り替える仕組み(テーマやデザインシステム)は、今はありません(追跡: #219)。この手順では、色や文字書式を、使う場所のコードで指定します。
+
+起動のコードで、ウィンドウの `Child` を `new Card()` に置き換えます。
+
+**できた?** 複数の文字の書式が、1か所の指定で揃っていれば、手順4は完了です。
+
+## 結果を確かめる
+
+HMD で、画面全体が指定どおりかを見ます。
+
+- カードの背景色、角丸、縁取りが指定どおりに出ている
+- タイトルが説明より大きく、太く出ている
+- 文字が背景の縁に張り付いていない
+
+HMD を被らずに確かめたいときは、[HMD を被らずに確かめる](../input/test-without-hmd.md)に進みます。見た目を整えたら、次は[アニメーションを付ける](add-animation.md)に進みます。
+
+## うまくいかないとき
+
+見た目が指定と違う、または文字が出ないときは、症状に合うページに進みます。大きさや位置が思ったとおりでない場合は[レイアウトの考え方](../../5-troubleshoot/layout-model.md)、例外が出る場合は[エラーを読んで直す](../../5-troubleshoot/read-errors.md)です。

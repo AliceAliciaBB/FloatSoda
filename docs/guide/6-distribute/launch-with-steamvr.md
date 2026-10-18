@@ -2,61 +2,37 @@
 
 # SteamVR と一緒に起動する
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この手順でできること
 
-## 設計シート
+アプリを SteamVR に登録して、SteamVR を起動すると、オーバーレイも自動で起動するようにします。SteamVR を起動するたびに、手で `.exe` を動かす手間がなくなります。手順は 3 つです。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / VRChatter、Booth クリエイター。オーバーレイを exe にして使っている / 何を知っている / SteamVR を起動してから、自分の exe を手で起動している / 読んで何をしたい / SteamVR を起動したら、オーバーレイも自動で起動するようにしたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: アプリを SteamVR に登録して、SteamVR の起動と同時に自動起動させる手順
-- 依頼の解釈: 「一緒に起動する」は、SteamVR の自動起動の設定に決めた。Windows のスタートアップへの登録は含めない
-- テーマファイル: how-to
-- Why(目的): SteamVR を起動するたびに手でアプリを起動する手間をなくす
-- What(目標・結果): SteamVR を起動すると、オーバーレイが自動で起動する
-- How(手段): SteamVR にアプリのマニフェストを登録する → 自動起動を有効にする → 確かめる、の順
-- 要素:
-  - アプリを SteamVR に登録するには、アプリのマニフェストファイルを SteamVR に追加する(`src/FloatSoda.OVR/OVRApplication.cs` の `OVRApplications.AddManifest`)
-  - 自動起動は `OVRApplication.AutoLaunch` で設定する。キーが SteamVR に登録済みであることが前提(`src/FloatSoda.OVR/OVRApplication.cs`)
-  - 登録済みかどうかは `OVRApplication.Installed` で確かめられる(`src/FloatSoda.OVR/OVRApplication.cs`)
-  - アプリの識別(`Identify`)に失敗しても、起動は続く。そのとき、自動起動などマニフェストに関わる機能だけが動かない(`src/FloatSoda/FloatSodaApp.cs`)
-  - アプリの識別には、`AppKey` が SteamVR に登録されている必要がある(`src/FloatSoda.OVR/OVRApplication.cs` の `Identify` の注記)
-  - マニフェストの自動生成は検討中で、今は手動(`README.md`、追跡: #219)
-  - 入力のアクションマニフェストは自動生成される。アプリのマニフェストとは別のもの(`src/FloatSoda/FloatSodaApp.cs`、`src/FloatSoda.OVR/Input/ActionManifestWriter.cs`)
-  - 配布先で自動起動させる場合の、マニフェストの置き場所と書き方は ※要確認
-- 見出し:
-  - この手順でできること
-  - 前提条件
-  - 手順1: アプリのマニフェストを用意する
-  - 手順2: SteamVR に登録する
-  - 手順3: 自動起動を有効にする
-  - 結果を確かめる
-  - うまくいかないとき
-- ※要確認:
-  - アプリのマニフェストファイル(`.vrmanifest`)の書き方と置き場所。リポジトリのコードやサンプルには、マニフェストを書いた例がない。SteamVR(OpenVR)の公式資料を読んで確かめる
-  - `AddManifest` と `AutoLaunch` を、利用者のコードのどの位置で呼ぶか(コード例を取り出して、実機で確かめる)
-  - 自動起動の設定が、SteamVR の設定画面から変えられるか(実機で確かめる)
-  - 登録を外す手順(`RemoveApplicationManifest` の使い方。配布物に含めるか)
-  - `OVRApplication` を、利用者が `FloatSodaApp` の外から取得できるか(`FloatSodaApp` の `_openVR` は private。取得できなければ、別に `OVRApplication` を生成するか、手動で登録するかを選ぶ必要がある)
+1. アプリのマニフェストを用意する
+2. SteamVR に登録する
+3. 自動起動を有効にする
 
-## ト書き
+「一緒に起動する」は、SteamVR の自動起動の設定を指します。Windows のスタートアップへの登録は扱いません。
 
-### この手順でできること
+マニフェストの自動生成は検討中で、今は手動で用意します(追跡: #139)。このページの手順は、リポジトリ内に動作例がなく、実機でも確かめていません。確かめていない箇所には、本文のすぐ後ろに HTML コメントで印を付けています。
 
-- 読み手が持って来るもの: 「SteamVR と一緒に起動したい」という目的
-- このページが渡すもの: 完成の状態と、手順の数。マニフェストの自動生成が検討中で、今は手動になること(追跡: #219)
-- 読み手がすること: 目的を確かめる
-- 次へ進む先: 「前提条件」
+## 前提条件
 
-### 前提条件
+次の 2 つを済ませてください。
 
-- 読み手が持って来るもの: exe にした配布物
-- このページが渡すもの: 要るもの(「exe にして配る」を終えていること、`AppKey` を固有の値にしていること)
-- 読み手がすること: 確かめる
-- 次へ進む先: 手順1
+- [exe にして配る](publish-exe.md) の手順 1 を終え、`publish` フォルダーに `.exe` があること
+- `AppKey` が、アプリごとに固有の値であること
 
-### 手順1: アプリのマニフェストを用意する
+`AppKey` は、`FloatSodaOptions` で指定します。空にはできません。使える文字は、小文字の英字、数字、ドット、アンダースコアで、127 文字までです。
+
+```csharp
+builder.Services.AddFloatSoda(new FloatSodaOptions
+{
+    AppKey = new AppKey("example.my_overlay"),
+});
+```
+
+## 手順1: アプリのマニフェストを用意する
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: `AppKey` と exe のパス
 - このページが渡すもの: マニフェストの書き方(最小の1例)と、置き場所
@@ -65,7 +41,41 @@
 - 次へ進む先: 手順2
 - 【未決】マニフェストの書き方を、このページに書くか、SteamVR の公式資料へのリンクで済ませるか。リポジトリに一次情報がないため、公式資料を読んでから決める
 
-### 手順2: SteamVR に登録する
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+マニフェストは、SteamVR にアプリの名前と起動する `.exe` の場所を伝える JSON のファイルです。`.exe` と同じフォルダーに、`my_overlay.vrmanifest` という名前で置きます。
+
+```json
+{
+  "source": "builtin",
+  "applications": [
+    {
+      "app_key": "example.my_overlay",
+      "launch_type": "binary",
+      "binary_path_windows": "MyOverlay.exe",
+      "is_dashboard_overlay": true,
+      "strings": {
+        "en_us": {
+          "name": "My Overlay"
+        }
+      }
+    }
+  ]
+}
+```
+
+`app_key` は、`AppKey` に指定した値と同じにします。`binary_path_windows` は、マニフェストから見た `.exe` の場所です。ダッシュボードのオーバーレイを自動起動するので、`is_dashboard_overlay` を `true` にします。
+
+**できた?** マニフェストのファイルが、`.exe` と同じフォルダーにある。
+
+<!-- ※要確認: マニフェストの項目名と書き方は、リポジトリのコードやサンプルに例がなく、SteamVR(OpenVR)の公式資料でも確かめていない。上の例は OpenVR のアプリケーションマニフェストの形式として書いた。binary_path_windows の基準となる場所、必須の項目、置き場所は、OpenVR の公式資料を読んで確かめる -->
+
+</details>
+
+## 手順2: SteamVR に登録する
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: マニフェスト
 - このページが渡すもの: `AddManifest` の呼び方と、登録済みかを `Installed` で確かめる方法
@@ -73,7 +83,44 @@
 - できた?: `Installed` が真になる
 - 次へ進む先: 手順3
 
-### 手順3: 自動起動を有効にする
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+マニフェストの登録は、`OVRApplications.AddManifest` で行います。引数には、マニフェストの絶対パスを渡します。登録は、SteamVR に OpenVR の接続ができている間に行うので、登録専用の起動モードをアプリに足します。
+
+```csharp
+using FloatSoda.OVR;
+
+if (args.Contains("--register-steamvr"))
+{
+    var appKey = new AppKey("example.my_overlay");
+    using var ovr = new OVRApplication(new OVRAppInfo(appKey, ApplicationType.Utility));
+
+    var manifestPath = Path.Combine(AppContext.BaseDirectory, "my_overlay.vrmanifest");
+    OVRApplications.AddManifest(manifestPath);
+
+    Console.WriteLine($"登録済み: {ovr.Installed}");
+    return;
+}
+```
+
+このコードは、`Host.CreateApplicationBuilder` を呼ぶ前、`Program.cs` の先頭に置きます。`ApplicationType.Utility` は、HMD がなくても起動し、アプリの登録に関する API が使える種類です。
+
+`.exe` を `--register-steamvr` を付けて 1 回だけ動かします。
+
+```powershell
+.\MyOverlay.exe --register-steamvr
+```
+
+**できた?** コンソールに `登録済み: True` と出る。
+
+<!-- ※要確認: ApplicationType.Utility で OpenVR を初期化して AddManifest を呼ぶ流れは、ソース(OVRApplication.cs の注記)から組み立てた。実機で動くこと、SteamVR が起動していなくてもよいかどうかは確かめていない。FloatSodaApp は内部の OVRApplication を公開していないため、FloatSoda の起動とは別に OVRApplication を作る形にした -->
+
+</details>
+
+## 手順3: 自動起動を有効にする
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 登録済みのアプリ
 - このページが渡すもの: `AutoLaunch` を設定する書き方
@@ -81,16 +128,51 @@
 - できた?: SteamVR の設定で、自動起動の項目にアプリが出る
 - 次へ進む先: 「結果を確かめる」
 
-### 結果を確かめる
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: 設定したアプリ
-- このページが渡すもの: 確かめる手順(SteamVR を終了し、もう一度起動する)
-- 読み手がすること: SteamVR を起動し直して、アプリが自動で起動するのを見る
-- 次へ進む先: 「利用者の環境で動かないとき」(配布先で動かないとき)
+登録したアプリの自動起動は、`OVRApplication.AutoLaunch` で有効にします。手順 2 のコードに 1 行足します。
 
-### うまくいかないとき
+```csharp
+    OVRApplications.AddManifest(manifestPath);
+    ovr.AutoLaunch = true;
+```
 
-- 読み手が持って来るもの: 自動で起動しない、または識別の警告が出る
-- このページが渡すもの: 識別の警告のときの意味(`AppKey` が未登録)と、ガイドの「5. 困ったとき」の「エラーを読んで直す」へのリンク
-- 読み手がすること: リンク先で切り分ける
-- 止まる箇所: なし
+`AutoLaunch` は、アプリのキーが SteamVR に登録済みであることが前提です。登録の前に設定すると、例外になります。
+
+手順 2 と同じコマンドを、もう一度実行します。
+
+```powershell
+.\MyOverlay.exe --register-steamvr
+```
+
+**できた?** SteamVR の設定で、自動起動の項目にアプリの名前が出る。
+
+<!-- ※要確認: SteamVR の設定画面のどこにアプリが出るかは、実機で確かめていない。AutoLaunch が登録の前に設定されたときに投げる例外の種類は、VRApplicationException(OpenVR のエラーを包む型)だと読めるが、実行して確かめていない -->
+
+</details>
+
+## 結果を確かめる
+
+アプリと SteamVR を終了し、アプリのプロセスが残っていないことを確かめます。そのあと SteamVR だけを起動します。アプリを手で動かさなくても、ダッシュボードにオーバーレイが出れば、設定は効いています。
+
+配布先の PC で自動起動させるときも、手順 2 の登録の実行が、その PC で 1 回必要です。マニフェストを配布物に同梱し、説明書に登録の手順を書いてください([Booth で売る準備](booth-release.md))。
+
+<!-- ※要確認: 配布先での、マニフェストの置き場所と登録の手順は、実機で確かめていない -->
+
+配布先で動かないときは、[利用者の環境で動かないとき](../7-maintain/user-environment-issues.md) で切り分けます。
+
+## うまくいかないとき
+
+自動で起動しないとき、または起動時に `SteamVRへのアプリケーション識別に失敗しました` という警告が出るときは、`AppKey` が SteamVR に登録されていない可能性があります。次の 4 点を確かめます。
+
+- マニフェストの `app_key` が、`FloatSodaOptions` の `AppKey` と同じ値であること
+- 手順 2 の登録を実行して、`登録済み: True` と出たこと
+- 自動起動が有効であること
+- マニフェストのファイルと `.exe` を、登録のあとに移動していないこと
+
+警告が出たときは、警告の後ろに続くメッセージも確かめます。
+
+この警告が出ても、オーバーレイの表示は続きます。止まるのは、自動起動など、マニフェストに関わる機能だけです。警告の詳細は [エラーを読んで直す](../5-troubleshoot/read-errors.md#起動で警告が出るが表示はされる) にあります。
+
+なお、コントローラー入力のアクションマニフェストは、自動で生成されます。このページのアプリのマニフェストとは別のものです。

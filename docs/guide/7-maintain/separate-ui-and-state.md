@@ -2,66 +2,82 @@
 
 # 画面と状態の分け方
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## 画面と処理が混ざると、直すたびに壊れる
 
-## 設計シート
+ファイルが長くなったら、画面の組み立てと、状態や処理を分けます。変更する場所を追いやすくなります。分けないままだと、画面を直したつもりが通信の処理を壊す、といったことが起きます。
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / Booth クリエイター、uGUI を避けたいエンジニア、AI に頼む VRChatter。画面が増え、1つのファイルが長くなってきた / 何を知っている / `StatefulWidget` と `SetState()` で1つの部品の状態を変えられる / 読んで何をしたい / ツール全体を、画面と状態に分けて整理し、久しぶりに触っても迷わない形にしたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: ツール全体を、画面を作る部分と、状態や処理を持つ部分に分ける考え方
-- 依頼の解釈: 1つの部品の中の状態(`SetState()` の仕組み)は、「状態と作り直し」に分ける。このページは、ツール全体の分け方を扱う
-- テーマファイル: explanation
-- Why(目的): 画面のコードに通信や保存の処理が混ざると、AI に頼んだ変更が壊れやすく、画面の確認も HMD でしかできなくなる
-- What(目標・結果): 画面は「値を受け取って画面を返す」部分に絞り、状態と処理は別のクラスに置く分け方と、その理由が分かる
-- How(手段): 混ざった状態の問題 → 分け方の考え方 → FloatSoda で使える手段(`ServiceProvider`、`InheritedWidget`)→ 分ける効果(HMD なしで確かめられる)、の順
-- 要素:
-  - 画面のウィジェットは不変の `record` で、値を受け取って画面を返す設計図(`src/FloatSoda/Widgets/Widget.cs`)
-  - 画面の外の状態や処理を、サービスとして登録し、画面から取り出す手段がある。`ServiceProvider` ウィジェットと `context.GetRequiredService<T>()` を使う(`src/FloatSoda/Widgets/ServiceProvider.cs`)
-  - 祖先の値を子孫へ渡す `InheritedWidget` で、値が変わったときに依存する子孫を作り直せる(`AGENTS.md` の「Widget/Element Tree」)
-  - 画面を分けると、ウィジェットだけを `WidgetBitmapRenderer` で画像にして確かめられ、HMD が要らない(`src/FloatSoda.Testing/WidgetBitmapRenderer.cs`、「HMD を被らずに確かめる」)
-  - UI 層を、振る舞い(`FloatSoda.UI`)と見た目(デザインシステム)に分ける設計がある。ただし未提供で、解除の条件は Phase 5(`README.md`、追跡: #219)
-  - UI がすべて C# コードなので、分けたコードは diff で読め、AI が修正しやすい(`AGENTS.md` の「Target Users」)
-  - FloatSoda は状態管理の特定のライブラリを強制していない。`FloatSoda.Hooks` は部分実装で、使えない(`AGENTS.md` の「Project Structure」)
-  - 久しぶりに触るときの思い出し方は、ページにしない。チュートリアルとリファレンスで答える(docs 再編の決定、2026-10-16)
-- 見出し:
-  - 画面と処理が混ざると、直すたびに壊れる
-  - 画面は「値を受け取って画面を返す」部分に絞る
-  - 状態と処理は、画面の外に置く
-  - 画面の外の状態を、画面から取り出す
-  - 分けると、HMD を被らずに確かめられる
-  - 分けすぎない
-- ※要確認:
-  - 画面の外の状態が変わったとき、画面を作り直す手段(`ListenableBuilder` や `InheritedWidget` で通知する。コード例を取り出してビルドして確かめる)
-  - `ListenableBuilder` の使い方(`src/FloatSoda/Widgets/ListenableBuilder.cs` を読んで確かめる)
-  - サービスを使ったコードを、`WidgetBitmapRenderer` で画像にできるか(`ServiceProvider` を包んだルートで、コード例を実行して確かめる)
-  - 「分けすぎない」の目安。評価語にならない数値や条件で書けるか(書けなければ、その節は置かない)
+たとえば、次のような 1 つの `State` があるとします。
 
-## ト書き
+```csharp
+public class PanelState : State<PanelWidget>
+{
+    private int _count;
+    private readonly HttpClient _http = new();
+    private Timer? _timer;
 
-### 画面と処理が混ざると、直すたびに壊れる
+    public override void InitState()
+    {
+        _timer = new Timer(async _ =>
+        {
+            var json = await _http.GetStringAsync("http://localhost:8080/count");
+            File.WriteAllText("count.json", json);
+            SetState(() => _count = int.Parse(json));
+        }, null, 0, 5000);
+    }
 
-- 読み手が持って来るもの: 長くなった1つのファイルと、AI に頼んで壊れた経験
-- このページが渡すもの: 冒頭の結論(画面と状態を分けると、直す場所が決まる)と、混ざった状態の例
-- 読み手がすること: 自分のコードと照らす
-- 次へ進む先: 次の節
+    // …ここに、100 行の画面の組み立て…
+}
+```
 
-### 画面は「値を受け取って画面を返す」部分に絞る
+この例は責務の混在を示す反例で、通信やタイマーの実装例ではありません。通信、保存、タイマー、画面が、1 つのクラスに入っています。AI に「ボタンの色を変えて」と頼んだとき、AI は通信の行も同じ場所で読むことになり、関係のない箇所を巻き込んで書き換える余地が生まれます。画面を確かめるにも、通信やタイマーが動く状態で確かめることになり、表示する値を固定して画面だけを確かめにくくなります。
 
-- 読み手が持って来るもの: 前の節
-- このページが渡すもの: 画面のウィジェットが持つのは、受け取る値と、それをどう描くかだけ、という考え方
-- 読み手がすること: 画面に置くものを決める
-- 次へ進む先: 次の節
+FloatSoda は UI のすべてを C# のコードで書くので、分けたコードは diff で読めて、AI が直しやすくなります。分け方の考え方を、次の節から順に説明します。
 
-### 状態と処理は、画面の外に置く
+## 画面は「値を受け取って画面を返す」部分に絞る
 
-- 読み手が持って来るもの: 画面に絞った考え方
-- このページが渡すもの: 状態と処理を、画面とは別のクラスに置く考え方と、置くものの例(通信、保存、タイマー)
-- 読み手がすること: 外に出すものを決める
-- 次へ進む先: 次の節
+画面のウィジェットは、受け取った値をどう描くかだけを持つ部品にします。この例のウィジェットは、`init` プロパティで値を受け取る `record` で、値を受け取って画面を返す設計図です。持つものは、表示する値と、押されたときに呼ぶ処理(`Action`)だけです。
 
-### 画面の外の状態を、画面から取り出す
+```csharp
+public record CounterView : StatelessWidget
+{
+    public required int Count { get; init; }
+    public required Action OnIncrement { get; init; }
+
+    public override Widget Build(IBuildContext context) => new GestureDetector
+    {
+        Behaviour = HitTestBehaviour.Opaque,
+        OnTap = OnIncrement,
+        Child = new Text($"カウント: {Count}"),
+    };
+}
+```
+
+この `CounterView` は、通信も保存も知りません。何を表示し、押されたら何を呼ぶかを、外から渡されます。画面に置くものを決めるときは、「この行は、渡された値から画面を作るために要るか」を問います。要らない行は、次の節で外に出します。
+
+## 状態と処理は、画面の外に置く
+
+状態と処理は、画面とは別のクラスに置きます。外に出すものの例は、通信、保存、タイマーです。
+
+```csharp
+public sealed class CounterModel : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public int Count { get; private set; }
+
+    public void Increment()
+    {
+        Count++;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Count)));
+    }
+}
+```
+
+`CounterModel` は、ウィジェットを 1 つも知りません。値が変わったら `PropertyChanged` で知らせるだけです。通信や保存を足すときも、このクラスの中に足します。画面へ渡す値と `Action` が変わらなければ、画面のファイルは変わりません。
+
+## 画面の外の状態を、画面から取り出す
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 外に出した状態
 - このページが渡すもの: `ServiceProvider` と `InheritedWidget` で取り出す2つの手段。「Generic Host の仕組みを使う」へのリンク
@@ -69,16 +85,76 @@
 - 次へ進む先: 次の節
 - 【未決】選択肢を並べるだけにするか、`ServiceProvider` を主にして `InheritedWidget` は一言触れるだけにするか。手順書ではなく解説なので、並べて違いを説明する案で骨組みを作った
 
-### 分けると、HMD を被らずに確かめられる
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: 分けたコード
-- このページが渡すもの: 画面だけを画像にして確かめる流れと、「HMD を被らずに確かめる」へのリンク
-- 読み手がすること: 分けた効果をつかむ
-- 次へ進む先: 次の節
+外に置いた状態を画面から取り出す手段は、2 つあります。違いは、取り出すものの性質です。
 
-### 分けすぎない
+| 手段 | 向いているもの | 値が変わったときの動き |
+| :-- | :-- | :-- |
+| `ServiceProvider` | アプリの間ずっと使うオブジェクト(通信、保存、状態を持つクラス) | 取り出しただけでは画面は変わらない。`ListenableBuilder` などで変更通知を受ける |
+| `InheritedWidget` | 画面の上から下へ渡す値(設定、見た目の指定など) | 値が変わると、その値に依存する子孫が作り直される |
 
-- 読み手が持って来るもの: ここまでの考え方
-- このページが渡すもの: 分ける必要がない場合(小さなツール)の目安
-- 読み手がすること: 自分のツールの大きさで、分けるかを決める
-- 止まる箇所: なし。ここでページは終わる。部品の中の状態の話は、「状態と作り直し」へのリンクで渡す
+`ServiceProvider` は、画面のルートを包み、`IServiceProvider` を子孫へ渡します。子孫は `context.GetRequiredService<T>()` で取り出します。取り出した状態の変更は、`ListenableBuilder` で受け取ります。`ListenableBuilder` は、`INotifyPropertyChanged` の通知のたびに、直下のウィジェットだけを作り直します。
+
+```csharp
+app.CreateWindow(new DashboardWindow
+{
+    Title = "Counter",
+    Child = new ServiceProvider
+    {
+        Services = host.Services,
+        Child = new CounterScreen(),
+    },
+});
+
+public record CounterScreen : StatelessWidget
+{
+    public override Widget Build(IBuildContext context)
+    {
+        var model = context.GetRequiredService<CounterModel>();
+
+        return new ListenableBuilder
+        {
+            Listenable = model,
+            ChildBuilder = _ => new CounterView
+            {
+                Count = model.Count,
+                OnIncrement = model.Increment,
+            },
+        };
+    }
+}
+```
+
+`CounterModel` は、起動のコードで `builder.Services.AddSingleton<CounterModel>()` として登録します。登録の手順は [Generic Host の仕組みを使う](../4-build/mechanics/use-generic-host.md) にあります。
+
+`ListenableBuilder` は、変更通知を、ウィジェットがマウントされたスレッド(通常は FloatSoda のメインループ)から出すことを前提にしています。バックグラウンドのスレッドで状態を更新するときは、メインループに処理を戻してから `PropertyChanged` を起こします。
+
+`InheritedWidget` は、自作の `record` で作ります。子孫は `context.DependOnInheritedWidgetOfExactType<T>()` で取り出し、その値に依存します。値が変わった(`UpdateShouldNotify` が `true` を返した)ときだけ、依存した子孫が作り直されます。
+
+<!-- ※要確認: 上のコードは、ServiceProvider / ListenableBuilder / StatelessWidget の公開 API の定義を読んで書いた。ビルドして動かして確かめていない。ServiceProvider で包んだルートを CreateWindow の Child に渡す書き方は、src/ にその例がなく、実行して確かめていない。InheritedWidget を自作する例は、ここには載せていない -->
+
+</details>
+
+## 分けると、HMD を被らずに確かめられる
+
+画面が「値を受け取って画面を返す」部品に絞られていると、状態を作らなくても、決めた値で画面を作れます。たとえば `new CounterView { Count = 42, OnIncrement = () => { } }` は、通信が動いていなくても組み立てられます。
+
+組み立てた画面は、`WidgetBitmapRenderer` で画像にして確かめられます。HMD を被る必要はありません。手順は [HMD を被らずに確かめる](../4-build/input/test-without-hmd.md) にあります。値を変えた画像を何枚か書き出しておくと、AI に画面を直してもらったあとの見た目の変化を、画像で比べられます。
+
+<!-- ※要確認: サービスを使う画面(ServiceProvider で包んだルート)を WidgetBitmapRenderer で画像にできるかは、実行して確かめていない。値だけを受け取る CounterView の形なら、サービスなしで画像にできるはず -->
+
+## 分けすぎない
+
+ツールが小さいうちは、分けなくてかまいません。次の 3 つがすべて当てはまるなら、1 つの `State` に置いたままで足ります。
+
+- 通信、保存、タイマーのどれも使わない
+- 画面のファイルが 1 つで、読み返して全体を追える
+- 同じ値を、複数の画面で使わない
+
+1 つでも外れたら、状態を外に出す時期です。
+
+分ける対象は、ツール全体の構造です。1 つの部品の中の状態、つまり `SetState()` の仕組みは [状態と作り直し](../4-build/mechanics/state-and-rebuild.md) にあります。
+
+FloatSoda は、状態管理の特定のライブラリを強制しません。上の例の `INotifyPropertyChanged` のほかに、自作のクラスや、使い慣れたライブラリを使えます。`FloatSoda.Hooks` は、今は使えません(追跡: #72)。

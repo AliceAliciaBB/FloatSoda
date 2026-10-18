@@ -1,85 +1,82 @@
 ← [ガイド](../../Home.md)
 
-# 起動と Generic Host
+# 起動のコードは何をしているの?
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。タイトル案: 起動のコードは何をしているの?
+## 起動のコードは、5つのことをしている
 
-## 設計シート
+チュートリアルで貼った起動のコードは、ホストを作る、FloatSoda を登録する、ウィンドウを予約する、動き始める、終わる、の5つをしています。各行の意味が分かると、AI が書き換えたコードを点検でき、起動に失敗したときも原因を探せます。
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / VRChatter、Booth クリエイター。チュートリアルの起動のコードを貼って動かした / 何を知っている / 貼ったコードが動くことは知っている。各行の意味は知らない / 読んで何をしたい / 起動のコードの各行が何をしているかを知り、自分で書き換えても怖くない状態になりたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: 起動のコードの各行が、何を準備し、いつ動き始め、どう終わるか
-- 依頼の解釈: チュートリアルが起動のコードの各行を説明するか、このページに送るだけにするかは、チュートリアル側の未決。このページは、各行の意味をすべて説明する前提で骨組みを作る
-- テーマファイル: explanation
-- Why(目的): 起動のコードの意味が分からないと、AI が書いた変更を点検できず、起動の失敗の原因も探せない
-- What(目標・結果): `Host.CreateApplicationBuilder` から `host.RunAsync()` までに起きることを、順に説明できる
-- How(手段): 起動のコードを行ごとに区切り、各行の前後で起きることを説明する
-- 要素:
-  - `Host.CreateApplicationBuilder(args)` は、.NET の Generic Host の builder を作る(`samples/FloatSoda.Samples.GettingStarted/Program.cs`)
-  - `AddFloatSoda()` は、FloatSoda の設定、アプリ情報、フレーム管理、`FloatSodaApp` をサービスとして登録し、`FloatSodaHostedService` をホストに登録する(`src/FloatSoda/FloatSodaServiceCollectionExtensions.cs`)
-  - `GetRequiredService<FloatSodaApp>()` で、登録済みの `FloatSodaApp` を取り出す(`samples/FloatSoda.Samples.GettingStarted/Program.cs`)
-  - `CreateWindow` は、ウィンドウの作成を予約する。実際の作成は、メインループが次に回ったときに行われる(`src/FloatSoda/FloatSodaApp.cs`)
-  - `host.RunAsync()` で `FloatSodaHostedService` が始まり、専用のメインスレッド(STA)で OpenVR を初期化して、メインループが動く(`src/FloatSoda/FloatSodaHostedService.cs`、`src/FloatSoda/FloatSodaApp.cs`)
-  - 起動の完了は、初期化のあとに通知される。OpenVR の初期化に失敗すると、例外が起動を失敗させる(`src/FloatSoda/FloatSodaHostedService.cs`、`src/FloatSoda/FloatSodaApp.cs`)
-  - アプリの識別に失敗しても、警告のログだけで起動は続く(`src/FloatSoda/FloatSodaApp.cs`)
-  - 終了は、SteamVR の終了通知か、ホストの停止で行われる(`src/FloatSoda/FloatSodaApp.cs`)
-  - `AppKey` の既定は `FloatSoda` で、アプリごとに別の値を指定する(`src/FloatSoda/FloatSodaOptions.cs`)
-- 見出し:
-  - 起動のコードは、5つのことをしている
-  - ホストの準備: Host.CreateApplicationBuilder と AddFloatSoda
-  - アプリの取り出しと、ウィンドウの予約
-  - RunAsync で動き始める
-  - 起動に失敗するとき
-  - 終わるとき
-- ※要確認:
-  - `builder.Build()` の時点では SteamVR へつながないこと(`FloatSodaApp` の生成が `GetRequiredService` まで遅延されることを、実行して確かめる)
-  - 同じ `Title` で `CreateWindow` を2回呼んだときの挙動(`src/FloatSoda/FloatSodaApp.cs` の `_bindings.TryAdd` を読んで確かめる)
-  - `AppKey` を省略した複数のアプリが同時に動いたときの問題(実機で確かめる)
+次のコードの番号が、5つのうち最初の4つに対応します。5つ目の「終わる」は、コードに書かれた行ではなく、`RunAsync` の中で起きます。このコードは、`AddFloatSoda()` を設定なしで呼ぶ最小の形です。アプリごとに別の `AppKey` を指定する形は、「ホストの準備」の節で説明します。
 
-## ト書き
+```csharp
+var builder = Host.CreateApplicationBuilder(args);          // 1. ホストを作る
+builder.Services.AddFloatSoda();                            // 2. FloatSoda を登録する
 
-### 起動のコードは、5つのことをしている
+using var host = builder.Build();
+var app = host.Services.GetRequiredService<FloatSodaApp>(); // 3. ウィンドウを作る FloatSodaApp を取り出す
 
-- 読み手が持って来るもの: チュートリアルの起動のコード
-- このページが渡すもの: 冒頭の結論(ホストを作る、FloatSoda を登録する、ウィンドウを予約する、動き始める、終わる)と、コードを5つに区切った図
-- 読み手がすること: 区切りをつかむ
-- 次へ進む先: 次の節
+app.CreateWindow(new DashboardWindow                        // 3. ウィンドウを予約する
+{
+    Title = "MyDashboard",
+    Child = root,
+});
 
-### ホストの準備: Host.CreateApplicationBuilder と AddFloatSoda
+await host.RunAsync();                                      // 4. 動き始める
+```
 
-- 読み手が持って来るもの: 区切り1と2
-- このページが渡すもの: .NET の Generic Host とは何か(1文)と、`AddFloatSoda` が登録するもの
-- 読み手がすること: 登録されるものの名前を知る
-- 止まる箇所: Generic Host 自体の詳しい説明。.NET の公式資料へリンクで渡す
-- 次へ進む先: 次の節
+## ホストの準備: Host.CreateApplicationBuilder と AddFloatSoda
 
-### アプリの取り出しと、ウィンドウの予約
+Generic Host は、設定、ログ、サービスの登録(依存性注入)、起動と終了の管理をまとめて持つ、.NET の標準の土台です。FloatSoda は、独自の起動の仕組みを作らず、この土台の上で動きます。詳しい説明は、.NET の公式資料の[.NET Generic Host](https://learn.microsoft.com/dotnet/core/extensions/generic-host)にあります。
 
-- 読み手が持って来るもの: 区切り3
-- このページが渡すもの: `FloatSodaApp` を取り出す理由と、`CreateWindow` が予約であること
-- 読み手がすること: ウィンドウが作られるタイミングを知る
-- 次へ進む先: 次の節
+`Host.CreateApplicationBuilder(args)` は、その土台の builder を作ります。次の `AddFloatSoda()` が登録するもののうち、起動のコードを読むために知っておきたいものを挙げます。内部の登録のすべてを示すものではありません。
 
-### RunAsync で動き始める
+- FloatSoda の設定(`FloatSodaOptions`)
+- SteamVR がアプリを見分ける `AppKey` を持つ、アプリの情報(`OVRAppInfo`)
+- フレームの間隔を管理する仕組み(`IFramePacer`)
+- `FloatSodaApp`
+- ホストが動き始めたときに FloatSoda を動かす役の `FloatSodaHostedService`
 
-- 読み手が持って来るもの: 区切り4
-- このページが渡すもの: `RunAsync` で、メインスレッドと OpenVR の初期化が始まる流れ
-- 読み手がすること: 動き始める順番をつかむ
-- 次へ進む先: 次の節
+設定を変えたいときは、`AddFloatSoda(new FloatSodaOptions { ... })` の形で渡します。`AppKey` の既定は `FloatSoda` で、アプリごとに別の値を指定します。
 
-### 起動に失敗するとき
+<!-- ※要確認: `AppKey` を省略した複数のアプリが同時に動いたときの問題。実機で確かめる -->
 
-- 読み手が持って来るもの: 起動の例外
-- このページが渡すもの: 失敗が起動を止める場合(OpenVR の初期化)と、続行する場合(アプリの識別、入力の初期化)の違い
-- 読み手がすること: 自分の症状がどちらかを知る
-- 止まる箇所: 症状が出ている読み手。ガイドの「5. 困ったとき」の「エラーを読んで直す」へ送る
-- 次へ進む先: 次の節
+## アプリの取り出しと、ウィンドウの予約
 
-### 終わるとき
+`host.Services.GetRequiredService<FloatSodaApp>()` は、登録済みの `FloatSodaApp` を取り出します。ウィンドウを作る操作 `CreateWindow` が、この `FloatSodaApp` にあるためです。
 
-- 読み手が持って来るもの: 前の節
-- このページが渡すもの: SteamVR の終了とホストの停止で終わること。「Generic Host の仕組みを使う」へのリンク
-- 読み手がすること: 必要なら次のページへ進む
-- 止まる箇所: なし。ここでページは終わる
+`CreateWindow` は、ウィンドウの作成を予約します。その場では作りません。メインループが動き始めて、最初の1周を回るときに、予約が実行されます。そのため、`RunAsync` の前に `CreateWindow` を呼んでも、ウィンドウは動き始めたあとに出ます。
+
+`builder.Build()` の時点では、SteamVR にはつながりません。つなぐのは、`RunAsync` で動き始めたあとです。
+
+<!-- ※要確認: Build() の時点で SteamVR へつながないこと。FloatSodaApp の生成と OpenVR の初期化の位置をコードで読んだ。実行しては確かめていない -->
+
+## RunAsync で動き始める
+
+`host.RunAsync()` を呼ぶと、ホストが `FloatSodaHostedService` を始めます。FloatSoda は、次の順に動き始めます。
+
+1. FloatSoda 専用のメインスレッドを作る。Windows では STA として作る
+2. そのスレッドで OpenVR を初期化する
+3. 初期化に成功したら、ホストへ「起動が済んだ」と知らせる
+4. メインループを回し続ける
+
+メインループの1周で行うことは、[FloatSoda の仕組み](how-floatsoda-works.md)にあります。
+
+## 起動に失敗するとき
+
+起動の失敗は、止まる場合と続く場合に分かれます。
+
+| 何が失敗したか | 起動はどうなるか | 見える表示 |
+| :-- | :-- | :-- |
+| OpenVR の初期化 | 止まる。`RunAsync` が例外で終わる | 「OpenVRの初期化に失敗しました」のログ |
+| アプリの識別(SteamVR への登録) | 続く。警告だけが出る | 「SteamVRへのアプリケーション識別に失敗しました」のログ |
+| コントローラー入力の初期化 | 続く。オーバーレイは表示される | 「アクション入力の初期化に失敗しました」のログ |
+
+HMD を接続していない、または SteamVR を起動していないと、OpenVR の初期化で止まります。止まったときは、[エラーを読んで直す](../../5-troubleshoot/read-errors.md)で、メッセージから原因を切り分けます。
+
+## 終わるとき
+
+通常の終了は、2つの場面で始まります。SteamVR が終了を知らせたときと、ホストが止まるときです。メインループが例外で止まったときも終わります([FloatSoda の仕組み](how-floatsoda-works.md)を参照)。SteamVR を閉じると、FloatSoda のアプリも終わります。ホストが止まるのは、コンソールで Ctrl+C を押したときなどです。
+
+メインループが止まれば、ホストも止まって、`RunAsync` が終わります。
+
+ホストの設定、ログ、裏で動く処理を足したいときは、[設定やログ、裏で動く処理を足す](use-generic-host.md)に進みます。

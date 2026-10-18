@@ -2,80 +2,58 @@
 
 # 開発環境を用意する
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+この手順で、自分の PC に .NET の SDK を入れ、FloatSoda を足した空のコンソールアプリを作って、SteamVR のダッシュボードに色の四角を出せます。手順は5つです。終わると、FloatSoda を足し、ダッシュボードに色の四角を出すコンソールアプリが手元にそろいます。チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)の最初に要る「空のコンソールアプリ」は、手順2と手順3で作るものと同じです。
 
-## 設計シート
+エディター(IDE)は指定しません。好きなものを使ってください。必要な設定も、この手順にはありません。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / FloatSoda で作ると決めた人 / 何を知っている / VR(SteamVR)を使っている。.NET の開発環境は持っていない、または持っているか分からない / 読んで何をしたい / 自分の PC で、FloatSoda のコードを書いて動かせる状態にしたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: .NET の SDK と SteamVR を用意し、空のコンソールアプリに FloatSoda を足して、動かせる状態にする
-- 依頼の解釈: 動作要件の一覧は、リファレンスの「動作環境」に任せ、このページは入れる手順に限る。エディター(IDE)の選び方は書かず、必要な設定だけを書く
-- テーマファイル: how-to
-- Why(目的): チュートリアルの最初の「空のコンソールアプリ」を、迷わず用意できるようにする
-- What(目標・結果): `dotnet --version` が 10 系を返し、FloatSoda を参照したコンソールアプリがビルドできる。SteamVR が起動できる
-- How(手段): 手順1つにつき操作1つ、成功したときの結果を添えて並べる。前提条件は手順より前に書く
-- 要素:
-  - 前提は、PC に SteamVR(Steam 経由)が入っていることと、VR の機材がつながっていること(README.md の「動作環境」)。※要確認: HMD なしで確かめる手順はガイドの「HMD を被らずに確かめる」にある
-  - 手順1: .NET 10 の SDK を入れる。確かめ方は `dotnet --version` が `10.` で始まること(`src/FloatSoda/FloatSoda.csproj` の `TargetFramework`)
-  - 手順2: コンソールアプリを作る。`dotnet new console -n MyOverlayApp`(再編前の `docs/GettingStarted.md`)
-  - 手順3: FloatSoda を足す。NuGet からの追加か、プロジェクト参照かを選ぶ。NuGet で公開されているのは FloatSoda 本体と、依存する層のパッケージである(docs 再編の決定、2026-10-16〜17)。※要確認: 追加のコマンドとパッケージ名
-  - 手順4: ビルドして確かめる。`dotnet build` が成功すること
-  - 手順5: SteamVR を起動して、作例を1つ動かす。`dotnet run --project samples/FloatSoda.Samples.GettingStarted`(リポジトリを取得した場合)(README.md の「サンプルアプリの起動」)
-  - 手順5 が成功した状態は、ダッシュボードに色の四角が出ること(`samples/FloatSoda.Samples.GettingStarted/Program.cs`)
-  - 推奨のエディター: 決めていない。リポジトリでは Rider の MCP を勧めているが、必須ではない(AGENTS.md の「Rider MCP」)
-  - 環境変数と PATH の設定は、.NET の SDK の標準のインストーラーに任せ、このページに書かない
-- 見出し:
-  - この手順でできること
-  - 始める前に確かめること
-  - 手順1: .NET の SDK を入れる
-  - 手順2: コンソールアプリを作る
-  - 手順3: FloatSoda を足す
-  - 手順4: ビルドして確かめる
-  - 手順5: SteamVR で作例を動かす
-  - うまくいかないとき
-- ※要確認:
-  - NuGet で FloatSoda を足すコマンドとパッケージ名(`dotnet add package FloatSoda` でよいか。nuget.org で公開パッケージを確かめる)
-  - プロジェクト参照で使う場合の手順(リポジトリを取得して `dotnet add reference` する形が今も有効か)
-  - HMD を被らずに SteamVR を起動できるか(SteamVR の仕様。リポジトリに記述がない)
-  - SDK のインストーラーの入手元と、Windows 以外の扱い(リファレンスの「動作環境」の ※要確認 と同じ)
+## 始める前に確かめること
 
-## ト書き
+次の2つが必要です。
 
-### この手順でできること
+- SteamVR が PC に入っていること(Steam から入れる)
+- VR の機材が PC につながっていること
 
-- 読み手が持って来るもの: 開発を始めたい PC
-- このページが渡すもの: 手順が5つであること、終わったときの状態(ビルドが通り、作例が動く)
-- 読み手がすること: 手順の数と終わりの状態を確かめる
-- 次へ進む先: 「始める前に確かめること」
+動作環境の全体は、リファレンスの[動作環境](../../reference/requirements.md)にあります。SteamVR が入っていない、または OS が対応していないときは、ここでは進めず、動作環境を確かめてから戻ってください。
 
-### 始める前に確かめること
+HMD を被らずに確かめたいときは、[HMD を被らずに確かめる](../4-build/input/test-without-hmd.md)を読んでください。
 
-- 読み手が持って来るもの: 自分の PC の状態(OS、SteamVR の有無)
-- このページが渡すもの: 前提の短い一覧と、リファレンスの「動作環境」へのリンク
-- 読み手がすること: 前提を確かめる。足りなければリファレンスで要件を確かめてから戻る
-- 止まる箇所: SteamVR が入っていない、OS が対応外。ここでは直し方を書かず、リファレンスへ送る
-- 次へ進む先: 手順1
+## 手順1: .NET の SDK を入れる
 
-### 手順1: .NET の SDK を入れる
+.NET 10 の SDK を、公式の配布元(<https://dotnet.microsoft.com/ja-jp/download>)から入れる。
 
-- 読み手が持って来るもの: 入っている SDK の版が分からない状態
-- このページが渡すもの: 入れ方の1手順(公式の配布元へのリンク)と、確かめるコマンド
-- 読み手がすること: SDK を入れ、`dotnet --version` を実行する
-- できた?: 10 から始まる版が表示された
-- できなかったら: コマンドが見つからない、版が古い → ページ末の「うまくいかないとき」
-- 次へ進む先: 手順2
+環境変数と PATH の設定は、インストーラーが行います。
 
-### 手順2: コンソールアプリを作る
+入れたら、ターミナルで次を実行する。
 
-- 読み手が持って来るもの: SDK
-- このページが渡すもの: `dotnet new console` の1コマンドと、できるファイルの説明
-- 読み手がすること: コマンドを実行する
-- できた?: `Program.cs` を含むフォルダーができた
-- 次へ進む先: 手順3
+```powershell
+dotnet --version
+```
 
-### 手順3: FloatSoda を足す
+**できた?** `10.` で始まる版が表示された。
+
+<details>
+<summary>できなかったら</summary>
+
+「コマンドが見つかりません」と出たときは、ターミナルを開き直してください。インストーラーが設定した PATH は、開き直したターミナルから有効になります。それでも出ないときは、SDK(ランタイムだけではない)を入れたかを確かめてください。`10.` より前の版が表示されたときは、`dotnet --list-sdks` で一覧を見て、10 系の SDK が入っているかを確かめてください。
+
+</details>
+
+<!-- ※要確認: SDK の入手元と、Windows 以外での手順。ここでは Windows の公式ダウンロードページだけを示している。確かめ方: 動作環境ページの OS の記述と合わせて、公式ページで対応 OS を確かめる -->
+
+## 手順2: コンソールアプリを作る
+
+作業用のフォルダーで、次を実行する。
+
+```powershell
+dotnet new console -n MyOverlayApp
+cd MyOverlayApp
+```
+
+**できた?** `MyOverlayApp` フォルダーができ、その中に `Program.cs` と `MyOverlayApp.csproj` がある。
+
+## 手順3: FloatSoda を足す
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: コンソールアプリ
 - このページが渡すもの: FloatSoda を足す方法を1つ(NuGet)。プロジェクト参照の方法は、コード例を脇に置くだけ
@@ -84,27 +62,100 @@
 - 次へ進む先: 手順4
 - 【未決】NuGet 参照とプロジェクト参照を併記するか。手順書は1つに決めるが、公開版が古いときの扱いが未確認
 
-### 手順4: ビルドして確かめる
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: FloatSoda を参照したプロジェクト
-- このページが渡すもの: `dotnet build` の1コマンド
-- 読み手がすること: ビルドする
-- できた?: 「ビルドに成功しました」と出た
-- できなかったら: 警告ではなくエラーのとき → ガイドの「エラーを読んで直す」
-- 次へ進む先: 手順5
+`MyOverlayApp` フォルダーで、NuGet から FloatSoda を足します。
 
-### 手順5: SteamVR で作例を動かす
+```powershell
+dotnet add package FloatSoda
+```
 
-- 読み手が持って来るもの: ビルドが通ったプロジェクト、SteamVR
-- このページが渡すもの: SteamVR を起動してから実行すること。最小の作例のコードか、チュートリアルの段1へのリンク
-- 読み手がすること: SteamVR を起動し、`dotnet run` する
-- できた?: ダッシュボードに色の四角が出た
-- できなかったら: 出ない → ガイドの「エラーを読んで直す」、リファレンスの「動作環境」
-- 次へ進む先: チュートリアル「最初のオーバーレイを作る」
+**できた?** `MyOverlayApp.csproj` に `FloatSoda` の `PackageReference` が入った。
 
-### うまくいかないとき
+<details>
+<summary>できなかったら</summary>
 
-- 読み手が持って来るもの: 手順のどこかで詰まった
-- このページが渡すもの: 症状別の行き先(SDK が見つからない、ビルドエラー、SteamVR が起動しない、オーバーレイが出ない)
-- 読み手がすること: 症状に合う行き先へ進む
-- 止まる箇所: なし。ここでページは終わる
+「パッケージが見つかりません」と出たときは、ネットワークと NuGet の接続を確かめてください。FloatSoda のリポジトリを取得して使うときは、`dotnet add reference <リポジトリ>/src/FloatSoda/FloatSoda.csproj` で、プロジェクト参照として足せます。
+
+</details>
+
+<!-- ※要確認: `dotnet add package FloatSoda` が通ること。PackageId は src/FloatSoda/FloatSoda.csproj の FloatSoda で、CHANGELOG の 0.4.0 が公開済みの版。確かめ方: nuget.org で FloatSoda のページを開き、新規プロジェクトで実行する -->
+<!-- ※要確認: プロジェクト参照の手順が今も有効か。確かめ方: リポジトリを取得して dotnet add reference を実行し、dotnet build を通す -->
+
+</details>
+
+## 手順4: ビルドして確かめる
+
+次を実行する。
+
+```powershell
+dotnet build
+```
+
+**できた?** 「ビルドに成功しました」と出た。
+
+<details>
+<summary>できなかったら</summary>
+
+警告ではなく、エラーが出たときは、[エラーを読んで直す](../5-troubleshoot/read-errors.md)を読んでください。
+
+</details>
+
+## 手順5: SteamVR で色の四角を出す
+
+SteamVR を起動してから、`Program.cs` を次のコードに書き換える。
+
+```csharp
+using FloatSoda;
+using FloatSoda.Widgets;
+using FloatSoda.Widgets.Layout;
+using FloatSoda.Widgets.Paint;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using SkiaSharp;
+
+var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddFloatSoda();
+
+using var host = builder.Build();
+var app = host.Services.GetRequiredService<FloatSodaApp>();
+
+Widget root = new Align
+{
+    Child = new SizedBox
+    {
+        Width = 100,
+        Height = 100,
+        Child = new ColoredBox
+        {
+            Color = SKColors.Tomato
+        }
+    }
+};
+
+app.CreateWindow(new DashboardWindow { Title = "MyDashboard", Child = root });
+
+await host.RunAsync();
+```
+
+SteamVR を起動したまま、次を実行する。
+
+```powershell
+dotnet run
+```
+
+SteamVR のダッシュボードを開く。
+
+**できた?** ダッシュボードに、トマト色(赤みのあるだいだい色)の四角が出た。
+
+<details>
+<summary>できなかったら</summary>
+
+四角が出ないときは、まず SteamVR が起動しているかを確かめてください。FloatSoda は、SteamVR が起動していない状態では動きません。アプリが終了したり例外が出たりしたときは、[エラーを読んで直す](../5-troubleshoot/read-errors.md)を、起動しているのに出ないときは、[反応しないときに切り分ける](../5-troubleshoot/not-responding.md)を読んでください。環境の要件は、リファレンスの[動作環境](../../reference/requirements.md)にあります。
+
+</details>
+
+<!-- ※要確認: 手順5の結果(ダッシュボードに四角が出る)。HMD と SteamVR でしか確かめられない。確かめ方: 空のコンソールアプリで上のコードを実行し、ダッシュボードを開く。コードは README.md の最小構成と同じ -->
+
+最後まで進めたら、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)へ進んでください。リポジトリを取得した人は、リポジトリのルートに移動して `dotnet run --project samples/FloatSoda.Samples.GettingStarted` を実行すると、同じ四角を出す作例も動かせます。

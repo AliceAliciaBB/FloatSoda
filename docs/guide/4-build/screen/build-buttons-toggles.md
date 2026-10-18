@@ -2,77 +2,126 @@
 
 # ボタンやトグルを組み立てる
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## ボタンが効くオーバーレイの種類
 
-## 設計シート
+今、コントローラーで押せるのは、ダッシュボードのオーバーレイだけです。`WorldSpaceWindow` と `DeviceTrackedWindow` は表示専用で、`GestureDetector` のコールバックが呼ばれません(追跡: #182)。ボタンやトグルを組み立てるときは、`DashboardWindow` に出します。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / VRChatter、Booth クリエイター、uGUI を避けたいエンジニア。値が変わると画面が変わる仕組み(`SetState()`)を、チュートリアルで一度動かしている / 何を知っている / `GestureDetector` を1回使った。`Button` ウィジェットがまだないことは知らない / 読んで何をしたい / 押せるボタンと、押すたびに切り替わるトグルを、自分の画面に組み立てたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: `GestureDetector` で、押せるボタンと、状態を切り替えるトグルを組み立てる手順
-- 依頼の解釈: `FloatSoda.UI` の `ButtonBase` と、デザインシステムの `Button` は使わない。どちらも提供前のため、`GestureDetector` で組み立てる手順に決めた
-- テーマファイル: how-to
-- Why(目的): `Button` がまだない状態でも、自分の画面に操作できる部品を足せるようにする
-- What(目標・結果): ダッシュボードのオーバーレイで、ボタンを押すと値が変わり、トグルを押すたびに状態が切り替わる
-- How(手段): 冒頭で、ボタンが効くオーバーレイの種類を伝える。そのあと、ボタン、トグル、押せる範囲の調整の順に組み立てる
-- 要素:
-  - ポインタ座標はダッシュボードのオーバーレイにだけ届くため、`WorldSpaceWindow` と `DeviceTrackedWindow` では `GestureDetector` のコールバックが呼ばれない(`README.md` の「開発ステータス」、`CONTRIBUTING.md`。追跡: #182)
-  - ボタンは `GestureDetector` の `OnTap` と、見た目のウィジェット(`ColoredBox`、`ClipRoundRect`、`Text`)の組み合わせで作る(`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - `OnTap` の中で `SetState()` を呼ぶと、値が変わって画面が描き直される(`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - `OnTap` は押して離した時点で成立する。押しただけでは呼ばれない(`samples/FloatSoda.Samples.GestureDetector/README.md`)
-  - 空白を含む領域全体で反応させるには `Behaviour = HitTestBehaviour.Opaque` を指定する(`samples/FloatSoda.Samples.GestureDetector/README.md`)
-  - ドラッグは `OnPanUpdate` で受け取る(`samples/FloatSoda.Samples.OverlayApp/DragBoxWidget.cs`)
-  - 生のポインターイベントとホバーは `Listener` と `PointerRegion` で受け取る(`README.md` の「入力系」)
-  - トグルは、`bool` の状態を `State` に持ち、`OnTap` で反転させ、状態で見た目を分けて作る(同じ `SetState()` の仕組み。`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - `Button` などの UI コンポーネントは未提供で、解除の条件は Phase 5(`README.md` の「まだ使えないもの」、追跡: #219)
-- 見出し:
-  - ボタンが効くオーバーレイの種類
-  - 前提条件
-  - 手順1: 押せるボタンを作る
-  - 手順2: 押すたびに切り替わるトグルを作る
-  - 手順3: 押せる範囲を決める
-  - 結果を確かめる
-  - うまくいかないとき
-- ※要確認:
-  - `GestureDetector` のボタンが、ダッシュボードのオーバーレイで実機で反応するか(HMD で確かめる)
-  - トグルのコード例が、今の公開 API でコンパイルできるか(コード例を取り出してビルドして確かめる)
-  - `samples/FloatSoda.Samples.GestureDetector` の型名が `GestureDetectorWidget` と `GestureDetector` のどちらか(`README.md` と `Program.cs` で食い違って見える。`GestureDetectorDemo.cs` を読んで確かめる)
+`Button` ウィジェットは、まだありません(追跡: #219)。この手順では、`GestureDetector` と見た目のウィジェットを組み合わせて、押せるボタンと、押すたびに切り替わるトグルを作ります。
 
-## ト書き
+自分のオーバーレイの種類は、`CreateWindow` に渡している型で確かめます。ダッシュボード以外に出したい場合は、[オーバーレイの種類と選び方](../mechanics/overlay-types.md)で、種類ごとの違いを確かめます。
 
-### ボタンが効くオーバーレイの種類
+## 前提条件
 
-- 読み手が持って来るもの: 「ボタンを付けたい」という目的
-- このページが渡すもの: 今押せるのはダッシュボードのオーバーレイだけという制約(追跡: #182)と、`WorldSpaceWindow` と `DeviceTrackedWindow` は表示専用であること
-- 読み手がすること: 自分のオーバーレイの種類を確かめる
-- 止まる箇所: ダッシュボード以外に出したい読み手。ここでは回避策を書かず、「オーバーレイの種類と選び方」へ送る
-- 次へ進む先: 「前提条件」
+- [最初のオーバーレイを作る](../../../tutorials/first-overlay.md)を終え、ダッシュボードにオーバーレイが出ること
+- `SetState()` で値を変えると画面が変わることを知っていること
+- ソースの先頭に、`FloatSoda.Geometrics`、`FloatSoda.Widgets.Gesture`、`FloatSoda.Widgets.Layout`、`FloatSoda.Widgets.Paint`、`FloatSoda.Painting`、`SkiaSharp` の `using` があること
 
-### 前提条件
+`SetState()` の仕組みが分からない場合は、[値が変わると、画面が変わる仕組み](../mechanics/state-and-rebuild.md)を先に読みます。
 
-- 読み手が持って来るもの: チュートリアルを終えたプロジェクト
-- このページが渡すもの: 要るもの(`SetState()` の使い方)と、「状態と作り直し」へのリンク
-- 読み手がすること: 確かめて、足りなければリンク先へ戻る
-- 次へ進む先: 手順1
+## 手順1: 押せるボタンを作る
 
-### 手順1: 押せるボタンを作る
+見た目の四角を `GestureDetector` で包み、`OnTap` で `SetState()` を呼びます。`OnTap` は、押して離した時点で呼ばれます。押しただけでは呼ばれません。
 
-- 読み手が持って来るもの: 見た目だけの四角
-- このページが渡すもの: `GestureDetector` で包み、`OnTap` で `SetState()` を呼ぶ書き方
-- 読み手がすること: 四角をボタンにする
-- できた?: コントローラーで押すと値が変わる
-- 次へ進む先: 手順2
+```csharp
+public record CountButton : StatefulWidget<CountButton>
+{
+    public override State<CountButton> CreateState() => new CountButtonState();
+}
 
-### 手順2: 押すたびに切り替わるトグルを作る
+public class CountButtonState : State<CountButton>
+{
+    private int _count;
 
-- 読み手が持って来るもの: 手順1のボタン
-- このページが渡すもの: `bool` の状態と、状態で見た目を変える書き方
-- 読み手がすること: 押すたびにオンとオフが切り替わるようにする
-- できた?: 押すたびに見た目が切り替わる
-- 次へ進む先: 手順3
+    public override Widget Build(IBuildContext context) => new GestureDetector
+    {
+        OnTap = () => SetState(() => _count++),
+        Child = new ClipRoundRect
+        {
+            BorderRadius = BorderRadius.All(Radius.Circular(15)),
+            Child = new SizedBox
+            {
+                Width = 300,
+                Height = 100,
+                Child = new ColoredBox
+                {
+                    Color = SKColors.CornflowerBlue,
+                    Child = new Center
+                    {
+                        Child = new Text($"押した回数: {_count}")
+                        {
+                            Style = new TextStyle { Color = SKColors.WhiteSmoke, FontSize = 40, FontWeight = 700 },
+                        },
+                    },
+                },
+            },
+        },
+    };
+}
+```
 
-### 手順3: 押せる範囲を決める
+起動のコードで、`DashboardWindow` の `Child` を `new CountButton()` に置き換えます。
+
+**できた?** ダッシュボードで、コントローラーのレーザーを四角に当てて押し、離したときに押した回数が増えれば、手順1は完了です。
+
+<!-- ※要確認: GestureDetector のボタンが、ダッシュボードのオーバーレイで実機で反応するか。HMD で確かめる -->
+
+<details>
+<summary>できなかったら</summary>
+
+押しても反応しないときは、ウィンドウが `DashboardWindow` であることを確かめます。`WorldSpaceWindow` と `DeviceTrackedWindow` では、コントローラーのレーザー操作を受け取れません(追跡: #182)。それでも直らないときは、[反応しないときに切り分ける](../../5-troubleshoot/not-responding.md)に進みます。
+
+</details>
+
+## 手順2: 押すたびに切り替わるトグルを作る
+
+トグルは、ボタンと同じ仕組みで作れます。`bool` の状態を `State` に持ち、`OnTap` で反転させ、状態に合わせて見た目を変えます。
+
+```csharp
+public record ToggleButton : StatefulWidget<ToggleButton>
+{
+    public override State<ToggleButton> CreateState() => new ToggleButtonState();
+}
+
+public class ToggleButtonState : State<ToggleButton>
+{
+    private bool _isOn;
+
+    public override Widget Build(IBuildContext context) => new GestureDetector
+    {
+        OnTap = () => SetState(() => _isOn = !_isOn),
+        Child = new ClipRoundRect
+        {
+            BorderRadius = BorderRadius.All(Radius.Circular(15)),
+            Child = new SizedBox
+            {
+                Width = 300,
+                Height = 100,
+                Child = new ColoredBox
+                {
+                    Color = _isOn ? SKColors.SeaGreen : SKColors.Gray,
+                    Child = new Center
+                    {
+                        Child = new Text(_isOn ? "ON" : "OFF")
+                        {
+                            Style = new TextStyle { Color = SKColors.White, FontSize = 40, FontWeight = 700 },
+                        },
+                    },
+                },
+            },
+        },
+    };
+}
+```
+
+手順1の確認のあとは、`DashboardWindow` の `Child` を `new ToggleButton()` に置き換えます。
+
+**できた?** 押すたびに、緑の `ON` と灰色の `OFF` が切り替われば、手順2は完了です。
+
+<!-- ※要確認: トグルの表示が HMD で切り替わること。コードのコンパイルは確かめた。表示は HMD で確かめる -->
+
+## 手順3: 押せる範囲を決める
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 余白が多いボタン
 - このページが渡すもの: `Behaviour = HitTestBehaviour.Opaque` の意味と、押せない範囲ができる理由
@@ -81,16 +130,44 @@
 - 次へ進む先: 「結果を確かめる」
 - 【未決】ドラッグ(`OnPanUpdate`)もこのページで扱うか。見本の `DragBoxWidget.cs` はあるが、読み手の目的は「ボタンやトグル」
 
-### 結果を確かめる
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: 手順を終えたコード
-- このページが渡すもの: HMD で押して確かめる観点
-- 読み手がすること: ダッシュボードで押す。HMD を被らずに確かめたいときは「HMD を被らずに確かめる」へ進む。その場合でも、ダッシュボードで動くことの確認は別に要ること(追跡: #182)を添える
-- 次へ進む先: 「表情切り替えパネルを作る」
+`GestureDetector` は、既定では、色や文字のように描かれている部分だけが押せます。余白だけの部分は、押しても反応しません。余白を含む領域全体で反応させるには、`Behaviour = HitTestBehaviour.Opaque` を指定します。
 
-### うまくいかないとき
+```csharp
+new GestureDetector
+{
+    Behaviour = HitTestBehaviour.Opaque,
+    OnTap = () => SetState(() => _count++),
+    Child = new Padding
+    {
+        Spacing = EdgeInsets.All(40),
+        Child = new Text($"押した回数: {_count}"),
+    },
+}
+```
 
-- 読み手が持って来るもの: 押しても反応しない
-- このページが渡すもの: ガイドの「5. 困ったとき」の「反応しないときに切り分ける」へのリンク
-- 読み手がすること: リンク先で切り分ける
-- 止まる箇所: なし
+`HitTestBehaviour` は、`FloatSoda.Gesture` の名前空間にあります。
+
+**できた?** 文字の周りの余白を押しても、押した回数が増えれば、手順3は完了です。
+
+ボタンを押したまま動かすドラッグは、`OnPanUpdate` で受け取ります。コードは[サンプルの DragBoxWidget.cs](../../../../samples/FloatSoda.Samples.OverlayApp/DragBoxWidget.cs) にあります。ホバーや生のポインターイベントが要るときは、`Listener` と `PointerRegion` を使います。
+
+</details>
+
+## 結果を確かめる
+
+ダッシュボードのタブを開き、コントローラーで次の3点を試します。
+
+- ボタンを押すと、値が変わる
+- トグルを押すたびに、見た目が切り替わる
+- 余白を含む範囲を押しても、反応する
+
+HMD を被らずに確かめたいときは、[HMD を被らずに確かめる](../input/test-without-hmd.md)に進みます。ただし、デスクトップで動いても、ダッシュボードで動く確認の代わりにはなりません(追跡: #182)。最後は、ダッシュボードで押して確かめます。
+
+組み立てた部品を使った、通しの例は[表情切り替えパネルを作る](expression-switcher.md)です。
+
+## うまくいかないとき
+
+押しても反応しないときは、[反応しないときに切り分ける](../../5-troubleshoot/not-responding.md)で原因を切り分けます。
