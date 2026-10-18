@@ -60,7 +60,7 @@ var move = new InputAction<Vector2>
 
 コントローラーの種類ごとに割り当てを変えたいときは、`SuggestedPath` の代わりに `DefaultBindings` を使います。`ControllerType` には `Index`、`ViveWand`、`OculusTouch` があります。
 
-次の例は、手順1の最初のコードにある `grab` の宣言を置き換えます。
+次の例は、手順1の最初のコードにある `grab` の宣言を置き換えます。`DefaultBindings` を1つでも書くと、`SuggestedPath` はどのコントローラーにも使われません。使うコントローラーの種類は、すべて書きます。
 
 ```csharp
 var grab = new InputAction<bool>
@@ -69,6 +69,7 @@ var grab = new InputAction<bool>
     DefaultBindings =
     [
         new DefaultBinding { Controller = ControllerType.Index, Path = "/user/hand/right/input/trigger/click" },
+        new DefaultBinding { Controller = ControllerType.ViveWand, Path = "/user/hand/right/input/trigger/click" },
         new DefaultBinding { Controller = ControllerType.OculusTouch, Path = "/user/hand/right/input/trigger/click" },
     ],
 };
@@ -79,7 +80,7 @@ var grab = new InputAction<bool>
 <details>
 <summary>できなかったら</summary>
 
-`T` に `bool`、`float`、`Vector2` 以外の型を渡すと、実行時に `NotSupportedException` が出ます。メッセージは次の形です。
+`T` に `bool`、`float`、`Vector2` 以外の型を渡すと、実行時に `TypeInitializationException` が出ます。原因は、その `InnerException` の `NotSupportedException` です。メッセージは次の形です。
 
 ```text
 InputAction<Int32> は未対応です。bool / float / Vector2 を使用してください。

@@ -19,7 +19,7 @@
 | 起動の直後に `VRInitializeException` が出て、アプリが終わる | [起動で例外が出る: SteamVR または HMD につながらない](#起動で例外が出る-steamvr-または-hmd-につながらない) |
 | 起動時に警告が出るが、オーバーレイは表示される | [起動で警告が出るが、表示はされる](#起動で警告が出るが表示はされる) |
 | 動いていたアプリが、ログを出して終わる | [動いていたアプリが途中で止まる](#動いていたアプリが途中で止まる) |
-| `ArgumentOutOfRangeException`、`NotSupportedException`、`FormatException` | [渡した値が不正だと言われる](#渡した値が不正だと言われる) |
+| `ArgumentOutOfRangeException`、`TypeInitializationException`、`FormatException` | [渡した値が不正だと言われる](#渡した値が不正だと言われる) |
 | `InvalidOperationException`(`…が祖先に見つかりません`) | [ウィンドウやサービスが祖先に見つからないと言われる](#ウィンドウやサービスが祖先に見つからないと言われる) |
 
 AI に貼って聞くときは、メッセージ全文に加えて、FloatSoda のバージョンと、動かした窓の種類(`DashboardWindow` など)を添えると、原因を絞りやすくなります。
@@ -100,9 +100,9 @@ SteamVR を先に起動してから、アプリを起動し直してください
 | 例外 | 原因 | 直し方 |
 | :-- | :-- | :-- |
 | `ArgumentOutOfRangeException`(`TargetFrameRateは1以上である必要があります。`) | `FloatSodaOptions.TargetFrameRate` が 0 以下 | 1 以上の値にする。既定は 60 |
-| `NotSupportedException`(`InputAction<…> は未対応です。bool / float / Vector2 を使用してください。`) | `InputAction<T>` の `T` が対応外 | `T` を `bool`、`float`、`Vector2` のどれかにする |
-| `FormatException` | `AppKey` の値が空、または使えない文字を含む | 小文字の英字、数字、ドット、アンダースコアだけで書く |
-| `ArgumentOutOfRangeException`(`AppKey` の値) | `AppKey` の値が 128 文字以上 | 127 文字以下にする |
+| `TypeInitializationException`(`InnerException` が `NotSupportedException`: `InputAction<…> は未対応です。bool / float / Vector2 を使用してください。`) | `InputAction<T>` の `T` が対応外 | `T` を `bool`、`float`、`Vector2` のどれかにする |
+| `FormatException` | `with` 式で `AppKey` の `Value` に、空の値か使えない文字を含む値を入れた(`new AppKey("...")` の時点では検証されない) | 小文字の英字、数字、ドット、アンダースコアだけで書く |
+| `ArgumentOutOfRangeException`(`AppKey` の値) | `with` 式で `AppKey` の `Value` に 128 文字以上の値を入れた(`new AppKey("...")` の時点では検証されない) | 127 文字以下にする |
 
 ```csharp
 builder.Services.AddFloatSoda(new FloatSodaOptions

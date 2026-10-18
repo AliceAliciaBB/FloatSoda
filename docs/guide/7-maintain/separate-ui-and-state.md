@@ -101,7 +101,7 @@ public sealed class CounterModel : INotifyPropertyChanged
 app.CreateWindow(new DashboardWindow
 {
     Title = "Counter",
-    Child = new ServiceProvider
+    Child = new FloatSoda.Widgets.ServiceProvider
     {
         Services = host.Services,
         Child = new CounterScreen(),
