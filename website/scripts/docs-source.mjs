@@ -154,12 +154,82 @@ export function homeSummaries() {
 }
 
 /**
- * サイドバーのグループを返す(`[{ key, label, rels }]`)。key は ASCII で、_llms-txt/<key>.txt のファイル名にも使う。
+ * タブの中のサブディレクトリ(docs/<tab>/<dir>/...)のサイドバーの見出しと並び順。
+ * キーは docs/ からの相対パス。ここに無いディレクトリは、ディレクトリ名を見出しにして後ろへアルファベット順に並べる。
+ * 見出しはサイトの表示だけに使う(ディレクトリ名は URL になるので英語のスラッグのまま)
+ */
+const DIR_LABELS = new Map([
+  ["guide/1-discover", "1. 探す"],
+  ["guide/2-adopt", "2. 採用する"],
+  ["guide/3-prepare", "3. 準備する"],
+  ["guide/4-build", "4. 作る"],
+  ["guide/4-build/screen", "画面"],
+  ["guide/4-build/input", "入力"],
+  ["guide/4-build/mechanics", "仕組み"],
+  ["guide/5-troubleshoot", "5. 困ったとき"],
+  ["guide/6-distribute", "6. 配る"],
+  ["guide/7-maintain", "7. メンテナンスする"],
+  ["contributor/1-get-involved", "1. はじめに"],
+  ["contributor/2-understand", "2. 理解する"],
+  ["contributor/3-prepare", "3. 準備する"],
+  ["contributor/4-write", "4. 書く"],
+  ["contributor/5-submit", "5. 出す"],
+  ["contributor/6-propose", "6. 提案する"],
+]);
+const DIR_ORDER = [...DIR_LABELS.keys()];
+
+/** 並べ方の比較関数を作る。order に載っているものを先にその順で、残りをアルファベット順に並べる */
+function byOrder(order) {
+  return (a, b) => {
+    const ia = order.indexOf(a);
+    const ib = order.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  };
+}
+
+/**
+ * ディレクトリ(docs/ からの相対パス)の中身を、サイドバーの木にして返す。
+ * 要素は { rel }(ページ)か { label, items }(サブディレクトリ)。並びは、直下のページ → サブディレクトリの順。
+ * ページは入口(Home)→ linkOrder に現れる順 → 残りをアルファベット順。サブディレクトリは DIR_ORDER の順
+ */
+function dirTree(dir, docs, linkOrder) {
+  const pages = docs.filter((doc) => doc.dir === dir).map((doc) => doc.rel);
+  const homeRel = `${dir}/${HOME}`;
+  pages.sort(byOrder([homeRel, ...linkOrder]));
+  const items = pages.map((rel) => ({ rel }));
+
+  const prefix = `${dir}/`;
+  const subdirs = [
+    ...new Set(
+      docs
+        .filter((doc) => doc.dir.startsWith(prefix))
+        .map((doc) => prefix + doc.dir.slice(prefix.length).split("/")[0]),
+    ),
+  ];
+  subdirs.sort(byOrder(DIR_ORDER));
+  for (const sub of subdirs) {
+    items.push({ label: DIR_LABELS.get(sub) ?? sub.split("/").pop(), items: dirTree(sub, docs, linkOrder) });
+  }
+  return items;
+}
+
+/** サイドバーの木を、上から読む順のページの並びにする */
+function flattenTree(items) {
+  return items.flatMap((item) => (item.rel ? [item.rel] : flattenTree(item.items)));
+}
+
+/**
+ * サイドバーのグループを返す(`[{ key, label, rels, items }]`)。key は ASCII で、_llms-txt/<key>.txt のファイル名にも使う。
+ * rels はグループのページを読む順に並べたもの、items はサイドバーに出す木(dirTree の形)。
  *
  * 1. docs/ 直下のページ: Home.md の表の「対象読者」列でグループ化し、表の行順を読む順にする。
- *    #188 の再編で全ページが系統ディレクトリへ移るまでの暫定で、移り終わったらこの分岐は消す
- * 2. 系統ディレクトリ(docs/user/ など): 1 ディレクトリ = 1 グループ。ラベルは <dir>/Home.md の H1、
- *    並びは入口 → 同 Home.md のリンク順 → 残りをアルファベット順。系統どうしの並びは docs/Home.md でリンクされる順
+ *    タブのディレクトリへ全ページが移るまでの暫定で、移り終わったらこの分岐は消す
+ * 2. タブのディレクトリ(docs/guide/ など): 1 ディレクトリ = 1 グループ。ラベルは <dir>/Home.md の H1。
+ *    中のサブディレクトリは、DIR_LABELS の見出しを付けた入れ子のグループにする。
+ *    ページの並びは、入口 → タブの Home.md のリンク順 → 残りをアルファベット順。タブどうしの並びは docs/Home.md でリンクされる順
  */
 export function sidebarGroups() {
   const docs = listDocs();
@@ -167,10 +237,13 @@ export function sidebarGroups() {
   const push = (key, label, rel) => {
     let group = groups.find((g) => g.key === key);
     if (!group) {
-      group = { key, label, rels: [] };
+      group = { key, label, rels: [], items: [] };
       groups.push(group);
     }
-    if (!group.rels.includes(rel)) group.rels.push(rel);
+    if (!group.rels.includes(rel)) {
+      group.rels.push(rel);
+      group.items.push({ rel });
+    }
   };
 
   const topLevel = docs.filter((doc) => doc.dir === "" && doc.name !== HOME);
@@ -188,30 +261,23 @@ export function sidebarGroups() {
   }
 
   const dirs = [...new Set(docs.filter((doc) => doc.dir !== "").map((doc) => doc.dir.split("/")[0]))];
-  const homeOrder = linkedRels(HOME, "").map((rel) => rel.split("/")[0]);
-  dirs.sort((a, b) => {
-    const ia = homeOrder.indexOf(a);
-    const ib = homeOrder.indexOf(b);
-    if (ia === -1 && ib === -1) return a.localeCompare(b);
-    if (ia === -1) return 1;
-    if (ib === -1) return -1;
-    return ia - ib;
-  });
+  dirs.sort(byOrder(linkedRels(HOME, "").map((rel) => rel.split("/")[0])));
 
   for (const dir of dirs) {
-    const pages = docs.filter((doc) => doc.rel.startsWith(`${dir}/`));
     const homeRel = `${dir}/${HOME}`;
-    const home = pages.find((doc) => doc.rel === homeRel);
-    const label = (home && firstHeading(readDoc(homeRel))) || dir;
-    const key = dir.toLowerCase();
-    if (home) push(key, label, homeRel);
-    for (const rel of linkedRels(homeRel, dir)) {
-      if (pages.some((doc) => doc.rel === rel)) push(key, label, rel);
-    }
-    for (const doc of pages) push(key, label, doc.rel);
+    const label = (fs.existsSync(path.join(docsDir, `${homeRel}.md`)) && firstHeading(readDoc(homeRel))) || dir;
+    const items = dirTree(dir, docs, linkedRels(homeRel, dir));
+    groups.push({ key: dir.toLowerCase(), label, rels: flattenTree(items), items });
   }
 
   return groups;
+}
+
+/** Starlight の sidebar に渡す形に、グループの木を変換する */
+export function sidebarItems(items) {
+  return items.map((item) =>
+    item.rel ? { slug: slugOf(item.rel) } : { label: item.label, items: sidebarItems(item.items) },
+  );
 }
 
 /**

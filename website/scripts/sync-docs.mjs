@@ -27,7 +27,6 @@ import {
   docsDir,
   homeSummaries,
   hrefOf,
-  hrefOfName,
   listDocs,
   repoRoot,
   repositoryUrl,
@@ -167,29 +166,40 @@ function writeFile(file, content) {
   fs.writeFileSync(file, content);
 }
 
+/** docs/ からの相対パス(拡張子なし)でページを探し、サイト内パスを返す。無ければ例外(リンク先の消失をビルドで検出する) */
+function hrefOfRel(rel) {
+  if (!rels.has(rel)) throw new Error(`docs/${rel}.md が見つかりません(ランディングのリンク先)`);
+  return hrefOf(rel);
+}
+
 /**
  * ランディング(src/pages/index.astro)が使う導線。
- * 3 系統の入口は docs/<dir>/Home.md が現れると自動で切り替わり、それまでは docs/Home.md へ送る(#188 の再編待ち)。
- * 主要ページへのリンクはファイル名で探すので、ページが移動しても追従し、消えたらここで例外になる
+ * タブ(docs/<tab>/Home.md)の入口と、トップのカードが指すページを返す。
+ * API リファレンスのタブは docs/ の外で生成するので、docs/api/Home.md が現れるまで exists は false になる。
+ * リンク先は docs/ の相対パスで指定し、消えたり移ったりしたらここで例外になる
  */
 function landingData() {
-  const home = hrefOfName(HOME);
   const tracks = {
-    user: trackEntry("user", home),
-    contributor: trackEntry("contributor", home),
+    tutorials: trackEntry("tutorials", null),
+    guide: trackEntry("guide", null),
+    reference: trackEntry("reference", null),
+    contributor: trackEntry("contributor", null),
     api: trackEntry("api", null),
   };
+  for (const [key, track] of Object.entries(tracks)) {
+    if (key !== "api" && !track.exists) throw new Error(`docs/${key}/${HOME}.md が見つかりません(ランディングのタブの入口)`);
+  }
   const links = {
-    home,
-    gettingStarted: hrefOfName("GettingStarted"),
-    targetUsers: hrefOfName("TargetUsers"),
-    widgetSystem: hrefOfName("WidgetSystem"),
-    architecture: hrefOfName("Architecture"),
-    apiDesign: hrefOfName("APIDesign"),
-    roadmap: `${home}#ロードマップphase`,
+    firstOverlay: hrefOfRel("tutorials/first-overlay"),
+    whatIsFloatSoda: hrefOfRel("guide/1-discover/what-is-floatsoda"),
+    troubleshoot: hrefOfRel("guide/5-troubleshoot/read-errors"),
+    findWidgets: hrefOfRel("reference/find-widgets"),
+    howItWorks: hrefOfRel("guide/4-build/mechanics/how-floatsoda-works"),
+    requirements: hrefOfRel("reference/requirements"),
+    limitations: hrefOfRel("reference/limitations"),
   };
   // 素の Markdown 版の例(末尾の "/" を ".md" に置き換えた URL)
-  links.widgetSystemMd = links.widgetSystem.replace(/\/$/, ".md");
+  links.exampleMd = links.firstOverlay.replace(/\/$/, ".md");
   return { tracks, links };
 }
 

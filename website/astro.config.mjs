@@ -9,8 +9,8 @@ import {
   repoRoot,
   repositoryUrl,
   sidebarGroups,
+  sidebarItems,
   siteUrl,
-  slugOf,
 } from "./scripts/docs-source.mjs";
 
 export default defineConfig({
@@ -58,13 +58,13 @@ export default defineConfig({
           rawContent: true,
         }),
       ],
-      // サイドバーは docs/ の構造を正典にする(#188)。系統ディレクトリ(docs/user/ など)が 1 グループ。
+      // サイドバーは docs/ の構造を正典にする(#219)。タブのディレクトリ(docs/guide/ など)が 1 グループで、中のサブディレクトリは入れ子にする。
       // docs/ 直下のページは再編が済むまで、docs/Home.md の表の「対象読者」列でグループ化する。詳細は scripts/docs-source.mjs
       sidebar: [
         { slug: "home" },
         ...sidebarGroups().map((group) => ({
           label: group.label,
-          items: group.rels.map((rel) => ({ slug: slugOf(rel) })),
+          items: sidebarItems(group.items),
         })),
       ],
     }),
