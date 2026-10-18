@@ -2,76 +2,80 @@
 
 # 動作環境
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+FloatSoda で開発する PC と、作ったアプリを動かす PC に要るものを、このページで確かめられます。どちらの PC にも SteamVR が要ります。確かめていない項目は、最後の節に分けて書いています。
 
-## 設計シート
+## 開発する PC に要るもの
 
-- 分類: 説明型(Diátaxis: reference)
-- 読み手: だれが / FloatSoda を使い始める人、作ったものを配る人、配られた物が動くかを確かめる人 / 何を知っている / 自分の PC の OS と、VR の機材は知っている。.NET の用語は知らなくてよい / 読んで何をしたい / 自分の PC で動くか、配る相手の PC で動くかを確かめたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: FloatSoda で開発するときと、作ったアプリを動かすときに要る環境を、同じ形で並べる
-- 依頼の解釈: 「動作環境」を、開発する PC と、実行する PC の2つに分ける。配布物の書き方(Booth の商品ページ)はガイドの「Booth で売る準備」に任せる
-- テーマファイル: reference
-- Why(目的): 「自分の環境で動くか」を使う前に確かめ、動かなかった原因を環境の不足から切り分けられるようにする
-- What(目標・結果): 開発する PC と実行する PC それぞれの要件が、項目・必要な値・確かめ方の同じ形で並ぶ。確かめられていない項目は ※要確認 と書かれている
-- How(手段): 2つの表(開発、実行)に分ける。依存ライブラリのバージョンは書かず、プロジェクトファイルへ送る
-- 要素:
-  - 対象のフレームワークは .NET 10 で、言語は C# 14 である(`src/FloatSoda/FloatSoda.csproj` の `TargetFramework`、AGENTS.md の「Project Overview」)
-  - 実行には SteamVR の起動が要る。`--desktop` を付けたカタログ型の作例も、OpenVR を初期化するため SteamVR の起動が要る(README.md の「動作環境」、`samples/FloatSoda.Samples.Flex/Program.cs` の冒頭コメント)
-  - SteamVR が要らないのは、`FloatSoda.Testing` で画像に書き出す `FloatSoda.Samples.PaintingSample` だけである(`samples/FloatSoda.Samples.PaintingSample/Program.cs`)
-  - OpenVR のネイティブ DLL は `runtimes/win-x64/native/` に入れる設定になっている(`src/FloatSoda.OVR/FloatSoda.OVR.csproj`)
-  - 依存するライブラリは、`Microsoft.Extensions.Hosting`、SkiaSharp、OpenTK、`Topten.RichTextKit` などである。バージョンはプロジェクトファイルで決まる(`src/FloatSoda/FloatSoda.csproj`、`src/FloatSoda.Engine/FloatSoda.Engine.csproj`)
-  - NuGet で公開しているパッケージから使える。プロジェクト参照で使うこともできる(README.md、`docs/` 旧版の GettingStarted。NuGet の公開状況は nuget.org で確かめる)
-  - 開発に使うエディターと IDE は、決まっていない。リポジトリでは Rider の MCP を勧めているが、必須ではない(AGENTS.md の「Rider MCP」)
-- 見出し:
-  - 開発する PC に要るもの
-  - 実行する PC に要るもの
-  - SteamVR が要らない場面
-  - 依存するライブラリ
-  - 確かめていないこと
-- ※要確認:
-  - 対応する OS(ネイティブ DLL が win-x64 だけであることしか確かめていない。Windows 以外で動くかは未確認)
-  - 対応する HMD の機種(SteamVR が対応する機種であること以外は確かめていない)
-  - GPU と OpenGL の最低バージョン(`GLView` が要求するバージョンをコードで確かめていない)
-  - 配布した exe の実行に .NET ランタイムが要るか(自己完結形式で配った場合の要件を確かめていない)
+開発する PC に要るものは、次の表にまとめています。FloatSoda の対象は .NET 10 で、言語は C# 14 です。
 
-## ト書き
+| 項目 | 必要な値 | 確かめ方 |
+| :-- | :-- | :-- |
+| .NET の SDK | 10 | `dotnet --version` の出力が `10.` で始まる |
+| SteamVR | 起動できる | Steam から SteamVR を起動し、ダッシュボードが開く |
+| HMD | SteamVR につないである | SteamVR の画面に HMD が認識されている |
+| OS | Windows(x64) | 同梱する OpenVR のネイティブ DLL の対象が x64 の Windows だけ(他の OS での動作は確かめていない) |
 
-### 開発する PC に要るもの
+**できた?** 表の全部の行に「ある」と答えられた。
 
-- 読み手が持って来るもの: 開発を始めたい PC
-- このページが渡すもの: 要るもの(.NET 10 の SDK、SteamVR、OS)の表。各行に、確かめる方法(`dotnet --version` など)
-- 読み手がすること: 自分の PC と表を見比べ、足りないものを確かめる
-- できた?: 全部の行に「ある」と答えられた
-- できなかったら: 足りないものの入れ方は、ガイドの「開発環境を用意する」
-- 次へ進む先: 「実行する PC に要るもの」。開発だけの人は、チュートリアル「最初のオーバーレイを作る」
+<details>
+<summary>できなかったら</summary>
 
-### 実行する PC に要るもの
+足りないものの入れ方は、ガイドの[開発環境を用意する](../guide/3-prepare/set-up-environment.md)にあります。
 
-- 読み手が持って来るもの: 作ったアプリを動かす PC、または配る相手の PC
-- このページが渡すもの: 実行に要るもの(SteamVR、OS、.NET ランタイムの要否)の表
-- 読み手がすること: 動かす PC を表と見比べる
-- 次へ進む先: 配る人は、ガイドの「Booth で売る準備」(商品ページに書く動作環境の書き方)。動かない人は、ガイドの「利用者の環境で動かないとき」
+</details>
 
-### SteamVR が要らない場面
+開発に使うエディターや IDE は、決まっていません。C# が書ける環境であれば使えます。開発だけの人は、準備ができたらチュートリアルの[最初のオーバーレイを作る](../tutorials/first-overlay.md)へ進めます。
 
-- 読み手が持って来るもの: SteamVR を起動せずに確かめたい
-- このページが渡すもの: 要らない場面は `PaintingSample` の画像書き出しだけで、`--desktop` でも要ること
-- 読み手がすること: SteamVR が起動できない PC で、できることを確かめる
-- 次へ進む先: ガイドの「HMD を被らずに確かめる」
+## 実行する PC に要るもの
 
-### 依存するライブラリ
+作ったアプリを動かす PC には、SteamVR と HMD が要ります。.NET 10 のランタイムは、フレームワーク依存形式で配るときに要ります。
 
-- 読み手が持って来るもの: 依存を気にする、または自分のプロジェクトと衝突しないか確かめたい
-- このページが渡すもの: 主な依存の名前と、バージョンの出どころ(プロジェクトファイル)。バージョンの数字は載せない
-- 読み手がすること: プロジェクトファイルを開いて確かめる
-- 止まる箇所: なし
+| 項目 | 必要な値 | 確かめ方 |
+| :-- | :-- | :-- |
+| SteamVR | アプリを起動する前に、起動してある | SteamVR のステータス画面が出ている |
+| HMD | SteamVR につないである | SteamVR の画面に HMD が認識されている |
+| OS | Windows(x64) | 開発する PC と同じ |
+| .NET のランタイム | 10 | `dotnet --list-runtimes` に `Microsoft.NETCore.App 10.` が出る。自己完結形式で配ったアプリには要らない |
 
-### 確かめていないこと
+配る人は、ガイドの[Booth で売る準備](../guide/6-distribute/booth-release.md)で、商品ページに書く動作環境の書き方を確かめられます。配られたアプリが動かないときは、ガイドの[利用者の環境で動かないとき](../guide/7-maintain/user-environment-issues.md)を開いてください。
+
+## SteamVR が要らない場面
+
+[PaintingSample](../../samples/FloatSoda.Samples.PaintingSample/Program.cs)は、`FloatSoda.Testing` でツリーを画像に書き出す作例で、SteamVR が要りません。この作例は `AddFloatSoda` も OpenVR も呼びません。
+
+デスクトップのウィンドウに表示する `--desktop` 付きの作例も、SteamVR の起動が要ります。起動時に OpenVR を初期化するためです。この場合も HMD の接続が要ります。
+
+HMD を被らずに確かめる方法は、ガイドの[HMD を被らずに確かめる](../guide/4-build/input/test-without-hmd.md)にあります。
+
+## 依存するライブラリ
+
+FloatSoda が依存するライブラリとバージョンは、次のプロジェクトファイルで確かめてください。
+
+- [src/FloatSoda/FloatSoda.csproj](../../src/FloatSoda/FloatSoda.csproj)
+- [src/FloatSoda.Engine/FloatSoda.Engine.csproj](../../src/FloatSoda.Engine/FloatSoda.Engine.csproj)
+
+OpenVR のネイティブ DLL(`openvr_api.dll`)は、`FloatSoda.OVR` のパッケージに含まれています。[src/FloatSoda.OVR/FloatSoda.OVR.csproj](../../src/FloatSoda.OVR/FloatSoda.OVR.csproj)で、`runtimes/win-x64/native/` に置く設定を確かめられます。
+
+## 確かめていないこと
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 自分の環境が、上の表に載っていない
 - このページが渡すもの: 確かめていない項目の一覧と、確かめた人が Issue に書ける場所
 - 読み手がすること: 自分の環境で動いたかどうかを知らせる
 - 止まる箇所: なし。ここでページは終わる
 - 【未決】この節を、確かめたら消すか、残して確かめた版を書くか
+
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+次の項目は、動作を確かめていません。
+
+- Windows 以外の OS で動くか(同梱の OpenVR のネイティブ DLL は x64 の Windows 用だけ)<!-- ※要確認: Windows 以外の OS で動くか。DLL の同梱先しか確かめていない。Linux 環境で起動して確かめる -->
+- 対応する HMD の機種(SteamVR が対応する機種であること以外は確かめていない)<!-- ※要確認: 機種ごとの動作。複数の HMD で起動して確かめる -->
+- GPU と OpenGL の最低バージョン<!-- ※要確認: GLView が要求する OpenGL のバージョンをコードで確かめていない。src/FloatSoda.Engine/GLView.cs と Renderer.cs を読み、古い GPU で起動して確かめる -->
+- 自己完結形式で配ったアプリの実行要件<!-- ※要確認: 自己完結形式で配った exe を、.NET を入れていない PC で起動して確かめていない -->
+
+自分の環境が表にないときは、動いたかどうかを[Issue](https://github.com/sumx21t-3310/FloatSoda/issues)で知らせてください。書き方は、コントリビューター向けの[不具合を切り分けて報告する](../contributor/1-get-involved/report-bugs.md)にあります。確かめられた項目は、このページの表へ移します。
+
+</details>

@@ -2,48 +2,11 @@
 
 # Flutter の読み替え表
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+Flutter で知っている書き方が、FloatSoda でそのまま通るか、変わるか、まだないかを、このページで引けます。Flutter のウィジェットの名前から、該当する節の表を探してください。
 
-## 設計シート
+## この表の使い方
 
-- 分類: 説明型(Diátaxis: reference)
-- 読み手: だれが / Flutter や React のような宣言的 UI を知っている人、または Flutter の docs や記事を手本に FloatSoda のコードを書く(AI に書かせる)人 / 何を知っている / Flutter のウィジェットと `setState` を知っている。FloatSoda の API は知らない / 読んで何をしたい / Flutter で知っている書き方が、FloatSoda でそのまま通るか、変わるか、まだないかを引きたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: Flutter の名前と書き方が FloatSoda でどうなるかを、「同じ」「違う」「まだない」の3つに分けて引けるようにする
-- 依頼の解釈: 個々の差異の詳細は、各作例の README の「Flutterとの違い」に1か所だけ書く(正本)。このページは、差異の種類で引く索引とし、詳細はコピーしない
-- テーマファイル: reference
-- Why(目的): 「Flutter と同じつもりで書いたら動かない」を、書く前に防ぎ、動かなかったときに原因を切り分けられるようにする
-- What(目標・結果): Flutter の名前を起点に、同じ・違う・まだないの区分と、詳細へのリンクが同じ形で並ぶ。読み手が自分の書こうとしているコードの区分を1回で引ける
-- How(手段): 区分ごとの表で並べる。列は「Flutter での名前または書き方」「FloatSoda での名前または書き方」「区分」「詳細(作例の README か Issue)」とする
-- 要素:
-  - FloatSoda は Flutter の三ツリー(Widget、Element、RenderObject)に合わせてある。ウィジェット名、レイアウト用語(`MainAxisAlignment`、`CrossAxisAlignment`)、`Child` と `Children` は Flutter の名前を使う(AGENTS.md の「Architecture: Three Trees」「API Design Conventions」、`CONTRIBUTING.md`)
-  - 状態の書き方は Flutter に合わせてある。`StatefulWidget<T>` と `State<T>` を継承し、`SetState()` で再ビルドする。型の書き方が違う(`StatefulWidget<T>` はジェネリック)(AGENTS.md の「Widget/Element Tree」)
-  - 子の指定は、コンストラクタの引数ではなく、オブジェクト初期化子の `Child` と `Children`(`IList<Widget>`)で行う。名前付きコンストラクタは持たない(AGENTS.md の「API Design Conventions」、`samples/FloatSoda.Samples.SizedBox/README.md`)
-  - 名前が変わるもの: `ClipRRect` は `ClipRoundRect`、`ClipPath` は `ClipCustomPath`、`MouseRegion` は `PointerRegion`、`Opacity.opacity` は `Opacity.Value`、`AspectRatio.aspectRatio` は `AspectRatio.Ratio`、`Padding.padding` は `Padding.Spacing`、`behavior`(`HitTestBehavior`)は `Behaviour`(`HitTestBehaviour`)(各作例の README の「Flutterとの違い」)
-  - 型の書き方が変わるもの: 色は `Color(r, g, b)`(0〜255 の整数)、フォントの太さは `int`(太字は `700`)、変換の行列は `Matrix3x2`(2次元アフィンのみ)(`samples/FloatSoda.Samples.ColoredBox/README.md`、`Text/README.md`、`Transform/README.md`)
-  - リスナーの登録は `addListener` ではなく C# の `event` を使う(`CONTRIBUTING.md` と AGENTS.md の API 規約が参照する API 設計規約。再編前の `docs/APIDesign.md` の 3.6)
-  - 入力の語彙は「マウス」ではなく「ポインター」で統一する(再編前の `docs/APIDesign.md` の「入力語彙は『ポインター』で統一する」)
-  - 挙動が違うもの(見た目に出る): `Row`/`Column` の既定の揃え方(`Flex` は `Center`、`Row` と `Column` は `Start`。Flutter は `start`)、`Stack` は範囲外の子をクリップしない、`Image` の `Fit` の既定は `Contain`、`Container` は `Border` の寸法を余白に加算しない、子なしの `Container` の大きさ(追跡: #224、#257、#267、#268)(`samples/FloatSoda.Samples.Flex/README.md`、`Stack/README.md`、`Image/README.md`、`Container/README.md`)
-  - 受け付ける項目が少ないもの: `GestureDetector` はタップと Pan のみ、`BoxDecoration` は背景色・角丸・ボーダーのみ、`Text` は折り返しと省略の指定がない、`Flex` に `spacing` がない(各作例の README)
-  - 文字方向(`textDirection`)による揃え方の切り替えは、どのウィジェットにもない(`samples/FloatSoda.Samples.Align/README.md` ほか)
-  - まだないもの: Material と Cupertino に当たるデザインシステム(`FloatSoda.UI` 系、未提供)、スクロール系、`Tween` と暗黙的アニメーション、`LayoutBuilder`、`CustomPaint`、`MediaQuery` に当たるもの、`Notification`(追跡: #126、#137、#163、#174、#171、#173、#175)(GitHub の Issue)
-  - 実装しないもの: Semantics(アクセシビリティ)(再編前の `docs/APIDesign.md` の「実装しない API」)
-  - Flutter の docs へのリンクの載せ方: 同じ区分の項目には、Flutter の docs の該当ページへのリンクを添える(docs 再編の決定、2026-10-16〜17)
-- 見出し:
-  - この表の使い方
-  - 同じように書けるもの
-  - 名前や書き方が違うもの
-  - 挙動が違うもの
-  - まだないもの・実装しないもの
-- ※要確認:
-  - `Navigator` や `Theme` に当たるものが、まったくないのか、別の名前であるのか(`src/` で確かめていない)
-  - 名前が変わるものの一覧に、漏れがないか(作例のない型の改名は、README から拾えない)
-  - 「同じ」と書く項目は、作例の README の「同等です」の記述を根拠にする。作例のない型(`IndexedStack` など)で同じと言えるか
-
-## ト書き
-
-### この表の使い方
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: Flutter のコード、または Flutter の docs のページ
 - このページが渡すもの: 区分の意味(同じ、違う、まだない)、表の列の意味、詳細は作例の README にあること
@@ -51,23 +14,104 @@
 - 次へ進む先: 該当する区分の節
 - 【未決】表を手で持つか、作例の README の「Flutterとの違い」から生成するか。手で持つと、差異が解消されたときに取り残される(docs のドリフト回避方針)
 
-### 同じように書けるもの
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: Flutter で知っているウィジェットの名前
-- このページが渡すもの: 名前と使い方が同じと確かめたウィジェットと、Flutter の docs へのリンク。「同じ」の範囲(レイアウトのしくみ、`SetState`)
-- 読み手がすること: Flutter の知識のまま書いてよいと確かめる
-- 次へ進む先: 作例のカタログ、または「部品を目的から探す」
+区分は3つです。
 
-### 名前や書き方が違うもの
+- 同じ: 名前も使い方も同じで、挙動も同等
+- 違う: 名前や書き方が違う、または見た目や反応が違う
+- まだない: Flutter にあって、FloatSoda にまだないもの、または実装しないもの
 
-- 読み手が持って来るもの: Flutter で知っている書き方
-- このページが渡すもの: 名前の対応表と、書き方の違い(オブジェクト初期化子、`event`、色、行列)。違いの理由は1語で(C# の流儀、オーバーロードしにくい、同名にできない)
-- 読み手がすること: 自分のコードを表のとおりに書き換える
-- できた?: コンパイルが通る
-- できなかったら: エラーの読み方は、ガイドの「エラーを読んで直す」。C# の書き方が分からないときは、ガイドの「C# がほぼ初めての人へ」
-- 次へ進む先: 「挙動が違うもの」
+FloatSoda は、Flutter の3つの木(ウィジェット、Element、RenderObject)に合わせて作ってあります。ウィジェットの名前、レイアウトの用語(`MainAxisAlignment`、`CrossAxisAlignment`)、`Child` と `Children` は、Flutter と同じ名前です。表の「詳細」の列は、各作例の README の「Flutterとの違い」へのリンクです。差異の詳しい説明は、その README に1か所だけ書いてあり、このページにはコピーしていません。
 
-### 挙動が違うもの
+<!-- ※要確認: 表を手で持つか、作例の README の「Flutterとの違い」から生成するか。手で持つと、差異が解消されたときに取り残される。意図した差異とバグを同じ表に載せるかも、オーナーの判断(CONTRIBUTING.md の README 規約は、同じ節に書く) -->
+
+</details>
+
+## 同じように書けるもの
+
+次のウィジェットは、作例の README で「同等」と確かめたものです。基本の挙動は Flutter と同じです。C# の書き方の違いと未対応の項目は、各行の補足で確かめてください。
+
+| Flutter | FloatSoda | 補足 | 詳細 |
+| :-- | :-- | :-- | :-- |
+| [`Align`](https://api.flutter.dev/flutter/widgets/Align-class.html)、[`Center`](https://api.flutter.dev/flutter/widgets/Center-class.html) | `Align`、`Center` | `textDirection` による左右の切り替えがない | [Align](../../samples/FloatSoda.Samples.Align/README.md) |
+| [`LimitedBox`](https://api.flutter.dev/flutter/widgets/LimitedBox-class.html) | `LimitedBox` | 差異なし | [LimitedBox](../../samples/FloatSoda.Samples.LimitedBox/README.md) |
+| [`FractionallySizedBox`](https://api.flutter.dev/flutter/widgets/FractionallySizedBox-class.html) | `FractionallySizedBox` | `textDirection` による左右の切り替えがない | [FractionallySizedBox](../../samples/FloatSoda.Samples.FractionallySizedBox/README.md) |
+| [`OverflowBox`](https://api.flutter.dev/flutter/widgets/OverflowBox-class.html) | `OverflowBox` | `textDirection` による左右の切り替えがない | [OverflowBox](../../samples/FloatSoda.Samples.OverflowBox/README.md) |
+| [`FittedBox`](https://api.flutter.dev/flutter/widgets/FittedBox-class.html) | `FittedBox` | `textDirection` による左右の切り替えがない | [FittedBox](../../samples/FloatSoda.Samples.FittedBox/README.md) |
+| [`ConstraintsTransformBox`](https://api.flutter.dev/flutter/widgets/ConstraintsTransformBox-class.html)、[`UnconstrainedBox`](https://api.flutter.dev/flutter/widgets/UnconstrainedBox-class.html) | `ConstraintsTransformBox`、`UnconstrainedBox` | `textDirection` による左右の切り替えと、debug 時のはみ出し表示がない | [ConstraintsTransformBox](../../samples/FloatSoda.Samples.ConstraintsTransformBox/README.md) |
+| [`Wrap`](https://api.flutter.dev/flutter/widgets/Wrap-class.html) | `Wrap` | `textDirection` と `clipBehavior` は未対応(既定の見た目は一致する) | [Wrap](../../samples/FloatSoda.Samples.Wrap/README.md) |
+| [`ColoredBox`](https://api.flutter.dev/flutter/widgets/ColoredBox-class.html) | `ColoredBox` | `Color` は `init` プロパティで指定する(次の節) | [ColoredBox](../../samples/FloatSoda.Samples.ColoredBox/README.md) |
+| [`StatefulWidget`](https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html)、[`State`](https://api.flutter.dev/flutter/widgets/State-class.html)、`setState` | `StatefulWidget<T>`、`State<T>`、`SetState()` | 型を `StatefulWidget<T>` のようにジェネリックで書く。`SetState()` で再ビルドする仕組みは同じ | [状態と作り直し](../guide/4-build/mechanics/state-and-rebuild.md) |
+
+レイアウトの仕組み(制約が親から子へ下り、大きさが子から親へ上る)も、Flutter と同じです。
+
+作例のないウィジェットは、Flutter と同じと確かめていません。`IndexedStack`、`ConstrainedBox`、`RotatedBox`、`Visibility`、`Offstage`、`IntrinsicWidth`、`IntrinsicHeight`、`RepaintBoundary`、`Builder`、`KeyedSubtree` などが当たります。<!-- ※要確認: 作例のない型の「同じ」を言えるか。型ごとに Flutter の実装と見比べていない。ConstrainedBox は AdditionalConstraints に改名されている(CHANGELOG.md の 0.4.0)ため、下の改名の表にも載せた -->
+
+## 名前や書き方が違うもの
+
+名前や書き方が違うと、コンパイルが通りません。表のとおりに書き換えてください。
+
+### 名前が変わるもの
+
+| Flutter | FloatSoda | 理由 | 詳細 |
+| :-- | :-- | :-- | :-- |
+| `ClipRRect` | `ClipRoundRect` | 記録なし | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
+| `ClipPath` | `ClipCustomPath` | 記録なし | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
+| `MouseRegion` | `PointerRegion` | VR のレーザーもマウスも「ポインター」と呼ぶ | [PointerRegion](../../samples/FloatSoda.Samples.PointerRegion/README.md) |
+| `Opacity` の `opacity` | `Opacity.Value` | C# ではメンバー名を型名と同じにできない | [Opacity](../../samples/FloatSoda.Samples.Opacity/README.md) |
+| `AspectRatio` の `aspectRatio` | `AspectRatio.Ratio` | C# ではメンバー名を型名と同じにできない | [AspectRatio](../../samples/FloatSoda.Samples.AspectRatio/README.md) |
+| `Padding` の `padding` | `Padding.Spacing` | 記録なし | [Padding](../../samples/FloatSoda.Samples.Padding/README.md) |
+| `behavior`(`HitTestBehavior`) | `Behaviour`(`HitTestBehaviour`) | 綴りが違う(Flutter は米国式の behavior) | [GestureDetector](../../samples/FloatSoda.Samples.GestureDetector/README.md) |
+| `ConstrainedBox` の `constraints` | `ConstrainedBox.AdditionalConstraints` | 親の制約に追加で課す制約であることを名前で示す | [CHANGELOG.md](../../CHANGELOG.md) |
+
+### 書き方が変わるもの
+
+| Flutter | FloatSoda | 理由 | 詳細 |
+| :-- | :-- | :-- | :-- |
+| 子と設定を、コンストラクタの引数で渡す | 子は `Child` か `Children`(`IList<Widget>`)、設定は各プロパティに、オブジェクト初期化子で渡す。名前付きコンストラクタは持たない(`Icon` のように、必須の値をコンストラクタ引数に取る型もある) | C# の流儀に合わせた方針 | [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) |
+| 色は `Color(0xAARRGGBB)` や `Colors.*` | `new Color(r, g, b)`(`FloatSoda.Geometrics.Color`、各 0〜255 の整数。`SKColors.CornflowerBlue` のような Skia の色も渡せる) | 色の型が違う | [ColoredBox](../../samples/FloatSoda.Samples.ColoredBox/README.md) |
+| `FontWeight.w700` | `FontWeight = 700`(`int`) | 列挙型を持たない | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
+| `Matrix4` | `Matrix3x2`(2次元のアフィン変換だけ) | 3次元の変換を持たない | [Transform](../../samples/FloatSoda.Samples.Transform/README.md) |
+| `addListener` | 通知元ごとの `event`(`AnimationController` は `Changed`、`INotifyPropertyChanged` は `PropertyChanged`。`+=` で登録し、`-=` で解除する) | C# の標準の仕組みを使う方針 | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
+| `SizedBox.square()`、`SizedBox.expand()` | `square()` は `Width` と `Height` に同じ値を指定して書く(`expand()` に当たる名前付きの手段はなく、省略すると親の制約に従う) | 名前付きコンストラクタを持たない | [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) |
+| `Padding` の `EdgeInsets.only(left: 48)` | `new EdgeInsets(Left: 48)` | 名前付きコンストラクタを持たない | [Padding](../../samples/FloatSoda.Samples.Padding/README.md) |
+
+<!-- ※要確認: 「addListener は event」の根拠は再編前の docs/APIDesign.md の 3.6。再編後の置き場所をこのページから辿れる形にできていないため、CONTRIBUTING.md を詳細の列に置いた。CONTRIBUTING.md 側に該当の記述があるかは確かめていない。改名の一覧に漏れがないかも未確認(作例のない型の改名は README から拾えない) -->
+
+### 受け付ける項目が少ないもの
+
+Flutter のウィジェットが取る引数のうち、FloatSoda にないものがあります。書くとコンパイルが通りません。
+
+| ウィジェット | FloatSoda にないもの | 詳細 |
+| :-- | :-- | :-- |
+| `GestureDetector` | ダブルタップ、長押し、水平ドラッグと垂直ドラッグ、スケール。タップと Pan だけを持つ | [GestureDetector](../../samples/FloatSoda.Samples.GestureDetector/README.md) |
+| `BoxDecoration` | グラデーション、画像、影、円形(`shape`)。背景色、角丸、ボーダーだけを持つ | [DecoratedBox](../../samples/FloatSoda.Samples.DecoratedBox/README.md) |
+| `Text` | `softWrap`、`overflow`、`maxLines`、`textAlign` | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
+| `Flex`、`Row`、`Column` | `spacing`、`clipBehavior`、`textBaseline`。間隔は `SizedBox` を挟んで作る | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
+| `Container` | `margin`、`constraints`、`foregroundDecoration`、`clipBehavior`。外側の余白は `Padding` で包んで作る | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
+| `Stack` | `clipBehavior`、`Positioned.fill`、`Positioned.fromRect` | [Stack](../../samples/FloatSoda.Samples.Stack/README.md) |
+| `Opacity` | `alwaysIncludeSemantics` | [Opacity](../../samples/FloatSoda.Samples.Opacity/README.md) |
+| `Transform` | `Transform.rotate`、`scale`、`translate`、`flip`、`filterQuality` | [Transform](../../samples/FloatSoda.Samples.Transform/README.md) |
+| `PointerRegion` | `onHover`、`cursor` | [PointerRegion](../../samples/FloatSoda.Samples.PointerRegion/README.md) |
+
+文字方向(`textDirection`)による左右の切り替えは、どのウィジェットにもありません。
+
+**できた?** 書き換えたあと、コンパイルが通った。
+
+<details>
+<summary>できなかったら</summary>
+
+エラーの読み方は、ガイドの[エラーを読んで直す](../guide/5-troubleshoot/read-errors.md)にあります。C# の書き方が分からないときは、ガイドの[C# がほぼ初めての人へ](../guide/3-prepare/csharp-primer.md)を開いてください。
+
+</details>
+
+コンパイルが通ってから見た目や反応が違うときは、次の節を開きます。
+
+## 挙動が違うもの
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: コンパイルは通るが、見た目や反応が Flutter と違う
 - このページが渡すもの: 挙動が違うウィジェットの一覧と、症状、直し方の1行、詳細な作例の README へのリンク。意図した差異かバグかは区別して書く
@@ -75,10 +119,44 @@
 - 次へ進む先: ガイドの「反応しないときに切り分ける」、「レイアウトの考え方」
 - 【未決】意図した差異とバグを、同じ表に載せるか(読み手が払うコストは同じだが、直る見込みは違う。CONTRIBUTING.md の README 規約は、同じ節に書く)
 
-### まだないもの・実装しないもの
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: Flutter にある部品が FloatSoda で見つからない
-- このページが渡すもの: まだないもの、実装しないものの区別と、追跡先(Issue の番号)
-- 読み手がすること: ないものを自分で組むか、待つかを決める
-- 次へ進む先: リファレンスの「できないこと・まだ使えないもの」
-- 止まる箇所: なし。ここでページは終わる
+コンパイルは通るのに、見た目や反応が Flutter と違うものです。「追跡」の列に Issue がある行は、Flutter に揃える作業が進んでいます。追跡がない行は、Flutter に揃える作業が見つかっていない差異です。
+
+| ウィジェット | 症状 | 直し方 | 追跡 | 詳細 |
+| :-- | :-- | :-- | :-- | :-- |
+| `Flex` | 既定の揃え方が `Center`。`Row` と `Column` は `Start`。Flutter は `start` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
+| `Row`、`Column` | 交差軸の既定の揃え方が `Start`。Flutter は `center` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
+| `Stack` | 範囲を超えた子も、切り取られずに見える | `Stack` を `ClipRect` で包む | #257 | [Stack](../../samples/FloatSoda.Samples.Stack/README.md) |
+| `Container` | `Border` の寸法が余白に加算されず、子がボーダーの下まで広がる | ボーダー幅を `Padding` に書く | #267 | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
+| `Container` | 子がないと、緩い制約の下で 0 に縮む | `Width` と `Height` を指定する | #268 | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
+| `Image` | `Fit` の既定が `Contain`。領域より小さい画像も拡大される | `Fit` を指定する | なし | [Image](../../samples/FloatSoda.Samples.Image/README.md) |
+| `ClipRect` | 既定のクリップが `Clip.Antialias`。Flutter は `hardEdge` | `ClipBehavior` を指定する | なし | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
+| `Expanded` | `Flex` に 0 以下を指定すると例外になる。主軸の長さが決まらない場所の `Expanded` も、常に例外になる | `Flex` に 1 以上を指定する | なし | [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) |
+
+<!-- ※要確認: 各行の「直し方」が今も有効か。実際に試していない。Row と Column の交差軸の既定は Flutter が center、FloatSoda が Start と README に書かれており、src/FloatSoda/Widgets/Layout/Flex.cs の既定値(Row、Column は Start)と一致することだけ確かめた -->
+
+表のとおりに直しても思った見た目にならないときは、ガイドの[レイアウトの考え方](../guide/5-troubleshoot/layout-model.md)を開きます。押しても反応しないときは、[反応しないときに切り分ける](../guide/5-troubleshoot/not-responding.md)です。
+
+</details>
+
+## まだないもの・実装しないもの
+
+Flutter にあって FloatSoda で見つからないものは、次の2つのどちらかです。
+
+| 区分 | 該当するもの | 追跡 |
+| :-- | :-- | :-- |
+| まだない | Material と Cupertino に当たるデザインシステム(`FloatSoda.UI` 系) | #126 |
+| まだない | スクロール系(`ListView`、`GridView`、`SingleChildScrollView`) | #69 |
+| まだない | `Tween`、`CurvedAnimation` | #137 |
+| まだない | `AnimatedContainer` などの暗黙的アニメーション | #163 |
+| まだない | `LayoutBuilder` | #174 |
+| まだない | `CustomPaint` | #171 |
+| まだない | `MediaQuery` に当たるもの(`ViewMetrics`) | #173 |
+| まだない | `Notification` | #175 |
+| 実装しない | `Semantics`(アクセシビリティ) | 追跡なし |
+
+`Navigator` と `Theme` に当たる型は、型名の検索では `src/` に見つかりませんでした。別名の部品は確かめていません。<!-- ※要確認: Navigator と Theme に当たるものが、別の名前であるのか。src/ で class Navigator と Theme を検索して見つからなかっただけで、別名の部品は確かめていない -->
+
+ないものは、自分で組むか、実装を待つかを選べます。各項目の詳しい状況は、[できないこと・まだ使えないもの](limitations.md)にあります。
