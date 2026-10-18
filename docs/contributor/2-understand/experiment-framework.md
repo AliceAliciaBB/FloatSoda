@@ -2,95 +2,225 @@
 
 # 実験: フレームワーク層
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## 問い: 一部の色を変えると、どこが描き直されるか
 
-## 設計シート
+`SetState` で画面の一部の色を変えたとき、どの再描画境界が描画待ちリストに登録されるかを、ログで確かめる実験です。最終画像の部分再描画を調べるものではありません。[フレームワーク層](framework-layer.md) を読んだあとに進みます。HMD も SteamVR も使いません。
 
-- 分類: 説明型(Diátaxis: tutorial。実験のページは、動作原理の問いを1つ立てて、動かして確かめる形で扱う)
-- 読み手: だれが / `framework-layer.md` を読んで、確かめてみたくなった人。HMD を持っていなくてもよい / 何を知っている / C# のコンソールアプリを作って動かせる。`SetState` と `RepaintBoundary` の名前は知っている / 読んで何をしたい / 変更が、どの RenderObject の描き直しになるかを、ログで自分の目で確かめたい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: `SetState` のあとに `RenderPipeline.NodesNeedingPaint` へ入るのが、変えた側の `RepaintBoundary` だけであることを、ログで確かめる
-- 依頼の解釈: なし
-- テーマファイル: tutorial
-- Why(目的): 「プロパティを変えると、どこから描き直されるか」を、読むだけでなく動かして確かめる。本体の説明は層の解説(`framework-layer.md`)に置く
-- What(目標・結果): 実行したログで、(1) `SetState` 直後は `NodesNeedingPaint` が空、(2) `BuildScope` のあとは変えた側の `RepaintBoundary` だけが入る、(3) `FlushPaint` のあとは空に戻る、の3点を確かめる
-- How(手段): 問いを立てる → 小さなコンソールアプリを動かす → ログを読む → `RepaintBoundary` を外して結果が変わるのを見る → なぜそうなるかを1〜2段落で読む
-- 要素:
-  - 問い: 画面の一部の色を変えたとき、描き直されるのは画面全体か、一部か
-  - 実験のコードは、公開 API だけで書ける。`RenderView`・`RenderPipeline`・`BuildOwner`・`RenderObjectToWidgetAdapter` を作り、`StatefulWidget` の `SetState` を呼び、`BuildScope`・`FlushLayout`・`FlushPaint` を順に呼ぶ(2026-10-17 に実行を確かめた。試したコードは `Exp1Repaint`。58 行)
-  - ウィジェットは、`Column` の中に2つの `RepaintBoundary` を並べ、片方の `ColoredBox` の色を `SetState` で切り替える(同上)
-  - 実行結果(2026-10-17 に確かめた): 初回フレームのあと `NodesNeedingPaint: []`。`SetState` 直後(`BuildScope` の前)も `[]`。`BuildScope` のあとは `[RenderRepaintBoundary@depth2]` で、変えた側の `RenderRepaintBoundary` と、その中の `RenderColoredBox` の `NeedsPaint` が `True`、もう一方は `False`。`FlushPaint` のあとは `[]`
-  - `RepaintBoundary` を外して同じ実験をすると、`BuildScope` のあとは `[RenderView@depth0]` になる(2026-10-17 に確かめた。`RepaintBoundary` を外した変種)
-  - 仕組み: `SetState` は `MarkNeedsBuild` を呼び、`BuildScope` が `UpdateRenderObject` でプロパティを書き換え、`MarkNeedsPaint` が最も近い再描画境界まで伝播して、その境界を `NodesNeedingPaint` に登録する(`src/FloatSoda/Widgets/ComponentWidget.cs` の 86〜89 行目、`src/FloatSoda/Elements/BuildOwner.cs` の 96〜135 行目、`src/FloatSoda/RenderObjects/RenderObject.cs` の 258〜273 行目)
-  - `RenderView` は再描画境界である(実行結果の `boundary=True`。`RenderView` の `IsRepaintBoundary` の定義は `src/FloatSoda/RenderObjects/RenderView.cs` を読んで確かめる)。※要確認
-  - 作り方: 新しいコンソールアプリに `FloatSoda` のプロジェクト参照を足す(試した `Exp1Repaint.csproj` は `src/FloatSoda/FloatSoda.csproj` を参照する)
-  - この実験は HMD も SteamVR も要らない(`OVRApplication` を作らないため)。※要確認(ウィジェットの作成が OpenVR を呼ばないことは実行で確かめた。ほかの PC では未確認)
-- 見出し:
-  - 問い: 一部の色を変えると、どこが描き直されるか
-  - 用意するもの
-  - 動かす
-  - ログを読む
-  - 壊してみる: RepaintBoundary を外す
-  - なぜそうなるか
-  - 次に読むもの
-- ※要確認:
-  - `RenderView` が再描画境界になる定義(`RenderView.cs` を読む)
-  - 実験のコードを docs に載せる形(本文に全文を載せるか、`samples/` に置くか)。`samples/` に置くなら、サンプルの規約(CONTRIBUTING.md)に従う
-  - 実行結果が、別の PC(HMD も SteamVR もない環境)でも同じになるか
+確かめる対象は `RenderPipeline.NodesNeedingPaint` です。次の `FlushPaint` で描き直す RenderObject の待ちリストで、空ならその時点で描き直すものはありません。このリストを、4つのタイミングで出力します。
 
-## ト書き
+1. 初回フレームのあと
+2. `SetState` の直後
+3. `BuildScope` のあと
+4. `FlushPaint` のあと
 
-### 問い: 一部の色を変えると、どこが描き直されるか
+先に予想を立てます。2 と 3 で、リストに何が入るかを考えてください。2つの四角を縦に並べて、片方の色だけを変えます。それぞれを `RepaintBoundary` で包みます。
 
-- 読み手が持って来るもの: `framework-layer.md` を読んだ記憶
-- このページが渡すもの: 問い1つ(色を変えたとき、描き直されるのは全体か一部か)と、予想を立てる場所。実験の完成形(ログの3つの行)の予告
-- 読み手がすること: 予想を決める
-- 次へ進む先: 「用意するもの」
+## 用意するもの
 
-### 用意するもの
+FloatSoda を clone したフォルダーと同じ階層に、コンソールアプリを作ります。`FloatSoda` のプロジェクトへの参照を足します。
 
-- 読み手が持って来るもの: 自分の PC
-- このページが渡すもの: コンソールアプリの作り方と、`FloatSoda` へのプロジェクト参照の足し方。HMD も SteamVR も要らないこと
-- 読み手がすること: アプリを作る
-- 止まる箇所: ビルドに失敗する場合は、`../3-prepare/dev-environment.md` へ送る
-- 次へ進む先: 「動かす」
+```powershell
+dotnet new console -o ExpFramework
+dotnet add ExpFramework reference ./FloatSoda/src/FloatSoda/FloatSoda.csproj
+```
 
-### 動かす
+参照先は、clone したフォルダーの名前に合わせて書き換えます。.NET の SDK のバージョンなど、開発の準備は [開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) にあります。
 
-- 読み手が持って来るもの: 空のコンソールアプリ
-- このページが渡すもの: 実験のコード(初回フレームの描画 → `SetState` → `BuildScope` → `FlushLayout`・`FlushPaint`。各段のあとにツリーと `NodesNeedingPaint` を出す)
-- 読み手がすること: コードを貼り、`dotnet run` する
-- できた?: 「初回フレーム後」「SetState 直後」「BuildScope 後」「FlushPaint 後」の4つのログが出た
-- できなかったら: コンパイルが通らない → 公開 API の変更の可能性。`framework-layer.md` の要素と照らす
-- 次へ進む先: 「ログを読む」
+**できた?** `dotnet build ExpFramework` が成功した。
 
-### ログを読む
+<details>
+<summary>できなかったら</summary>
 
-- 読み手が持って来るもの: 4つのログ
-- このページが渡すもの: どの行を見るか(`NodesNeedingPaint` の中身と、各 `RenderObject` の `NeedsPaint`)
-- 読み手がすること: 予想と結果を比べる
-- できた?: 「`BuildScope` のあとだけ、変えた側の `RenderRepaintBoundary` が入った」と言える
-- 次へ進む先: 「壊してみる: RepaintBoundary を外す」
+SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。
 
-### 壊してみる: RepaintBoundary を外す
+</details>
 
-- 読み手が持って来るもの: 結果の読み方
-- このページが渡すもの: `RepaintBoundary` を外す変更の指示と、予想を立てる場所
-- 読み手がすること: 外して実行し、`NodesNeedingPaint` の中身を見る
-- できた?: `[RenderView@depth0]` になった(描き直しの範囲が、境界から根まで広がった)
-- 次へ進む先: 「なぜそうなるか」
+## 動かす
 
-### なぜそうなるか
+`ExpFramework/Program.cs` を、次のコードに置き換えます。パイプラインを自分で組み、`BuildScope`、`FlushLayout`、`FlushPaint` を順に呼びます。
 
-- 読み手が持って来るもの: 2つの結果
-- このページが渡すもの: 1〜2段落の説明。`MarkNeedsPaint` が、境界でなければ親へ伝わり、最初の境界で止まって登録されること。境界がなければ根の `RenderView` まで伝わること。詳細は `framework-layer.md` の「レイアウトと描画は、境界までを描き直す」へリンクする
-- 読み手がすること: 自分の変更で、境界をどこに置くかを考える
-- 次へ進む先: 「次に読むもの」
+```csharp
+using FloatSoda.Core;
+using FloatSoda.Elements;
+using FloatSoda.RenderObjects;
+using FloatSoda.Widgets;
+using FloatSoda.Widgets.Layout;
+using FloatSoda.Widgets.Paint;
+using SkiaSharp;
 
-### 次に読むもの
+var useBoundary = args.Length == 0 || args[0] != "no-boundary";
+
+var renderView = new RenderView(400, 300);
+var pipeline = new RenderPipeline
+{
+    OnNeedVisualUpdate = () => { },
+    RenderView = renderView
+};
+var owner = new BuildOwner(() => { });
+
+TogglePanelState? state = null;
+new RenderObjectToWidgetAdapter
+{
+    Container = renderView,
+    Child = new TogglePanel
+    {
+        UseBoundary = useBoundary,
+        OnStateCreated = s => state = s
+    }
+}.AttachToRenderTree(owner, null);
+
+renderView.PrepareInitialFrame();
+owner.BuildScope();
+pipeline.FlushLayout();
+pipeline.FlushPaint();
+Show("初回フレーム後", pipeline);
+
+state!.Toggle();
+Show("SetState 直後", pipeline);
+
+owner.BuildScope();
+Show("BuildScope 後", pipeline);
+
+pipeline.FlushLayout();
+pipeline.FlushPaint();
+Show("FlushPaint 後", pipeline);
+
+static void Show(string label, RenderPipeline pipeline)
+{
+    var nodes = pipeline.NodesNeedingPaint
+        .Select(n => $"{n.GetType().Name}@depth{n.Depth}");
+    Console.WriteLine($"{label}: NodesNeedingPaint = [{string.Join(", ", nodes)}]");
+}
+
+record TogglePanel : StatefulWidget<TogglePanel>
+{
+    public bool UseBoundary { get; init; } = true;
+    public Action<TogglePanelState>? OnStateCreated { get; init; }
+
+    public override State<TogglePanel> CreateState() => new TogglePanelState();
+}
+
+class TogglePanelState : State<TogglePanel>
+{
+    private bool _flag;
+
+    // SetState は protected なので、外から呼べるように State を受け渡す
+    public override void InitState() => Widget!.OnStateCreated?.Invoke(this);
+
+    public void Toggle() => SetState(() => _flag = !_flag);
+
+    private Widget Panel(SKColor color) => new SizedBox
+    {
+        Width = 100,
+        Height = 100,
+        Child = new ColoredBox { Color = color }
+    };
+
+    private Widget Wrap(Widget child) =>
+        Widget!.UseBoundary ? new RepaintBoundary { Child = child } : child;
+
+    public override Widget Build(IBuildContext context) => new Column
+    {
+        Children =
+        {
+            Wrap(Panel(_flag ? SKColors.Tomato : SKColors.CornflowerBlue)),
+            Wrap(Panel(SKColors.DarkSeaGreen)),
+        }
+    };
+}
+```
+
+コードの流れは次のとおりです。
+
+- `RenderView`、`RenderPipeline`、`BuildOwner` を作り、`RenderObjectToWidgetAdapter` でウィジェットのツリーをつなぐ
+- `TogglePanel` は、`Column` に四角を2つ並べ、上の四角の色を `SetState` で切り替える
+- `UseBoundary` が真のとき、それぞれの四角を `RepaintBoundary` で包む
+
+次のコマンドで動かします。
+
+```powershell
+dotnet run --project ExpFramework
+```
+
+**できた?** 「初回フレーム後」「SetState 直後」「BuildScope 後」「FlushPaint 後」の4つの行が出た。
+
+<details>
+<summary>できなかったら</summary>
+
+コンパイルが通らない場合は、公開 API が変わった可能性があります。使っている型(`RenderPipeline`、`BuildOwner`、`RenderObjectToWidgetAdapter`、`StatefulWidget<T>`、`State<T>`)の名前と使い方を、[フレームワーク層](framework-layer.md) と、`src/FloatSoda` の現在のソースで照らします。
+
+</details>
+
+## ログを読む
+
+出力は次の4行になります。
+
+```text
+初回フレーム後: NodesNeedingPaint = []
+SetState 直後: NodesNeedingPaint = []
+BuildScope 後: NodesNeedingPaint = [RenderRepaintBoundary@depth2]
+FlushPaint 後: NodesNeedingPaint = []
+```
+
+見る場所は、リストの中身です。
+
+- `SetState` 直後: 空
+- `BuildScope` 後: `RenderRepaintBoundary` が1件
+- `FlushPaint` 後: 空
+
+`SetState` が行うのは再ビルドの予約までなので、直後は RenderObject がまだ変わらず、リストは空です。`BuildScope` の後に境界が1件入るのは、色を変えた四角の `RenderColoredBox` が `MarkNeedsPaint` を呼び、直近の境界で要求が止まるためです。`@depth2` は木の深さで、`RenderView`(0)、`Column` の `RenderFlex`(1)、境界(2)の順です。
+
+このログで確認できるのは、深さ2の境界が1件だけ登録されたことです。2つの境界は型も深さも同じなので、どちらの境界かはこの出力から区別できません。
+
+**できた?** 「`BuildScope` のあとだけ、深さ2の `RenderRepaintBoundary` が1件入った」と言える。
+
+<details>
+<summary>できなかったら</summary>
+
+`BuildScope` のあとのリストが空の場合は、`Toggle()`、`BuildScope()`、`Show()` の呼び出し順を確かめます。`state!.Toggle()` で例外になる場合は、`OnStateCreated` が呼ばれたかを確かめます。`UseBoundary` が偽のログになっている場合は、実行コマンドに `no-boundary` を付けていないかを確かめます。
+
+</details>
+
+## 壊してみる: RepaintBoundary を外す
+
+境界を外すと、結果がどう変わるかを予想してから実行します。コードの `Wrap` が、`RepaintBoundary` で包まずに、四角をそのまま返すようにします。引数 `no-boundary` を付けると同じ状態になります。
+
+```powershell
+dotnet run --project ExpFramework -- no-boundary
+```
+
+**できた?** 「`BuildScope` 後」の行が `[RenderView@depth0]` になった。描き直しの範囲が、境界から根の `RenderView` まで広がっている。
+
+<details>
+<summary>できなかったら</summary>
+
+行が `[RenderRepaintBoundary@depth2]` のままなら、引数が渡っていません。`--` の位置と綴りを確かめます。
+
+</details>
+
+## なぜそうなるか
+
+この例では、`RenderColoredBox.Color` の値が変わると、`MarkNeedsPaint` が呼ばれます。`MarkNeedsPaint` は、自分が再描画境界ならそこで止まって `NodesNeedingPaint` に登録し、そうでなければ親へ伝わります。`RepaintBoundary` があると、色を変えた `RenderColoredBox` から親へ伝わった要求が、最初の境界で止まります。境界がなければ、要求は根の `RenderView` まで伝わります。`RenderView` も再描画境界なので、そこで登録されます。
+
+つまり、描き直す範囲は、変えたノードの祖先をたどって、最初に見つかる境界までです。自分の変更で境界をどこに置くかは、この範囲の広さで考えます。範囲が根まで広がる場所に、頻繁に変わる部品を置かないようにします。伝播の細部は、[フレームワーク層](framework-layer.md) の「レイアウトと描画は、境界までを描き直す」にあります。
+
+<!-- ※要確認: HMD も SteamVR も要らないことは、OVRApplication を作らないコードで実行して確かめた(この実験の実行は、SteamVR が入った PC だった) / SteamVR が入っていない PC でも同じ出力になるかを確かめる -->
+
+## 次に読むもの
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 実験の結果
 - このページが渡すもの: `framework-layer.md`、`experiment-rendering.md`、`frame-to-steamvr.md` へのリンク
 - 読み手がすること: 続きを選ぶ
 - 止まる箇所: なし。ここでこのページは終わる
 - 【未決】実験のコードを、本文に全文で載せるか、`samples/` に置いてリンクするか
+
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+- [フレームワーク層](framework-layer.md): ツリーの役割と、差分更新の仕組み
+- [実験: 描画層](experiment-rendering.md): Layer の合成を png で確かめる
+- [1フレームが SteamVR に届くまで](frame-to-steamvr.md): 描き直した結果が、SteamVR に届くまで
+
+</details>

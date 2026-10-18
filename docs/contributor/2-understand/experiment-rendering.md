@@ -2,89 +2,159 @@
 
 # 実験: 描画層
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## 問い: 合成の Layer は、同じ絵に何をするか
 
-## 設計シート
+同じ絵を `OpacityLayer`、`ClipRectLayer`、`TransformLayer` で1つずつ包み、png を並べて見比べる実験です。[描画層](rendering-layer.md) の Layer の種類の表を読んだあとに進みます。HMD も SteamVR も使いません。
 
-- 分類: 説明型(Diátaxis: tutorial。実験のページは、動作原理の問いを1つ立てて、動かして確かめる形で扱う)
-- 読み手: だれが / `rendering-layer.md` を読んで、Layer の合成を確かめてみたくなった人。HMD を持っていなくてもよい / 何を知っている / C# のコンソールアプリを作って動かせる。`SKPicture` と `SKCanvas` の基本は分かる / 読んで何をしたい / 不透明度、クリップ、変換の Layer が、同じ絵に何をするかを、png を見比べて確かめたい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: 同じ絵を `OpacityLayer`・`ClipRectLayer`・`TransformLayer` で1つずつ包んだ png を並べて見比べ、合成の Layer が何をするかを確かめる
-- 依頼の解釈: なし
-- テーマファイル: tutorial
-- Why(目的): 「合成の Layer は、子の絵に対して何をするか」を、動かして確かめる。本体の説明は層の解説(`rendering-layer.md`)に置く(docs 再編の決定、2026-10-17。実験の問いを、`PaintingSample` と重ならない形に変えた)
-- What(目標・結果): 同じ絵の png が4枚(包まない、不透明度、クリップ、変換)でき、違いを目で見て説明できる
-- How(手段): 問いを立てる → 絵を1つ決める → 4通りに包んで png に出す → 見比べる → なぜそうなるかを1〜2段落で読む
-- 要素:
-  - 問い: 同じ絵を、合成の Layer で包むと、何が変わるか
-  - 絵は、青い矩形(20,20)-(220,160)と、橙の矩形(120,100)-(360,260)を、400×300 の描画範囲に記録した `SKPicture` 2つである(2026-10-17 に確かめたコード。`Exp2b`)
-  - `OpacityLayer { Alpha = 128 }`、`ClipRectLayer(new SKRect(0, 0, 200, 150))`、`TransformLayer { Transform = SKMatrix.CreateRotationDegrees(15, 200, 150) }` で、同じ絵を包む(同上)
-  - 実行結果(2026-10-17 に画素値で確かめた): 包まない絵では、青の中の点(50,50)が不透明な青、橙の中の点(300,230)が不透明な橙、重なりの点(150,120)が橙、絵の外の点(300,50)が透明。不透明度では、色は同じで、青と橙の点のアルファが 128、重なりの点(150,120)もアルファ 128 で、重なりが濃くならない。クリップでは、(300,230)が透明になり、(50,50)と(150,120)は残る。変換では、15 度回転した絵になる
-  - 重なりが濃くならないのは、`OpacityLayer.Paint` が `SaveLayer` でまとめて描いてから合成するため(`src/FloatSoda.Rendering/Layers/OpacityLayer.cs` の 27〜38 行目付近)
-  - クリップは `Save` → `ClipRect` → 子を描画 → `Restore` する(`src/FloatSoda.Rendering/Layers/ClipRectLayer.cs` の 56〜64 行目付近)
-  - 変換は `Save` → `Concat` → 子を描画 → `Restore` する(`src/FloatSoda.Rendering/Layers/TransformLayer.cs` の 40〜48 行目付近)
-  - ヘッドレスで動く。`LayerBitmapRenderer.Render(root, SKSizeI)` で `SKBitmap` を作る(`src/FloatSoda.Rendering/LayerBitmapRenderer.cs` の 34 行目)。HMD も SteamVR も要らない
-  - `samples/FloatSoda.Samples.PaintingSample` は、Layer ツリー、RenderObject ツリー、Widget ツリーを png に出す。この実験は、そのうち Layer ツリーの1本と重なるが、問いが違う(`samples/FloatSoda.Samples.PaintingSample/Program.cs` の 19、23 行目)
-  - 作り方: `FloatSoda.Rendering` へのプロジェクト参照だけのコンソールアプリ(試した `Exp2b.csproj` は `src/FloatSoda.Rendering/FloatSoda.Rendering.csproj` を参照する)
-  - png の保存は、試したコードでは `SKImage.Encode` と `File.WriteAllBytes` で行った。`SKBitmapExtensions.Save` も使える(`src/FloatSoda.Rendering/SKBitmapExtensions.cs` の 29 行目)。※要確認(`Save` の引数と出力を読む)
-- 見出し:
-  - 問い: 合成の Layer は、同じ絵に何をするか
-  - 用意するもの
-  - 4通りに包んで png に出す
-  - png を見比べる
-  - なぜそうなるか
-  - 次に読むもの
-- ※要確認:
-  - 変換の png の見た目(画素の点の比較では、回転の効果を示せていない。画像を開いて確かめる)
-  - `SKBitmapExtensions.Save` の使い方
-  - 実験のコードの載せ方(本文に載せるか、リンクにするか)
-  - `ClipRectLayer.Layout` の `Canvas.Restore()`(`rendering-layer.md` の※要確認)が、この実験の結果に影響しないこと
+絵は、青い矩形と橙の矩形が重なった1枚です。包まない絵と合わせて、png が4枚できます。
 
-## ト書き
+| ファイル | 包み方 |
+| :-- | :-- |
+| `plain.png` | 包まない |
+| `opacity.png` | `OpacityLayer`(`Alpha` は 128) |
+| `clip.png` | `ClipRectLayer`(左上の 200×150 だけを残す) |
+| `transform.png` | `TransformLayer`(中心まわりに 15 度回す) |
 
-### 問い: 合成の Layer は、同じ絵に何をするか
+先に予想を立てます。3つの Layer が、それぞれ絵をどう変えるかを考えてください。特に、青と橙が重なる部分が、`OpacityLayer` でどう見えるかを予想します。
 
-- 読み手が持って来るもの: `rendering-layer.md` の Layer の種類の表
-- このページが渡すもの: 問い1つと、完成形(4枚の png を並べた図)の予告。予想を立てる場所
-- 読み手がすること: 3つの Layer がそれぞれ何をするか、予想を決める
-- 次へ進む先: 「用意するもの」
+## 用意するもの
 
-### 用意するもの
+FloatSoda を clone したフォルダーと同じ階層に、コンソールアプリを作ります。`FloatSoda.Rendering` のプロジェクトへの参照を足します。
 
-- 読み手が持って来るもの: 自分の PC
-- このページが渡すもの: コンソールアプリの作り方と、`FloatSoda.Rendering` へのプロジェクト参照。HMD も SteamVR も要らないこと
-- 読み手がすること: アプリを作る
-- 止まる箇所: ビルドに失敗する場合は、`../3-prepare/dev-environment.md` へ送る
-- 次へ進む先: 「4通りに包んで png に出す」
+```powershell
+dotnet new console -o ExpRendering
+dotnet add ExpRendering reference ./FloatSoda/src/FloatSoda.Rendering/FloatSoda.Rendering.csproj
+```
 
-### 4通りに包んで png に出す
+参照先は、clone したフォルダーの名前に合わせて書き換えます。
 
-- 読み手が持って来るもの: 空のコンソールアプリ
-- このページが渡すもの: 絵を作る関数と、包むラッパーを差し替えて4枚の png に出すコード
-- 読み手がすること: コードを貼り、`dotnet run` する
-- できた?: `plain.png`、`opacity.png`、`clip.png`、`transform.png` の4枚ができた
-- できなかったら: png が真っ黒、またはサイズが 0 → `rendering-layer.md` の「CPU の Bitmap に描く」の節
-- 次へ進む先: 「png を見比べる」
+**できた?** `dotnet build ExpRendering` が成功した。
 
-### png を見比べる
+<details>
+<summary>できなかったら</summary>
 
-- 読み手が持って来るもの: 4枚の png
-- このページが渡すもの: 見る点(重なりの濃さ、切れた範囲、回転)と、予想との比べ方
-- 読み手がすること: 画像ビューアで並べて開き、違いを言葉にする
-- できた?: 「不透明度は重なりを濃くしない」「クリップは範囲の外を消す」「変換は絵全体を回す」と言える
-- 次へ進む先: 「なぜそうなるか」
+SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。
 
-### なぜそうなるか
+</details>
 
-- 読み手が持って来るもの: 見比べた結果
-- このページが渡すもの: 1〜2段落の説明。`OpacityLayer` が `SaveLayer` で子をまとめて描くので重なりが濃くならないこと。クリップと変換は `Save`・`Restore` の組で子を包むこと。詳細は `rendering-layer.md` の「Layer の種類と、それぞれの役割」へリンクする
-- 読み手がすること: 自分が足す Layer の `Paint` が、何を `Save` し何を `Restore` するかを考える
-- 次へ進む先: 「次に読むもの」
+## 4通りに包んで png に出す
 
-### 次に読むもの
+`ExpRendering/Program.cs` を、次のコードに置き換えます。`CreatePicture` が絵を作り、`Save` が絵を包んで png に出します。`PictureLayer` は絵の所有権を持たないので、`Save` が絵を保持し、保存が終わってから破棄します。
+
+```csharp
+using FloatSoda.Rendering;
+using FloatSoda.Rendering.Layers;
+using SkiaSharp;
+
+var size = new SKSizeI(400, 300);
+var renderer = new LayerBitmapRenderer();
+
+Save("plain", picture => picture);
+Save("opacity", picture => new OpacityLayer { Alpha = 128, Children = { picture } });
+Save("clip", picture => new ClipRectLayer(new SKRect(0, 0, 200, 150)) { Children = { picture } });
+Save("transform", picture => new TransformLayer
+{
+    Transform = SKMatrix.CreateRotationDegrees(15, 200, 150),
+    Children = { picture }
+});
+
+Console.WriteLine($"保存先: {Path.GetFullPath(".")}");
+
+void Save(string name, Func<ILayer, ILayer> wrap)
+{
+    // PictureLayer は SKPicture の所有権を持たないので、描画と保存が終わるまで呼び出し側が保持する
+    using var picture = CreatePicture();
+    var root = new ContainerLayer { Children = { wrap(new PictureLayer { Picture = picture }) } };
+
+    using var bitmap = renderer.Render(root, size);
+    bitmap.Save($"{name}.png");
+
+    Console.WriteLine($"{name}.png: 青(50,50)={bitmap.GetPixel(50, 50)} " +
+                      $"橙(300,230)={bitmap.GetPixel(300, 230)} 重なり(150,120)={bitmap.GetPixel(150, 120)}");
+}
+
+SKPicture CreatePicture()
+{
+    using var recorder = new SKPictureRecorder();
+    var canvas = recorder.BeginRecording(new SKRect(0, 0, size.Width, size.Height));
+
+    using var blue = new SKPaint { Color = SKColors.CornflowerBlue };
+    using var orange = new SKPaint { Color = SKColors.Orange };
+    canvas.DrawRect(new SKRect(20, 20, 220, 160), blue);
+    canvas.DrawRect(new SKRect(120, 100, 360, 260), orange);
+
+    return recorder.EndRecording();
+}
+```
+
+`Save` は、包んだ Layer をルートの `ContainerLayer` に入れ、`LayerBitmapRenderer.Render` で `SKBitmap` にして、png で保存します。あわせて、3つの点の色を出力します。
+
+```powershell
+dotnet run --project ExpRendering
+```
+
+**できた?** `plain.png`、`opacity.png`、`clip.png`、`transform.png` の4枚ができた。最後の行に出る保存先のフォルダーに、4枚がある。
+
+<details>
+<summary>できなかったら</summary>
+
+png が空になる、サイズが 0 になる場合は、`LayerBitmapRenderer.Render` に渡した大きさと、ルートに子を入れたかを確かめます。仕組みは [描画層](rendering-layer.md) の「CPU の Bitmap に描く」にあります。
+
+</details>
+
+## png を見比べる
+
+画像ビューアーで4枚を並べて開き、違いを言葉にします。背景は透明なので、ビューアーによって白や黒に見えます。
+
+見る点は3つです。
+
+- 青と橙が重なる部分の濃さ
+- 左上の 200×150 より外に、絵が残っているか
+- 絵全体が傾いているか
+
+コンソールの出力は、4枚の点の色を数値で示します(このあとに、保存先の行が続きます)。`#80ffa500` は、先頭の 2 桁(`80`)が不透明度で、残りが色です。
+
+```text
+plain.png: 青(50,50)=#ff6495ed 橙(300,230)=#ffffa500 重なり(150,120)=#ffffa500
+opacity.png: 青(50,50)=#806495ed 橙(300,230)=#80ffa500 重なり(150,120)=#80ffa500
+clip.png: 青(50,50)=#ff6495ed 橙(300,230)=#00000000 重なり(150,120)=#ffffa500
+transform.png: 青(50,50)=#ff6495ed 橙(300,230)=#ffffa500 重なり(150,120)=#ffffa500
+```
+
+`opacity.png` は、3つの点がどれも不透明度 `80`(10進で 128)です。重なりの点も `80` のままで、重なると濃くなる、ということはありません。`clip.png` は、橙の点(300,230)が透明(`00000000`)になり、(50,50)と(150,120)は残ります。`transform.png` は、3つの点の値が `plain.png` と同じです。回転は、点の値では分かりません。画像を開いて、絵全体が回っていることを目で確かめます。
+
+**できた?** 「まとめた絵に不透明度を掛けると、この例の重なりは濃くならない」「指定した矩形の外は描かれない」「指定した回転が絵全体に掛かる」と言える。
+
+<details>
+<summary>できなかったら</summary>
+
+`opacity.png` の重なりの不透明度が `80` より大きい場合は、`OpacityLayer` で包んだ対象が、2つの矩形をまとめた `PictureLayer` になっているかを確かめます。矩形ごとに別の `PictureLayer` にして、それぞれを `OpacityLayer` で包むと、重なりは濃くなります。
+
+</details>
+
+## なぜそうなるか
+
+`OpacityLayer` は、`SaveLayer` で子を一時レイヤーにまとめて描きます。`Restore` のときに、`Alpha` を掛けて合成します。2つの矩形は、先に1枚の絵として描かれるので、重なりの部分は橙で上書きされたままになります。そのあとで、絵全体が半透明になります。クリップと変換は、`Save` と `Restore` の組で子を包みます。クリップは `ClipRect` で描画範囲を絞り、変換は `Concat` で座標系を変えてから、子を描きます。どちらも `Restore` で状態を戻すので、後ろに並ぶ Layer へは影響しません。
+
+自分で Layer を足すときは、`Paint` が何を `Save` して何を `Restore` するかを先に決めます。詳細は、[描画層](rendering-layer.md) の「Layer の種類と、それぞれの役割」にあります。
+
+<!-- ※要確認: transform.png の見た目(回転)は、画像を開いて目で確かめた。点の値では回転を確かめていない / 別の PC と別のビューアーでも同じように見えるか、確かめる -->
+
+## 次に読むもの
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 実験の結果
 - このページが渡すもの: `rendering-layer.md`、`tutorial-render-path.md` の段2、`experiment-framework.md` へのリンク
 - 読み手がすること: 続きを選ぶ
 - 止まる箇所: なし。ここでこのページは終わる
 - 【未決】`PaintingSample` との重なり(どちらも Layer ツリーを png に出す)を、本文でどう扱うか。この実験の問いを変えることで重なりを減らす、と決めている(docs 再編の決定、2026-10-17)。`tutorial-render-path.md` の段2との分担は、段2の本文を書くときに決める
+
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+- [描画層](rendering-layer.md): Layer の種類と、`Clone` の共有範囲
+- [描画が届くまで(4段)](tutorial-render-path.md): 2段目で、Layer ツリーを組んで png に出す
+- [実験: フレームワーク層](experiment-framework.md): `SetState` のあとに描き直される範囲を確かめる
+
+</details>

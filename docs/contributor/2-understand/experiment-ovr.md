@@ -2,101 +2,138 @@
 
 # 実験: OVR 層
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## 問い: OVR 層だけで、オーバーレイと入力が扱えるか
 
-## 設計シート
+`FloatSoda.OVR` だけを参照するコンソールアプリで、オーバーレイを出し、レーザーポインターの入力を受けられるかを、HMD の中で確かめる実験です。[OVR 層](ovr-layer.md) を読んだあとに進みます。SteamVR と HMD が要ります。
 
-- 分類: 説明型(Diátaxis: tutorial。実験のページは、動作原理の問いを1つ立てて、動かして確かめる形で扱う)
-- 読み手: だれが / `ovr-layer.md` を読んで、OVR 層だけで動かしてみたくなった人 / 何を知っている / C# のコンソールアプリを作って動かせる。SteamVR と HMD が使える / 読んで何をしたい / FloatSoda のほかのプロジェクトなしで、OVR 層だけでオーバーレイを出し、レーザーポインターの入力を受けられることを確かめたい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: `FloatSoda.OVR` だけを参照したコンソールアプリで、オーバーレイを出し、ホバー、クリック、移動のイベントと振動を確かめる
-- 依頼の解釈: なし
-- テーマファイル: tutorial
-- Why(目的): 「OVR 層は、ほかの層なしで動くか」を、動かして確かめる。本体の説明は層の解説(`ovr-layer.md`)に置く
-- What(目標・結果): HMD の 1 m 前に付いたオーバーレイに画像が出て、レーザーポインターのイベントがコンソールに出る。ホバーとクリックで振動する
-- How(手段): 問いを立てる → サンプルを動かす → HMD の中で操作する → ログを読む → なぜそうなるかを1〜2段落で読む。サンプルは書きかけなので、動かない点も正直に書く
-- 要素:
-  - 問い: OVR 層だけで、オーバーレイを出して入力を受けられるか
-  - `FloatSoda.OVR` のプロジェクトは、ほかのプロジェクトを参照しない(`src/FloatSoda.OVR/FloatSoda.OVR.csproj`)。サンプルのプロジェクトは `FloatSoda.OVR` だけを参照する(`samples/FloatSoda.Samples.PrimitiveOverlay/FloatSoda.Samples.PrimitiveOverlay.csproj`)
-  - サンプルは `samples/FloatSoda.Samples.PrimitiveOverlay` にある。書きかけである
-  - 流れ: `OVRApplication` を作る → `VRSystemEventDispatcher` で `VREvent_Quit` を待つ → `OverlayIdentity` と `DeviceTrackedOverlay` を作る → 位置を `(0, 0, -1)` にする → デスクトップの `layer_tree_output.png` を `Texture.FromFile` で読む → `Visibility.Show()` で出す(`samples/FloatSoda.Samples.PrimitiveOverlay/Program.cs` の 6〜26 行目)
-  - 入力: `Input.Method` をマウスにし、`MakeOverlaysInteractiveIfVisible` を有効にする。`FocusEnter` と `FocusLeave` で振動させ、`MouseButtonDown`・`MouseButtonUp`・`MouseMove` をコンソールに出す(`samples/FloatSoda.Samples.PrimitiveOverlay/Program.cs` の 29〜58 行目)
-  - メインループは、ホバー中に `hovered` を出し続け、2つのディスパッチャーの `PollEvents` を呼び、`1000 / 72` ミリ秒眠る(`samples/FloatSoda.Samples.PrimitiveOverlay/Program.cs` の 60〜71 行目)
-  - 入力の画像は、デスクトップの `layer_tree_output.png` である。`samples/FloatSoda.Samples.PaintingSample` の出力で、ない場合は先に `PaintingSample` を動かす(`samples/FloatSoda.Samples.PrimitiveOverlay/Program.cs` の 22〜25 行目、`samples/FloatSoda.Samples.PaintingSample/Program.cs` の 23 行目)
-  - ビルドは通る(2026-10-17 に確かめた)
-  - HMD がない PC では、`OVRApplication` の初期化で `Init_HmdNotFound` になる(2026-10-17 に1台で観測した)。この実験は HMD が要る
-  - サンプルの書きかけの点(読んで気づいたこと): 画像の読み込み先がデスクトップ固定、`hovered` が毎周出力される、例外が起きると `app.Dispose()` に届かない、`Identify()` を呼ばないのでアプリケーションマニフェストと結びつかない。※要確認(どれを直すか、オーナーが決める)
-  - 実機で動かした記録は、まだない。※要確認
-  - 仕組み: 絵は OpenVR が画像ファイルから読み、入力は `VREvent_*` のイベントとして `PollEvents` で受ける。ポインターの扱いは、フレームワークが `OverlayMouseRawPointerSource` で包んでいる(`src/FloatSoda.OVR/Overlay/Capability.cs` の 186〜196、253〜283 行目、`src/FloatSoda.Engine/OverlayMouseRawPointerSource.cs`)
-- 見出し:
-  - 問い: OVR 層だけで、オーバーレイと入力が扱えるか
-  - 用意するもの
-  - サンプルを動かす
-  - HMD の中で操作する
-  - ログと振動を読む
-  - なぜそうなるか
-  - 次に読むもの
-- ※要確認:
-  - サンプルを実機で動かして、絵、入力、振動が出るか(HMD で確かめる)
-  - サンプルの書きかけの範囲と、本文に載せる前に直すか
-  - `layer_tree_output.png` の入手手順(`PaintingSample` を先に動かす手順を書くか)
-  - `DeviceTrackedOverlay` の追従先は、既定で HMD である(`src/FloatSoda.OVR/Overlay/Capability.cs` の 155 行目)。サンプルは `Target` を設定せず、位置を `(0, 0, -1)` にするので、HMD の 1 m 前に付く見込み。実機で見え方を確かめる
-  - `Init_HmdNotFound` の再現条件
+完成形は次のとおりです。
 
-## ト書き
+- HMD の 1 m 前に付いたオーバーレイに、画像が出る
+- レーザーポインターを当てると、コントローラーが振動する
+- ホバー、クリック、移動のイベントが、コンソールに出る
 
-### 問い: OVR 層だけで、オーバーレイと入力が扱えるか
+先に予想を立てます。FloatSoda のほかの層なしで、ここまで動くかを考えてください。
 
-- 読み手が持って来るもの: `ovr-layer.md` を読んだ記憶
-- このページが渡すもの: 問い1つと、完成形(HMD の 1 m 前のオーバーレイに画像が出る)の予告。予想を立てる場所
-- 読み手がすること: 予想を決める
-- 次へ進む先: 「用意するもの」
+## 用意するもの
 
-### 用意するもの
+SteamVR と HMD を使える状態にします。FloatSoda を clone したフォルダーで、オーバーレイに出す画像 `layer_tree_output.png` を作ります。サンプルの `PaintingSample` を1回動かすと、デスクトップに `layer_tree_output.png` ができます。
 
-- 読み手が持って来るもの: SteamVR と HMD
-- このページが渡すもの: リポジトリの clone、`layer_tree_output.png` を先に作る手順(`PaintingSample` を1回動かす)、HMD が要ること
-- 読み手がすること: 画像を作る
-- 止まる箇所: HMD がない場合は、この実験を飛ばして `experiment-rendering.md` へ送る
-- 次へ進む先: 「サンプルを動かす」
+```powershell
+dotnet run --project samples/FloatSoda.Samples.PaintingSample
+```
 
-### サンプルを動かす
+**できた?** デスクトップに `layer_tree_output.png` ができた。
 
-- 読み手が持って来るもの: デスクトップの画像
-- このページが渡すもの: `dotnet run --project samples/FloatSoda.Samples.PrimitiveOverlay` の1行と、コードの流れの短い説明
-- 読み手がすること: SteamVR を起動して、サンプルを動かす
-- できた?: コンソールにエラーが出ずに、待機状態になった
-- できなかったら: `Init_HmdNotFound` → SteamVR の状態と HMD の接続を確かめる。`ovr-layer.md` の「つまずきやすい点」へリンクする
-- 次へ進む先: 「HMD の中で操作する」
+<details>
+<summary>できなかったら</summary>
 
-### HMD の中で操作する
+ビルドに失敗する場合は、[開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。HMD を持っていない場合は、この実験を飛ばして [実験: 描画層](experiment-rendering.md) に進みます。
 
-- 読み手が持って来るもの: 動いているサンプル
-- このページが渡すもの: 見る場所(正面の 1 m 先のオーバーレイ)と、やること(レーザーを当てる、クリックする)
-- 読み手がすること: 正面の 1 m 先(HMD に追従する位置)でオーバーレイを探し、レーザーを当ててクリックする
-- できた?: 画像が見え、ホバーとクリックで振動した
-- できなかったら: オーバーレイが見えない → 位置と追跡対象のデバイス(`Transform`)を確かめる。ホバーしない → `Input.Method` と `MakeOverlaysInteractiveIfVisible` を確かめる
-- 次へ進む先: 「ログと振動を読む」
+</details>
 
-### ログと振動を読む
+## サンプルを動かす
 
-- 読み手が持って来るもの: 操作の結果
-- このページが渡すもの: コンソールの `クリック: (x, y)` と `移動: (x, y)` の見方、座標の範囲
-- 読み手がすること: 座標とイベントの順序を見る
-- できた?: クリックした位置の座標が出た
-- 次へ進む先: 「なぜそうなるか」
+実験には、`samples/FloatSoda.Samples.PrimitiveOverlay` を使います。プロジェクトが参照するのは `FloatSoda.OVR` だけです。`Program.cs` の流れは次のとおりです。
 
-### なぜそうなるか
+1. `OVRApplication` を作って、SteamVR に接続する
+2. `VRSystemEventDispatcher` に、終了を知らせる `VREvent_Quit` の処理を登録する
+3. `OverlayIdentity` と `DeviceTrackedOverlay` を作り、位置を `(0, 0, -1)` にする
+4. デスクトップの `layer_tree_output.png` を `Texture.FromFile` で読み、`Visibility.Show()` で出す
+5. `Input.Method` をマウスにして、`MakeOverlaysInteractiveIfVisible` を有効にする
+6. `FocusEnter`、`FocusLeave`、`MouseButtonDown`、`MouseButtonUp`、`MouseMove` の処理を登録する
+7. ループでホバー中の表示と、2つのディスパッチャーの `PollEvents` を行い、各周の終わりに `1000 / 72` ミリ秒待機する
 
-- 読み手が持って来るもの: ログ
-- このページが渡すもの: 1〜2段落の説明。OVR 層だけで、画像の提出(`FromFile`)と入力の受信(イベントのポーリング)ができること。描画とレイアウトは、上の層(描画層、エンジン層、フレームワーク層)が足すこと。詳細は `ovr-layer.md` へリンクする
-- 読み手がすること: 上の層が足すものを、`tutorial-render-path.md` で確かめる
-- 次へ進む先: 「次に読むもの」
+このサンプルは書きかけです。コードを読むと、次の点が見つかります。
 
-### 次に読むもの
+- 画像の読み込み先が、デスクトップの `layer_tree_output.png` に固定されている
+- ホバー中は、ループのたびに `hovered` が出力される
+- 例外が起きると、最後の `app.Dispose()` に届かない
+- `OVRApplication.Identify()` を呼ばないので、アプリケーションマニフェストとは結びつかない
+
+SteamVR を起動してから、サンプルを動かします。
+
+```powershell
+dotnet run --project samples/FloatSoda.Samples.PrimitiveOverlay
+```
+
+**できた?** 初期化エラーで終了せず、動き続けている。
+
+<details>
+<summary>できなかったら</summary>
+
+`Init_HmdNotFound` の `VRInitializeException` で止まる場合は、SteamVR の状態と HMD の接続を確かめます。`NullReferenceException` で止まる場合は、原因が確かめられていません。スタックトレースの全文を添えて、[OVR 層](ovr-layer.md) の「つまずきやすい点」に従って報告します。`OpenVR.IsHmdPresent()` が `True` でも、初期化が `Init_HmdNotFound` で失敗する場合があります。詳細は [OVR 層](ovr-layer.md) の「つまずきやすい点」にあります。デスクトップに png がない場合は、前の手順に戻って `PaintingSample` を動かします。
+
+</details>
+
+<!-- ※要確認: png がないときの `FromFile` の挙動(例外になるか) / デスクトップの png を消して動かし、出力を確かめる -->
+
+## HMD の中で操作する
+
+ソースの読みでは、オーバーレイは HMD の正面、1 m 先に付きます。実機での見え方は未確認です。`DeviceTrackedOverlay` の追従先は、既定で HMD で、位置は追従先から見た `(0, 0, -1)` です。頭を動かしても、同じ位置に付いてきます。
+
+正面の 1 m 先でオーバーレイを探し、レーザーを当てて、クリックします。
+
+**できた?** 画像が見え、ホバーとクリックで振動した。
+
+<details>
+<summary>できなかったら</summary>
+
+オーバーレイが見えない場合は、位置(`Transform.Position`)と、追従先のデバイス(`Transform.Target`)を確かめます。ホバーしない場合は、`Input.Method` がマウスになっているか、`MakeOverlaysInteractiveIfVisible` が有効かを確かめます。
+
+</details>
+
+<!-- ※要確認: 絵、入力、振動が実機で出るか / 追従先の既定が HMD で、位置が HMD の 1 m 前になること(ソースの読みだけで、実機で見え方を確かめていない) / HMD でサンプルを動かして確かめる -->
+
+## ログと振動を読む
+
+コンソールには、イベントに応じて次の行が出ます。
+
+| 出力 | イベント |
+| :-- | :-- |
+| `クリック: (x, y) ボタン: Left` | `MouseButtonDown`。座標とボタンを出す |
+| `クリック離した` | `MouseButtonUp` |
+| `移動: (x, y)` | `MouseMove`。座標を出す |
+| `hovered` | ループのたびに、ホバー中に出る |
+
+振動は、`FocusEnter` で 25 ミリ秒、`FocusLeave` で振幅を下げた 25 ミリ秒、`MouseButtonDown` で 25 ミリ秒(周波数 1500、振幅 0.5)に設定されています。
+
+見る点は、クリックした位置の座標と、イベントの順序です。
+
+**できた?** クリックした位置の座標が出た。
+
+<details>
+<summary>できなかったら</summary>
+
+座標が出ない場合は、`overlay.EventDispatcher.PollEvents()` がループの中で呼ばれているかを確かめます。イベントは、`PollEvents` を呼んだスレッドで、ハンドラーが呼ばれます。
+
+</details>
+
+<!-- ※要確認: 座標の範囲 / サンプルは SetMouseScale を呼ばないので、x と y の範囲は OpenVR の既定になる。実機でクリックして、値の範囲を確かめる(フレームワークは、ピクセルサイズで SetMouseScale を呼んでいる) -->
+<!-- ※要確認: FocusLeave の処理が MakeOverlaysInteractiveIfVisible を false にするので、2回目以降のホバーが動くか / 実機で、レーザーを外して当て直して確かめる -->
+
+## なぜそうなるか
+
+OVR 層だけで、画像の提出と入力の受信ができます。画像は `Texture.FromFile` が OpenVR にファイルのパスを渡し、OpenVR が画像ファイルを読みます。入力は `VREvent_*` のイベントとして、`PollEvents` を呼んだときに受け取ります。
+
+OVR 層が持たないのは、描画とレイアウトです。描画層が Layer ツリーを絵にし、エンジン層が GL テクスチャとして OpenVR に提出し、フレームワーク層がウィジェットから Layer ツリーを作ります。ポインターの扱いも上の層が足します。エンジン層は、OpenVR のマウスイベントを `OverlayMouseRawPointerSource` で包んで、フレームワークへ渡します。OVR 層の型の詳細は [OVR 層](ovr-layer.md) にあります。
+
+上の層が足すものは、[描画が届くまで(4段)](tutorial-render-path.md) で、層を1つずつ足して確かめられます。
+
+## 次に読むもの
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 実験の結果
 - このページが渡すもの: `ovr-layer.md`、`tutorial-render-path.md`、`experiment-rendering.md` へのリンク
 - 読み手がすること: 続きを選ぶ
 - 止まる箇所: なし。ここでこのページは終わる
 - 【未決】サンプルが書きかけのまま実験のページを書くか、先にサンプルを直すか。直す場合の範囲(画像の読み込み先、ログの量、後始末)
+
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
+
+- [OVR 層](ovr-layer.md): OpenVR を包む型と、つまずきやすい点
+- [描画が届くまで(4段)](tutorial-render-path.md): 層を足して、描画が届くまでを作る
+- [実験: 描画層](experiment-rendering.md): HMD なしで確かめられる実験
+
+</details>

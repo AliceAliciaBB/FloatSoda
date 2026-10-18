@@ -2,84 +2,71 @@
 
 # Flutter から移植する
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この手順でできること
 
-## 設計シート
+Flutter の Widget や RenderObject を FloatSoda に移植し、Flutter の観測できる挙動と合った状態で PR に出せます。挙動が合わない箇所を残す場合は、理由とテストつきで記録されている状態になります。手順は5つです。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / Flutter の Widget や RenderObject を FloatSoda に移植する人。Flutter を知っているエンジニアを含む / 何を知っている / C# と、Flutter の Widget の使い方。FloatSoda の規約は知らなくてよい / 読んで何をしたい / Flutter の元の実装を読み、どこまでそろえるかを決めて、テストと一緒に写したい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: Flutter の部品を FloatSoda に移植するときの5つの問い(元の実装を見つける、どこまでそろえるか、差異をどう記録するか、テストをどう写すか、C# らしく書いてよい範囲)に順に答える
-- 依頼の解釈: なし
-- テーマファイル: how-to
-- Why(目的): 「実装しやすい」「こちらが自然」だけで挙動を変えると、Flutter の挙動を期待して書く利用者と LLM が困る。移植の判断を手順にして、差異が理由とテストつきで残るようにする
-- What(目標・結果): 移植した部品が、Flutter の観測できる挙動と合っている。合わない箇所は、理由とテストつきで記録されている。PR から Flutter の版、参照した実装、参照したテストを追跡できる
-- How(手段): 5つの問いを手順に並べる。1 元の実装を見つける → 2 どこまでそろえるか決める → 3 差異を残すなら記録する → 4 Flutter のテストを写す → 5 C# として自然な書き方に置き換える
-- 要素:
-  - Flutter の元の実装は、ローカル参照クローン `~/code_reading/flutter_reference` で引く。Widget / Element / RenderObject の特定には `flutter-widget-source` skill を使う(CONTRIBUTING.md の「テスト観点」、REVIEW.md の「3. 仕様の一次情報と優先順位」)
-  - Flutter 由来の Widget と RenderObject は、明示された理由のない限り、観測できる挙動に差異を作らない(REVIEW.md の「6. Flutter parity」)
-  - parity の対象は、プロパティの意味、既定値、レイアウト、描画とクリップ、ヒットテスト、子の扱い、Widget の更新、不正・退化入力の扱い、dirty の条件、Element と State のライフサイクル(REVIEW.md の「6. Flutter parity」)
-  - 理由にならないもの。「実装しやすい」「こちらの方が安全」「こちらの方が自然」だけ(REVIEW.md の「6. Flutter parity」)
-  - C# や .NET として自然な表現への置き換え(`event`、`init` / `required`、`record` / `record struct`、.NET 標準機構)は、差異に数えない。迷ったら「利用者から見た挙動が変わるか」で切り分ける(REVIEW.md の「6. Flutter parity」、前の docs の `APIDesign.md`(退避済み))
-  - 差異を残すときの記録必須は5項目。Flutter の挙動、FloatSoda の挙動、差異が必要な理由、差異を固定するテスト、利用者に影響する場合のドキュメント(REVIEW.md の「6. Flutter parity」)
-  - 差異の記録先は `known-divergences.md`(`.agents/skills/floatsoda-device-test-gen/references/known-divergences.md`)。ADR にまとめる移行は後回しの決定(docs 再編の決定、2026-10-17)
-  - 差異のラベルは deliberate、not ported、port mistake、unlabelled。ラベルで書くテストが逆になる(`.agents/skills/floatsoda-device-test-gen/references/known-divergences.md`、前の docs の `TestStrategy.md`(退避済み)の「5.」)
-  - 仕様が食い違うときの優先順位は、FloatSoda で明示された差異・設計判断、Flutter の仕様・実装・公式テスト、既存の FloatSoda 実装(根拠にならない)の順(REVIEW.md の「3. 仕様の一次情報と優先順位」)
-  - Flutter 由来の Widget と RenderObject のテストは、Flutter の実装分岐、公式テスト、API contract を確かめ、対応する重要ケースを FloatSoda 側でも検証する(CONTRIBUTING.md の「テスト観点」)
-  - 追跡のために、PR に Flutter の版または commit、参照した source、参照した tests を書く(`.github/PULL_REQUEST_TEMPLATE.md` の「Flutter reference」、REVIEW.md の「6. Flutter parity」)
-  - 既に決めた非移植方針(Semantics など)を parity を理由に破らない(REVIEW.md の「6. Flutter parity」)
-  - 受け入れ範囲は、`basic.dart` 相当のプリミティブ層(CONTRIBUTING.md の「受け入れ範囲」)
-- 見出し:
-  - この手順でできること
-  - 前提条件
-  - 手順1: Flutter の元の実装を見つける
-  - 手順2: どこまでそろえるかを決める
-  - 手順3: 差異を残すなら、記録する
-  - 手順4: Flutter のテストを FloatSoda のテストに写す
-  - 手順5: C# として自然な書き方に置き換える
-  - PR に書くこと
-  - うまくいかないとき
-- ※要確認:
-  - 差異の記録先が ADR に移るまでの、記録の置き場所の案内の書き方(今は `known-divergences.md`。移行は後回し)
-  - `flutter-widget-source` skill の入手方法(`.agents/skills/` にない)
-  - Flutter の「公式テスト」の置き場所と、FloatSoda のテストへ写すときの具体的な型(1対1で写すのか、観点を写すのか)を示す一次情報があるか
-  - `known-divergences.md` の「Observation: HEADLESS か VR」の使い分けを、このページが説明するか、案内だけにするか
-  - ※要確認: CONTRIBUTING.md の「テスト観点」にある `~/code_reading/flutter_reference` が、読み手の PC で別の場所のことがある。パスの書き方
+1. Flutter の元の実装を見つける
+2. どこまでそろえるかを決める
+3. 差異を残すなら、記録する
+4. Flutter のテストを FloatSoda のテストに写す
+5. C# として自然な書き方に置き換える
 
-## ト書き
+先に、移植したい部品が Flutter 由来かを確かめてください。Flutter に対応する概念がない部品は、このページの対象外です。
 
-### この手順でできること
+## 前提条件
 
-- 読み手が持って来るもの: 移植したい部品の名前
-- このページが渡すもの: 手順が終わったときの状態(挙動が合っている、または差異が理由とテストつきで記録されている)と、5つの手順
-- 読み手がすること: 自分の部品が Flutter 由来かを確かめる(Flutter に対応する概念がなければ、このページの対象外)
-- 次へ進む先: 「前提条件」
+次の2つがそろっていれば、手順1から始められます。
 
-### 前提条件
+- 開発環境と Flutter の参照クローンを用意しておくこと([開発環境を用意する](../3-prepare/dev-environment.md))
+- 移植の Issue を立てておくこと([コントリビューターの規約](../3-prepare/conventions.md))
 
-- 読み手が持って来るもの: Issue と、手元のビルド環境
-- このページが渡すもの: 開発環境と参照クローンが用意できていること(../3-prepare/dev-environment.md)、Issue を先に立てる規約(../3-prepare/conventions.md)
-- 読み手がすること: 足りなければ先に用意する
-- 次へ進む先: 手順1
+Flutter との差異の判断は、Issue が必須な変更に含まれます。
 
-### 手順1: Flutter の元の実装を見つける
+## 手順1: Flutter の元の実装を見つける
 
-- 読み手が持って来るもの: 移植したい部品の名前
-- このページが渡すもの: 参照クローンと skill の使い方。Widget、Element、RenderObject の3つの位置を、Flutter の版とあわせて控えること
-- 読み手がすること: 3つの位置を見つけ、版を控える
-- できた?: 3つのファイルと版(commit)が書き出せる
-- 次へ進む先: 手順2
+移植したい部品について、対応する Widget と、関係する Element・RenderObject の定義位置を、Flutter の版とあわせて控えます。部品専用の Element や RenderObject がないときは、継承元や委譲先の定義位置を控えます。
 
-### 手順2: どこまでそろえるかを決める
+Flutter の元の実装は、ローカルの参照クローンで引きます(CONTRIBUTING.md の「テスト観点」では `~/code_reading/flutter_reference`)。Widget は `packages/flutter/lib/src/widgets/`、RenderObject は `packages/flutter/lib/src/rendering/` にあります。Widget / Element / RenderObject の位置は、参照クローンでクラス名を検索して特定します。`flutter-widget-source` skill でも特定できますが、この skill は `.agents/skills/` にありません。
 
-- 読み手が持って来るもの: Flutter の実装を読んだ結果
-- このページが渡すもの: parity の対象(10項目)と、理由にならないもの。判断の優先順位(FloatSoda の明示 → Flutter → 既存の実装は根拠にしない)。非移植方針は破らないこと
-- 読み手がすること: 差異が要る箇所があるかを決める。なければ手順4へ
-- できた?: 「差異なし」か「差異あり、理由は〜」を一文で言える
-- 次へ進む先: 差異ありなら手順3、なしなら手順4
-- 止まる箇所: Flutter 由来かの判断が割れるとき。実装を始める前に、Issue で基準を明示する
+<!-- ※要確認: flutter-widget-source skill の入手方法。.agents/skills/ に無く、参照クローンの作り方もリポジトリの文書に無い。確かめ方: オーナーに入手先を確認する -->
 
-### 手順3: 差異を残すなら、記録する
+版は、参照クローンで `git rev-parse HEAD` を実行して commit を控えます。
+
+**できた?** Widget、Element、RenderObject の定義位置(専用の定義がなければ継承元や委譲先)と、Flutter の commit を書き出せます。
+
+## 手順2: どこまでそろえるかを決める
+
+Flutter 由来の Widget と RenderObject は、明示された理由がない限り、観測できる挙動に差異を作りません。そろえる対象は次のとおりです(REVIEW.md の「6. Flutter parity」)。
+
+- プロパティの意味
+- 既定値
+- レイアウト
+- 描画とクリップ
+- ヒットテスト
+- 子の扱い
+- Widget の更新
+- 不正・退化入力の扱い
+- dirty の条件
+- Element と State のライフサイクル
+
+「実装しやすい」「こちらの方が安全」「こちらの方が自然」だけは、差異の理由になりません。Flutter を期待して書く利用者と LLM が、その差異で困るためです。
+
+仕様が食い違うときは、次の順に従います(REVIEW.md の「3. 仕様の一次情報と優先順位」)。
+
+1. FloatSoda で明示された差異・設計判断
+2. Flutter の仕様・実装・公式テスト
+3. 既存の FloatSoda 実装(根拠になりません)
+
+Semantics のように、すでに移植しないと決めたものは、parity を理由に破りません。
+
+**できた?** 「差異なし」か「差異あり、理由は〜」を一文で言えます。差異なしなら手順4へ、差異ありなら手順3へ進みます。
+
+Flutter 由来かどうかの判断が割れるときは、実装を始める前に Issue で基準を明示してください。
+
+## 手順3: 差異を残すなら、記録する
+
+> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
 
 - 読み手が持って来るもの: 差異が要るという判断
 - このページが渡すもの: 記録必須の5項目と、記録先。5項目のうち、差異を固定するテストがないと、次の移植で戻されること。差異は ADR にも書くこと(../6-propose/write-adr.md)
@@ -88,32 +75,79 @@
 - 次へ進む先: 手順4
 - 【未決】ADR への移し方が決まるまで、記録先を `known-divergences.md` と ADR のどちらで案内するか
 
-### 手順4: Flutter のテストを FloatSoda のテストに写す
+<details>
+<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
-- 読み手が持って来るもの: 手順1の公式テストの位置
-- このページが渡すもの: Flutter の実装分岐と公式テストから重要なケースを拾い、FloatSoda 側でも検証する規約。Flutter が明示的にテストしている退化ケースは、FloatSoda でも壊れること。写したテストの名前の付け方(CONTRIBUTING.md の「テストの命名」)
-- 読み手がすること: ケースを拾い、テストを書く
-- できた?: Flutter のテストのケースと、FloatSoda のテストの対応が表にできる
-- 次へ進む先: 手順5
+差異を残すときは、次の5項目を記録します(REVIEW.md の「6. Flutter parity」)。
 
-### 手順5: C# として自然な書き方に置き換える
+| 項目 | 書くこと |
+| :-- | :-- |
+| Flutter の挙動 | Flutter が何をするか。対応するファイルつき |
+| FloatSoda の挙動 | FloatSoda が何をするか。`src/` のファイルと行つき |
+| 差異が必要な理由 | 手順2の「理由にならないもの」以外の理由 |
+| 差異を固定するテスト | 差異を戻すと失敗するテストのファイルとメソッド名 |
+| 利用者向けのドキュメント | 利用者から観測できる場合の、docs やサンプルの `## Flutterとの違い` 節 |
 
-- 読み手が持って来るもの: 移植した実装
-- このページが渡すもの: 差異に数えない置き換えの種類(`event`、`init` / `required`、`record`、.NET 標準機構)と、迷ったときの切り分け(利用者から見た挙動が変わるか)
-- 読み手がすること: 置き換えが挙動を変えていないか確かめる
-- できた?: 置き換えの前後で、観測できる挙動が同じである
-- 次へ進む先: 「PR に書くこと」
+差異を固定するテストがないと、次の移植で差異が戻されます。テストは省かないでください。
 
-### PR に書くこと
+記録先は、差異の台帳 [known-divergences.md](../../../.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) です。エントリの形と、`deliberate` / `not ported` / `port mistake` / `unlabelled` のラベルの意味は、台帳の冒頭にあります。台帳を ADR にまとめる移行は決まっていません。移行が決まるまでは、台帳へ追記してください。設計判断として ADR も書く場合は [決定を ADR に書く](../6-propose/write-adr.md) を読んでください。
 
-- 読み手が持って来るもの: 移植を終えた変更
-- このページが渡すもの: PR テンプレートの「Flutter reference」欄に書く4つ(版、参照した source、参照した tests、差異)
-- 読み手がすること: 欄を埋めて PR を出す
-- 次へ進む先: 出す前のチェック(../3-prepare/conventions.md)、レビュー(../5-submit/address-review.md)
+<!-- ※要確認: 差異の記録先を台帳から ADR に移したあとの案内の書き方。確かめ方: 移行の決定後にオーナーへ確認する -->
 
-### うまくいかないとき
+台帳の `Observation` 欄は、差異が HMD なしで観測できるか(`HEADLESS`)、SteamVR が要るか(`VR`)を示します。HMD が要る範囲の分け方は [テストの分け方](../3-prepare/test-strategy.md) にあります。
 
-- 読み手が持って来るもの: 手順で迷った状況
-- このページが渡すもの: 症状ごとの行き先。Flutter とどちらを正にするか迷う → 手順2、差異の記録の書き方が分からない → 手順3
-- 読み手がすること: 該当する手順に戻る
-- 止まる箇所: 判断が割れるとき。Issue で相談する
+**できた?** 5項目がすべて埋まり、差異を戻すと落ちるテストがあります。
+
+</details>
+
+## 手順4: Flutter のテストを FloatSoda のテストに写す
+
+Flutter 由来の Widget と RenderObject のテストは、FloatSoda 独自にケースを想像するだけで済ませません(CONTRIBUTING.md の「テスト観点」)。Flutter の実装の分岐、公式テスト、API contract を確かめ、対応する重要なケースを FloatSoda 側でも検証します。Flutter が明示的にテストしている退化ケースは、FloatSoda でも壊れます。
+
+Flutter の公式テストは、参照クローンの `packages/flutter/test/widgets/` と `packages/flutter/test/rendering/` にあります。FloatSoda 側のテストは、`tests/FloatSoda.Test` の `Widgets/` と `RenderObjects/` に置きます。
+
+<!-- ※要確認: Flutter のテストを1対1で写すのか、観点を写すのかを示す一次情報がリポジトリに無い。確かめ方: オーナーに方針を確認する -->
+
+写したテストの名前は `対象メンバー名_条件_期待結果` の形にし、条件と期待結果を日本語で書きます(CONTRIBUTING.md の「テストの命名」)。バグ修正の場合は、修正を戻すと落ちるテストを足します。
+
+**できた?** Flutter のテストのケースと、FloatSoda のテストの対応を表にできます。
+
+## 手順5: C# として自然な書き方に置き換える
+
+次の置き換えは、差異に数えません(REVIEW.md の「6. Flutter parity」)。
+
+- `event`
+- `init` / `required`
+- `record` / `record struct`
+- .NET 標準機構の利用
+
+迷ったら、利用者から見た挙動が変わるかで切り分けます。変わらなければ置き換えです。変わるなら、手順2に戻って差異として扱います。
+
+**できた?** 置き換えの前後で、観測できる挙動が同じです。
+
+## PR に書くこと
+
+PR の本文は、[PR テンプレート](../../../.github/PULL_REQUEST_TEMPLATE.md)の「Flutter reference」欄に次の4つを書きます。PR から、Flutter の版、参照した実装、参照したテストを追跡できるようにするためです。
+
+- Flutter version / commit
+- Referenced source
+- Referenced tests
+- Behavioral differences from Flutter(差異がなければ「なし(parity)」)
+
+出す前のチェックは [コントリビューターの規約](../3-prepare/conventions.md) にあります。出したあとの指摘への対応は [レビューの指摘を受けて直す](../5-submit/address-review.md) に進んでください。
+
+## うまくいかないとき
+
+<details><summary>Flutter とどちらを正にするか迷う</summary>
+
+手順2に戻り、優先順位の表で確かめます。FloatSoda で明示された差異がなければ、Flutter が正です。既存の FloatSoda 実装は根拠になりません。
+
+</details>
+
+<details><summary>差異の記録の書き方が分からない</summary>
+
+手順3の5項目と、台帳の既存エントリを見比べてください。
+
+</details>
+
+判断が割れるときは、Issue で相談してください。

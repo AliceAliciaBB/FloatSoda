@@ -2,82 +2,81 @@
 
 # コントリビューターの規約
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この一覧の使い方
 
-## 設計シート
+規約の正本は、リポジトリ直下の2つのファイルにあります。このページは規約を写さず、場面ごとに読む節の場所だけを案内します。
 
-- 分類: 説明型(Diátaxis: reference)
-- 読み手: だれが / 変更を出す人(人間もエージェントも)、レビューする人 / 何を知っている / FloatSoda の目的と、自分がやりたい変更 / 読んで何をしたい / 守る規約がどこに書かれているかを知り、書き始める前に読むべき箇所へ行く
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: コントリビューターの規約の正本は CONTRIBUTING.md と REVIEW.md にあり、このページは何がどこにあるかの案内だけを置く
-- 依頼の解釈: 「規約を写す」ではなく「規約の場所を引く索引」と読む
-- テーマファイル: reference
-- Why(目的): 規約を2か所に書くと食い違う。正本を1か所に保ち、読み手が探し回らずに該当の節へ着けるようにする
-- What(目標・結果): 作業の場面ごとに、読むべき正本の節が分かる。このページには規約の本文がない
-- How(手段): 場面(書く前、書いている間、出す前、レビューされる側、レビューする側、提案する)ごとに、正本のファイルと節名を表で並べる。規約の中身は写さない
-- 要素:
-  - 開発・コントリビューション規約の一次情報は CONTRIBUTING.md。本文の「必須」は MUST、「推奨」は SHOULD(CONTRIBUTING.md の冒頭)
-  - コードレビューの判断基準の一次情報は REVIEW.md(REVIEW.md の冒頭)
-  - 規約の置き場所は目的ごとに決まっている。API 設計原則と Flutter parity、エージェントの入口、リリース手順(CONTRIBUTING.md の冒頭の表)
-  - CONTRIBUTING.md の節: 開発環境のセットアップ、Issue とラベル(Issue が必須な変更、タイトルとラベル)、ブランチ・PRフロー(ブランチ名、PR のスコープ)、テスト方針(テストの命名、テスト観点)、namespace とディレクトリ、エージェント向け skill を追加・変更する場合、コーディング規約、受け入れ範囲、新しい public API を追加する場合の受け入れ条件、サンプルを追加する場合の規約、アーキテクチャを理解する、ドキュメントを更新する場合の注意、PRを出す前のチェックリスト(CONTRIBUTING.md の見出し)
-  - REVIEW.md の章: 重要度の順序、finding の基準、仕様の一次情報と優先順位、FloatSoda 固有の不変条件、テスト、Flutter parity、namespace / ディレクトリ、scope discipline、レビューの層と分担(REVIEW.md の見出し)
-  - API 設計原則と Flutter parity の判断基準の正本は docs の API 設計(前の docs の `APIDesign.md`。退避済みで、移した先は未確認)
-  - PR の本文は `.github/PULL_REQUEST_TEMPLATE.md` の欄に沿って書く(CONTRIBUTING.md の「ブランチ・PRフロー」)
-  - 出す前のチェックリストは CONTRIBUTING.md の「PRを出す前のチェックリスト」。内容の直しは後回しの決定(docs 再編の決定、2026-10-17)
-  - 描画に関わる変更の範囲(`src/FloatSoda.Rendering/`、`src/FloatSoda.Engine/`、`src/FloatSoda.OVR/`、`src/FloatSoda.Abstractions/` の `Engine/`・`Input/`・`Scheduling/`、`src/FloatSoda/Core/WidgetBinding.cs`、`src/FloatSoda/FloatSodaApp.cs`、`src/FloatSoda/FloatSodaServiceCollectionExtensions.cs`)は決まったが、一覧の正本は CONTRIBUTING.md に置く決定で、まだ CONTRIBUTING.md にない(docs 再編の決定、2026-10-17。このページには書かない)
-- 見出し:
-  - この一覧の使い方
-  - 書き始める前に読むもの
-  - 書いている間に引くもの
-  - 出す前に読むもの
-  - レビューされる側とする側が読むもの
-  - 提案するときに読むもの
-- ※要確認:
-  - docs の API 設計の判断原則(旧 `APIDesign.md`)を、新しい docs のどこに置くか。このページから案内する先が決まっていない
-  - CONTRIBUTING.md が参照する `docs/APIDesign.md` などの旧パスが、新しい docs の構成に合わせて直されるか(今は退避したため壊れている参照がある)
-  - 節名の一覧は CONTRIBUTING.md から取った時点のもの。節名が変わっても索引が追従する手段(リンク切れの検査)があるか
+| ファイル | 決めていること |
+| :-- | :-- |
+| [CONTRIBUTING.md](../../../CONTRIBUTING.md) | 人間とエージェントに共通する開発・コントリビューション規約 |
+| [REVIEW.md](../../../REVIEW.md) | コードレビューの判断基準と、見る項目の優先度 |
 
-## ト書き
+どちらのファイルも、本文中の「必須」は MUST、「推奨」は SHOULD の強さで読みます。API 設計原則と Flutter parity の判断基準、エージェントの入口、リリース手順の正本は、それぞれ別のファイルです。置き場所は CONTRIBUTING.md の冒頭の表にあります。
 
-### この一覧の使い方
+自分の場面に合う見出しへ進んでください。
 
-- 読み手が持って来るもの: 「どの規約を守ればよいか」という疑問
-- このページが渡すもの: このページが規約を写さない案内であること、正本が CONTRIBUTING.md と REVIEW.md であること、「必須」と「推奨」の強さの読み方
-- 読み手がすること: 自分の場面を選び、該当する見出しへ進む
-- 次へ進む先: 「書き始める前に読むもの」
+## 書き始める前に読むもの
 
-### 書き始める前に読むもの
+書き始める前に、変更が Issue を要するか、ブランチ名と PR の範囲をどうするか、変更が受け入れ範囲に入るかを確かめます。
 
-- 読み手が持って来るもの: これから書く変更の中身
-- このページが渡すもの: 書き始める前に読む節の表。Issue が必須な変更、ブランチ名、PR のスコープ、受け入れ範囲(CONTRIBUTING.md)。Flutter 由来の部品なら、移植の手順(../4-write/port-from-flutter.md)
-- 読み手がすること: 自分の変更が Issue を要するかを、正本の節で確かめる
-- 次へ進む先: 「書いている間に引くもの」
+| 確かめること | 正本の節 |
+| :-- | :-- |
+| 着手前に Issue が要る変更か | CONTRIBUTING.md の「Issue が必須な変更」 |
+| Issue のタイトルとラベル | CONTRIBUTING.md の「タイトルとラベル」 |
+| ブランチ名 | CONTRIBUTING.md の「ブランチ名」 |
+| PR に含めてよい変更の範囲 | CONTRIBUTING.md の「PR のスコープ」 |
+| コアに受け入れる変更か | CONTRIBUTING.md の「受け入れ範囲」 |
 
-### 書いている間に引くもの
+Flutter 由来の部品を作る場合は、[Flutter から移植する](../4-write/port-from-flutter.md)も読みます。
 
-- 読み手が持って来るもの: 書いている最中の疑問
-- このページが渡すもの: 疑問ごとの正本の節。テストの命名と観点、namespace とディレクトリ、コーディング規約、サンプルの規約、skill の規約、文書の規約
-- 読み手がすること: 該当する節を開く
-- 次へ進む先: 「出す前に読むもの」
+## 書いている間に引くもの
 
-### 出す前に読むもの
+書いている最中の疑問は、次の表の節で引きます。
 
-- 読み手が持って来るもの: 書き終えた変更
-- このページが渡すもの: 出す前のチェックリスト(CONTRIBUTING.md)と、PR の本文のテンプレートへのリンク。CI と同じ手順を手元で通すこと(../3-prepare/dev-environment.md)
-- 読み手がすること: チェックリストを上から確かめる
-- 止まる箇所: 描画に関わる変更の範囲の扱い。範囲の一覧は CONTRIBUTING.md の正本に置く決定だが、まだ載っていない(追跡: #NN。番号は※要確認)
-- 次へ進む先: レビューの指摘への対応(../5-submit/address-review.md)、CI が落ちたとき(../5-submit/ci-failures.md)
+| 疑問 | 正本の節 |
+| :-- | :-- |
+| テスト名の付け方 | CONTRIBUTING.md の「テストの命名」 |
+| 何を検証するか | CONTRIBUTING.md の「テスト観点」(置き場所は [テストの分け方](test-strategy.md)) |
+| namespace とディレクトリの対応 | CONTRIBUTING.md の「namespace とディレクトリ」 |
+| コードの書き方 | CONTRIBUTING.md の「コーディング規約」 |
+| public API の追加 | CONTRIBUTING.md の「新しい public API を追加する場合の受け入れ条件」 |
+| サンプルの追加 | CONTRIBUTING.md の「サンプルを追加する場合の規約」 |
+| skill の追加・変更 | CONTRIBUTING.md の「エージェント向け skill を追加・変更する場合」 |
+| 文書の更新と文体 | CONTRIBUTING.md の「ドキュメントを更新する場合の注意」と「ドキュメントのトンマナ」 |
 
-### レビューされる側とする側が読むもの
+## 出す前に読むもの
 
-- 読み手が持って来るもの: PR を出した、またはレビューを頼まれた状況
-- このページが渡すもの: REVIEW.md の章の案内。重要度の順序、finding の基準、仕様の一次情報と優先順位
-- 読み手がすること: レビューで何が見られるかを、REVIEW.md で確かめる
-- 次へ進む先: 指摘の受け方(../5-submit/address-review.md)
+変更を出す前に、CONTRIBUTING.md の「PRを出す前のチェックリスト」を上から確かめます。
 
-### 提案するときに読むもの
+- PR を出す前に、CI と同じ手順を手元で通すこと(手順は [開発環境を用意する](dev-environment.md)にあります)
 
-- 読み手が持って来るもの: 新しい機能や設計の変更の案
-- このページが渡すもの: 受け入れ範囲と、public API の受け入れ条件(CONTRIBUTING.md)。提案の書き方(../6-propose/write-proposal.md)
-- 読み手がすること: 案が受け入れ範囲に入るかを、正本で確かめる
-- 止まる箇所: なし
+PR の本文は、[PULL_REQUEST_TEMPLATE.md](../../../.github/PULL_REQUEST_TEMPLATE.md) の欄に沿って書きます。
+
+描画に関わる変更には、範囲を決める予定の規約があります。範囲の一覧は CONTRIBUTING.md に置く方針ですが、まだ載っていません。載るまでは、変更が描画に関わるかどうかを Issue で確かめます。
+
+<!-- ※要確認: 描画に関わる変更の範囲を CONTRIBUTING.md に載せる作業の追跡 Issue の番号が分からない。分かれば「(追跡: #NN)」を添える -->
+
+PR を出したあとは、[レビューの指摘を受けて直す](../5-submit/address-review.md)と [CI が落ちたとき](../5-submit/ci-failures.md)を読みます。
+
+## レビューされる側とする側が読むもの
+
+PR を出した人も、レビューを頼まれた人も、REVIEW.md で何が見られるかを確かめます。見る順番に並べた章が、次のとおりです。
+
+| 知りたいこと | 正本の章 |
+| :-- | :-- |
+| 指摘の重さの順 | REVIEW.md の「1. 重要度の順序」 |
+| どんな指摘を出すか | REVIEW.md の「2. finding の基準」 |
+| 判断の根拠にする資料の順 | REVIEW.md の「3. 仕様の一次情報と優先順位」 |
+| FloatSoda 固有の不変条件 | REVIEW.md の「4. FloatSoda 固有の不変条件」 |
+| Flutter との差異の扱い | REVIEW.md の「6. Flutter parity」 |
+| 自動レビューと人のレビューの分担 | REVIEW.md の「9. レビューの層と分担」 |
+
+指摘の受け方は [レビューの指摘を受けて直す](../5-submit/address-review.md)にあります。
+
+## 提案するときに読むもの
+
+新しい機能や設計の変更を提案する前に、案が受け入れ範囲に入るかを確かめます。範囲は CONTRIBUTING.md の「受け入れ範囲」、public API の受け入れ条件は同じファイルの「新しい public API を追加する場合の受け入れ条件」にあります。
+
+提案の書き方は [提案を書く](../6-propose/write-proposal.md)にあります。
+
+<!-- ※要確認: CONTRIBUTING.md と REVIEW.md と PR テンプレートが参照する docs/APIDesign.md と docs/WritingDocumentation.md は、いまの docs にない。API 設計原則と Flutter parity の判断基準をどこに置くかが決まっておらず、このページから案内できない -->
