@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- `VRSettingsException` / `VRNotificationException` / `VRScreenshotException` / `VRCompositorException` / `TrackedPropertyException` の `ThrowIfError` が、対応表にないエラー値で `ArgumentOutOfRangeException` を投げていた問題を修正。対応表にない値でも、各クラスの型付き例外を「予期しない〜エラー」のメッセージで投げる。`EVRSettingsError.AccessDenied` と `EVRNotificationError.ServiceUnavailable` には専用のメッセージを追加した(#295)
+
 ## [0.4.0] - 2026-09-22
 
 ### Added

@@ -22,7 +22,7 @@ public class VRScreenshotException(string message, EVRScreenshotError errorCode)
         EVRScreenshotError.ScreenshotAlreadyInProgress => ExceptionMessages
             .VRScreenshotException_ScreenshotAlreadyInProgress,
 
-        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+        _ => string.Format(ExceptionMessages.VRScreenshotException_UnexpectedError, error)
     };
 
     /// <summary>Throws a <see cref="VRScreenshotException"/> if <paramref name="error"/> indicates a failure.</summary>
