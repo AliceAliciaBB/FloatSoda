@@ -14,8 +14,14 @@ var step = 0;
 var positionalArgs = new List<string>();
 for (var i = 0; i < args.Length; i++)
 {
-    if (args[i] == "--step" && i + 1 < args.Length && int.TryParse(args[i + 1], out var parsed))
+    if (args[i] == "--step")
     {
+        if (i + 1 >= args.Length || !int.TryParse(args[i + 1], out var parsed))
+        {
+            Console.WriteLine("--step の後ろに、段の番号(1 から 4)を書いてください。");
+            return 1;
+        }
+
         step = parsed;
         i++;
     }
