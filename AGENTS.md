@@ -8,6 +8,8 @@ This file provides guidance to coding agents — Codex, Claude Code (claude.ai/c
 
 The repository owner develops hands-on and tracks the implementation themselves. By default, **investigate and explain — do not modify code.** When asked about a bug or behavior, report the root cause, the relevant files/lines, and (optionally) how a fix would look, but leave the actual implementation to the owner unless they explicitly ask you to make the change.
 
+When you are asked to implement, how much you may take on depends on the kind of work — see the tiers in `CONTRIBUTING.md` (「コーディングエージェントに任せる範囲」): new APIs that Flutter does not have are implemented by a human; bug fixes start with investigation only; porting Flutter widgets (with Flutter's tests) may be delegated fully.
+
 ## Output Language
 
 **Write all output to the repository owner in Japanese.** This is a hard requirement, not a preference.
@@ -18,7 +20,7 @@ The repository owner develops hands-on and tracks the implementation themselves.
 
 Do not translate identifiers, type names, file paths, or code fences — those stay verbatim as they appear in the source.
 
-Rationale: FloatSoda treats **Japanese as the neutral (default) language** — see `docs/Localization.md`. `docs/`, XML doc comments, and exception messages are all Japanese by design. Review output in Japanese keeps the entire surface consistent for the owner and for the LLMs that relay it to end users. If you feel English "should" be the default here, read `docs/Localization.md` before changing anything.
+Rationale: FloatSoda treats **Japanese as the neutral (default) language** — see `LOCALIZATION.md`. `docs/`, XML doc comments, and exception messages are all Japanese by design. Review output in Japanese keeps the entire surface consistent for the owner and for the LLMs that relay it to end users. If you feel English "should" be the default here, read `LOCALIZATION.md` before changing anything.
 
 ## Repository Conventions
 
@@ -28,7 +30,7 @@ Conventions have one canonical home each. **Read the canon before acting on a co
 |---|---|
 | Branch naming, namespace/directory layout, agent skills, PR flow, scope discipline, test perspectives | `CONTRIBUTING.md` |
 | Code review criteria — priorities, finding bar, FloatSoda tree invariants | `REVIEW.md` |
-| API design principles and Flutter parity (including when a divergence is allowed and how to record it) | `docs/APIDesign.md` |
+| API design principles and Flutter parity (including when a divergence is allowed and how to record it) | `API_DESIGN.md` |
 | Release procedure | `RELEASING.md` |
 
 Three that catch agents out most often:
@@ -121,17 +123,17 @@ Do not use `[Fact(DisplayName = "…")]` — it duplicates the intent and drifts
 | `src/FloatSoda.OVR` | OpenVR wrappers, overlay types (`DashboardOverlay`, `WorldSpaceOverlay`, `DeviceTrackedOverlay`), `VREventDispatcher`, and exception types |
 | `src/FloatSoda` | Framework core: RenderObject tree, Widget/Element system, `RenderPipeline`, `FloatSodaApp` |
 | `src/FloatSoda.Testing` | Headless Widget and RenderObject bitmap renderers for tests and tooling |
-| `src/FloatSoda.UI` | Headless UI layer: behavior-only widgets (`ButtonBase`, `InteractionState`), no visuals — see `docs/UILayering.md`. **Planned for Phase 5, not yet usable** |
+| `src/FloatSoda.UI` | Headless UI layer: behavior-only widgets (`ButtonBase`, `InteractionState`), no visuals — see `docs/contributor/2-understand/ui-layer.md`. **Planned for Phase 5, not yet usable** |
 | `src/FloatSoda.UI.Cream` | Design system #1: retro creamy colors, flat design (`Button`, `ButtonStyle`, `CreamTheme`). **Planned for Phase 5, not yet usable** |
 | `src/FloatSoda.UI.FizzyPop` | Design system #2: translucency / glassmorphism (`Button`, `ButtonStyle`, `FizzyPopTheme`). **Planned for Phase 5, not yet usable** |
 | `src/FloatSoda.Hooks` | R3-based `HookWidget` / `HookElement`; partially implemented, not yet integrated with the build loop |
 | `samples/FloatSoda.Samples.OverlayApp` | Runnable sample (requires SteamVR running) |
 | `tests/FloatSoda.Test` | xunit tests for geometry types, RenderObjects, and Widgets |
 | `tests/FloatSoda.Rendering.Test` | xunit tests for the Layer tree |
-| `docs/` | Developer documentation, wiki-style with `Home.md` as the entry point (Home, TargetUsers, GettingStarted, Architecture, WidgetSystem, UILayering, Animation, BuildPipeline, RenderObjects, OVRIntegration, Input, APIDesign, DocumentationComments, Localization). Synced to the GitHub Wiki by `.github/workflows/sync-wiki.yml` and built into the docs site by `.github/workflows/docs-site.yml` — every `.md` under `docs/` becomes a wiki page and a site page, so do not put scratch files there |
-| `website/` | Docs site (Astro Starlight) published at `https://floatsoda.sumx21t.com` with `llms.txt` / `llms-full.txt` for LLM readers. Every docs page is generated from `docs/` at build time by `scripts/sync-docs.mjs`, so edit `docs/`, never `website/src/content/docs/`. The site's structure follows the `docs/` directory tree: each track directory from #188 (`docs/user/`, `docs/contributor/`, `docs/api/`) becomes one sidebar group and one landing entry. The only site-authored content is the landing page `website/content/index.mdx`, which carries navigation only and links to `docs/` for facts. See `website/README.md` |
+| `docs/` | Developer documentation, being rebuilt under #219: one directory per site tab (`tutorials/`, `guide/`, `reference/`, `contributor/`), each with a `Home.md` entry page. Synced to the GitHub Wiki by `.github/workflows/sync-wiki.yml` and built into the docs site by `.github/workflows/docs-site.yml` — every `.md` under `docs/` becomes a wiki page and a site page, so do not put scratch files there |
+| `website/` | Docs site (Astro Starlight) published at `https://floatsoda.sumx21t.com` with `llms.txt` / `llms-full.txt` for LLM readers. Every docs page is generated from `docs/` at build time by `scripts/sync-docs.mjs`, so edit `docs/`, never `website/src/content/docs/`. The site's structure follows the `docs/` directory tree: each tab directory (`docs/tutorials/`, `docs/guide/`, `docs/reference/`, `docs/contributor/`) becomes one sidebar group and one landing entry; the API reference tab is generated, not written under `docs/`. The only site-authored content is the landing page `website/content/index.mdx`, which carries a short introduction (problem → solution → offer → audience → action) plus navigation. Anything that goes stale when the code changes (current limitations, versions, counts) stays in `docs/` and is only linked from the landing page. See `website/README.md` |
 
-### UI Layering Rules (see `docs/UILayering.md`)
+### UI Layering Rules (see `docs/contributor/2-understand/ui-layer.md`)
 
 The UI is split into three layers: `FloatSoda` (core + primitive widgets; anything touching Skia/render-tree types), `FloatSoda.UI` (headless behavior: interaction state machines, typed builder slots), and two parallel design systems `FloatSoda.UI.Cream` / `FloatSoda.UI.FizzyPop` (state→visual mapping only). **Only the core layer ships today** — the upper two are skeletons planned for Phase 5, marked `IsPackable=false`, and `ButtonBase` is not yet wired to `GestureDetector`. The rules below still bind: they decide where new code goes when that work lands. Two rules: (1) behavior/state machines always go in `FloatSoda.UI`, never in a design system; (2) `FloatSoda.UI` widgets must work without any design-system `InheritedWidget` (themes' `Of()` returns null and components fall back to defaults). Litmus test: each design system must be buildable without copying code from the other. Design systems never reference each other.
 
@@ -198,7 +200,7 @@ FloatSodaApp.Run() [main thread, STA]
 
 The render thread runs in `RenderThreadRunner` (a `ThreadRunner` subclass) and owns the GLFW/GL context. Work is posted via `ConcurrentQueue<Action>` (`_pendingTasks`). Window creation is also deferred through this queue so all GL calls stay on the same thread.
 
-## API Design Conventions (from `docs/APIDesign.md`)
+## API Design Conventions (from `API_DESIGN.md`)
 
 - **Object-initializer first**: no constructor arguments on components — use `init` properties only.
 - **Single child** → `Child` property; **multiple children** → `Children` (`IList<Widget>`).

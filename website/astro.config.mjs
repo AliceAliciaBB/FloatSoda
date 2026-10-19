@@ -4,17 +4,21 @@ import catppuccin from "@catppuccin/starlight";
 import mermaid from "astro-mermaid";
 import starlightLlmsTxt from "starlight-llms-txt";
 import {
+  LEGACY_PAGES,
   llmsCustomSets,
   llmsPageLinks,
   repoRoot,
   repositoryUrl,
   sidebarGroups,
+  sidebarItems,
   siteUrl,
-  slugOf,
 } from "./scripts/docs-source.mjs";
 
 export default defineConfig({
   site: siteUrl,
+  // #219 の作り直しで消した旧ページの URL を、中身が移った新しいページへ送る(外部の古いリンクを切らないため)。
+  // 対応は docs-source.mjs の LEGACY_PAGES に1か所だけ書く
+  redirects: Object.fromEntries(Object.entries(LEGACY_PAGES).map(([slug, to]) => [`/${slug}`, to])),
   integrations: [
     // Starlight より前に置く(astro-mermaid の要件)。```mermaid をブラウザ側で描画する
     mermaid({ autoTheme: true }),
@@ -58,13 +62,13 @@ export default defineConfig({
           rawContent: true,
         }),
       ],
-      // サイドバーは docs/ の構造を正典にする(#188)。系統ディレクトリ(docs/user/ など)が 1 グループ。
+      // サイドバーは docs/ の構造を正典にする(#219)。タブのディレクトリ(docs/guide/ など)が 1 グループで、中のサブディレクトリは入れ子にする。
       // docs/ 直下のページは再編が済むまで、docs/Home.md の表の「対象読者」列でグループ化する。詳細は scripts/docs-source.mjs
       sidebar: [
         { slug: "home" },
         ...sidebarGroups().map((group) => ({
           label: group.label,
-          items: group.rels.map((rel) => ({ slug: slugOf(rel) })),
+          items: sidebarItems(group.items),
         })),
       ],
     }),

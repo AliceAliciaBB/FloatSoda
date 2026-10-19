@@ -115,7 +115,7 @@ sequenceDiagram
     end
 ```
 
-> 詳細は [docs/Architecture.md](docs/Architecture.md) を参照。
+> 詳細は [docs/contributor/2-understand/frame-to-steamvr.md](docs/contributor/2-understand/frame-to-steamvr.md) を参照。
 
 ## 実装済みの Widget
 
@@ -183,22 +183,12 @@ sequenceDiagram
 
 公開サイトは **[floatsoda.sumx21t.com](https://floatsoda.sumx21t.com/)** です。ソースは **[docs/Home.md](docs/Home.md)** 以下の Markdown で、サイトはリリースごとに、GitHub Wiki は `main` への push ごとに更新されます。コーディングエージェントに読ませるときは [llms.txt](https://floatsoda.sumx21t.com/llms.txt)(索引)か [llms-full.txt](https://floatsoda.sumx21t.com/llms-full.txt)(全文)を渡してください。
 
-| ドキュメント | 内容 |
+| タブ | 内容 |
 |---|---|
-| [docs/Home.md](docs/Home.md) | ドキュメントトップ・全体像・実装状況サマリ |
-| [docs/TargetUsers.md](docs/TargetUsers.md) | 想定する3タイプの作り手と読み進め方 |
-| [docs/GettingStarted.md](docs/GettingStarted.md) | クイックスタートガイド |
-| [docs/Architecture.md](docs/Architecture.md) | アーキテクチャ概要・フレームパイプライン・スレッドモデル |
-| [docs/WidgetSystem.md](docs/WidgetSystem.md) | ウィジェット/エレメントシステム・組み込みウィジェット一覧 |
-| [docs/UILayering.md](docs/UILayering.md) | UI層の3層パッケージ構成(ヘッドレス / デザインシステム)。設計方針であり未提供 |
-| [docs/Animation.md](docs/Animation.md) | AnimationController・Ticker・Curves によるアニメーション |
-| [docs/BuildPipeline.md](docs/BuildPipeline.md) | BuildOwner による Widget 差分更新の仕組み |
-| [docs/RenderObjects.md](docs/RenderObjects.md) | RenderObject ツリーのリファレンス |
-| [docs/OVRIntegration.md](docs/OVRIntegration.md) | OpenVR インテグレーションリファレンス |
-| [docs/Input.md](docs/Input.md) | アクション入力(コントローラーのボタン・トリガー・スティック) |
-| [docs/APIDesign.md](docs/APIDesign.md) | API 設計規約 |
-| [docs/DocumentationComments.md](docs/DocumentationComments.md) | ドキュメントコメント規約 |
-| [docs/Localization.md](docs/Localization.md) | ローカライゼーション方針(日本語デフォルト) |
+| [チュートリアル](docs/tutorials/Home.md) | 手を動かして、最初のオーバーレイを作る |
+| [ガイド](docs/guide/Home.md) | 探す・採用する・準備する・作る・困ったとき・配る・メンテナンスするの順に、目的の手順と仕組みを引く |
+| [リファレンス](docs/reference/Home.md) | 作例、制約、動作環境、用語、部品を引く |
+| [コントリビューター](docs/contributor/Home.md) | FloatSoda を一緒に育てるための理解・準備・貢献の手順 |
 
 コントリビュータ向けの規約はリポジトリルートにあります(公開サイトと Wiki には載りません)。
 
@@ -207,6 +197,10 @@ sequenceDiagram
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発・コントリビューション規約(ブランチ命名・namespace・テスト観点・PR運用) |
 | [REVIEW.md](REVIEW.md) | コードレビューの判断基準 |
 | [RELEASING.md](RELEASING.md) | リリース手順 |
+| [API_DESIGN.md](API_DESIGN.md) | API 設計の原則と Flutter parity |
+| [LOCALIZATION.md](LOCALIZATION.md) | ローカライゼーション方針(日本語を既定の言語にする) |
+| [DOCUMENTATION_COMMENTS.md](DOCUMENTATION_COMMENTS.md) | XML ドキュメントコメントの規約 |
+| [WRITING_DOCUMENTATION.md](WRITING_DOCUMENTATION.md) | docs の書き方と、変更ごとに直す docs を決める Documentation Impact Matrix |
 | [AGENTS.md](AGENTS.md) | コーディングエージェント向けの入口 |
 
 ## 開発ステータス
