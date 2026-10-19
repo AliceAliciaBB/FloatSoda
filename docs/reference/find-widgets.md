@@ -135,4 +135,4 @@ SteamVR 上のオーバーレイでポインターの座標が届くのは、ダ
 - Flutter の名前で探している: 名前が変わった部品がある。[Flutter の読み替え表](flutter-mapping.md)で、Flutter の名前から引く
 - 部品を組み合わせて作る: 表にない形の画面は、表の部品を入れ子にして作る。AI に書かせる手順は、ガイドの[AI に FloatSoda を書かせる](../guide/3-prepare/write-with-llm.md)にある
 
-自分で新しい部品を作る場合は、`StatelessWidget`、`StatefulWidget<T>`、`LeafRenderObjectWidget<T>`、`ParentDataWidget<T>` を継承します。
+自分で新しい部品を作る場合は、`StatelessWidget`、`StatefulWidget<T>`、`LeafRenderObjectWidget<T>`、`ParentDataWidget<T>` を継承します。
