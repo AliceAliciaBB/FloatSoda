@@ -14,6 +14,12 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>
   </ItemGroup>
 
+  <!-- Linux でテストを動かすためのネイティブライブラリ。SkiaSharp 3.x は Linux 用を同梱せず、
+       Topten.RichTextKit が持ち込む 2.88 系の libSkiaSharp.so は 3.x と互換がない。 -->
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.2" />
+  </ItemGroup>
+
   <ItemGroup>
     <Using Include="Xunit"/>
   </ItemGroup>
