@@ -4,6 +4,7 @@ import catppuccin from "@catppuccin/starlight";
 import mermaid from "astro-mermaid";
 import starlightLlmsTxt from "starlight-llms-txt";
 import {
+  LEGACY_PAGES,
   llmsCustomSets,
   llmsPageLinks,
   repoRoot,
@@ -16,24 +17,8 @@ import {
 export default defineConfig({
   site: siteUrl,
   // #219 の作り直しで消した旧ページの URL を、中身が移った新しいページへ送る(外部の古いリンクを切らないため)。
-  // リポジトリ直下に戻した規約(API_DESIGN.md など)はサイトに載らないので、それらを案内するページへ送る
-  redirects: {
-    "/apidesign": "/contributor/3-prepare/conventions/",
-    "/animation": "/guide/4-build/screen/add-animation/",
-    "/architecture": "/contributor/2-understand/frame-to-steamvr/",
-    "/buildpipeline": "/contributor/2-understand/framework-layer/",
-    "/documentationcomments": "/contributor/3-prepare/conventions/",
-    "/gettingstarted": "/tutorials/first-overlay/",
-    "/input": "/contributor/2-understand/framework-input/",
-    "/localization": "/contributor/3-prepare/conventions/",
-    "/ovrintegration": "/contributor/2-understand/ovr-layer/",
-    "/renderobjects": "/contributor/2-understand/framework-layer/",
-    "/targetusers": "/guide/1-discover/what-is-floatsoda/",
-    "/teststrategy": "/contributor/3-prepare/test-strategy/",
-    "/uilayering": "/contributor/2-understand/ui-layer/",
-    "/widgetsystem": "/reference/find-widgets/",
-    "/writingdocumentation": "/contributor/3-prepare/conventions/",
-  },
+  // 対応は docs-source.mjs の LEGACY_PAGES に1か所だけ書く
+  redirects: Object.fromEntries(Object.entries(LEGACY_PAGES).map(([slug, to]) => [`/${slug}`, to])),
   integrations: [
     // Starlight より前に置く(astro-mermaid の要件)。```mermaid をブラウザ側で描画する
     mermaid({ autoTheme: true }),

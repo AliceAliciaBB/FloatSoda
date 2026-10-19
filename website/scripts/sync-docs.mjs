@@ -24,6 +24,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   HOME,
+  LEGACY_PAGES,
   contentPathOf,
   docsDir,
   homeSummaries,
@@ -77,7 +78,10 @@ function rewriteLinks(line, selfDir) {
       }
     }
     // docs/ の外(../CONTRIBUTING.md など)や、docs/ 内の .md 以外はリポジトリの GitHub ページへ
-    return `[${text}](${repositoryUrl}/blob/${linkRef}/${resolved}${anchor}${title})`;
+    // ディレクトリは GitHub では /tree/ で開く(/blob/ だと 404 になる)
+    const full = path.join(repoRoot, resolved);
+    const kind = fs.existsSync(full) && fs.statSync(full).isDirectory() ? "tree" : "blob";
+    return `[${text}](${repositoryUrl}/${kind}/${linkRef}/${resolved.replace(/\/$/, "")}${anchor}${title})`;
   });
 }
 
@@ -141,12 +145,40 @@ function transform(doc, source) {
     }
     body.push(rewriteLinks(line, doc.dir));
   }
+  stripComments(body);
 
   if (title === undefined) {
     throw new Error(`docs/${doc.rel}.md: 先頭の H1(ページタイトル)が見つかりません`);
   }
   const text = `${body.join("\n").replace(/^\n+/, "").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;
   return { title, description: summaries.get(doc.rel) ?? describe(text), body: text };
+}
+
+/**
+ * コードフェンスの外の HTML コメント(<!-- ... -->)を除く。docs の ※要確認 のような執筆用の印を、
+ * サイトの本文と LLM 向けの Markdown(llms-*.txt を含む)に出さないため。複数行にまたがるコメントも除く
+ */
+function stripComments(lines) {
+  const result = [];
+  let inFence = false;
+  let buffer = [];
+  const flush = () => {
+    if (buffer.length === 0) return;
+    result.push(...buffer.join("\n").replace(/<!--[\s\S]*?-->/g, "").split("\n"));
+    buffer = [];
+  };
+  for (const line of lines) {
+    if (FENCE.test(line)) {
+      if (!inFence) flush();
+      inFence = !inFence;
+      result.push(line);
+      continue;
+    }
+    if (inFence) result.push(line);
+    else buffer.push(line);
+  }
+  flush();
+  lines.splice(0, lines.length, ...result);
 }
 
 function frontmatter(doc, page) {
@@ -234,6 +266,12 @@ function main() {
     // LLM 向けの素の Markdown。サイト内リンクは絶対 URL にして、単体で読んでも辿れるようにする
     const raw = `# ${page.title}\n\n${page.body}`.replace(/\]\(\//g, `](${siteUrl}/`);
     writeFile(path.join(publicDir, `${slug}.md`), raw);
+  }
+  // 消した旧ページの素の Markdown(/<旧スラッグ>.md)には、移動先を知らせる短い Markdown を置く。
+  // エージェントやブックマークが古い .md の URL を取りに来ても、新しいページへ辿れるようにする
+  for (const [slug, to] of Object.entries(LEGACY_PAGES)) {
+    const target = `${siteUrl}${to.replace(/\/$/, "")}.md`;
+    writeFile(path.join(publicDir, `${slug}.md`), `# このページは移動しました\n\n内容は [${target}](${target}) にあります。\n`);
   }
   writeFile(landingFile, `${JSON.stringify(landingData(), null, 2)}\n`);
   console.log(`sync-docs: ${docs.length} pages generated from docs/`);

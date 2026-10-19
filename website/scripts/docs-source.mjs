@@ -19,6 +19,29 @@ export const repoRoot = path.dirname(websiteDir);
 export const docsDir = path.join(repoRoot, "docs");
 
 export const siteUrl = "https://floatsoda.sumx21t.com";
+
+/**
+ * #219 の作り直しで消した旧ページのスラッグ → 中身が移った新しいページのサイト内パス。
+ * astro.config.mjs のリダイレクトと、sync-docs.mjs が書く旧 /<slug>.md の移動の案内の両方が使う。
+ * リポジトリ直下に戻した規約(API_DESIGN.md など)はサイトに載らないので、それらを案内するページへ送る
+ */
+export const LEGACY_PAGES = {
+  apidesign: "/contributor/3-prepare/conventions/",
+  animation: "/guide/4-build/screen/add-animation/",
+  architecture: "/contributor/2-understand/frame-to-steamvr/",
+  buildpipeline: "/contributor/2-understand/framework-layer/",
+  documentationcomments: "/contributor/3-prepare/conventions/",
+  gettingstarted: "/tutorials/first-overlay/",
+  input: "/contributor/2-understand/framework-input/",
+  localization: "/contributor/3-prepare/conventions/",
+  ovrintegration: "/contributor/2-understand/ovr-layer/",
+  renderobjects: "/contributor/2-understand/framework-layer/",
+  targetusers: "/guide/1-discover/what-is-floatsoda/",
+  teststrategy: "/contributor/3-prepare/test-strategy/",
+  uilayering: "/contributor/2-understand/ui-layer/",
+  widgetsystem: "/reference/find-widgets/",
+  writingdocumentation: "/contributor/3-prepare/conventions/",
+};
 export const repositoryUrl = "https://github.com/sumx21t-3310/FloatSoda";
 
 /** 各階層の入口ページ。docs/Home.md はドキュメント全体、docs/<dir>/Home.md はその系統の入口 */
@@ -297,12 +320,44 @@ export function sidebarItems(items) {
  * label がそのままファイル名になるので ASCII の key を使い、人間向けの名前は description に書く
  */
 export function llmsCustomSets() {
-  return sidebarGroups().map((group) => ({
-    label: group.key,
-    description: `${group.label}のページ(${group.rels.map((rel) => rel.split("/").pop()).join(" / ")})`,
-    paths: group.rels.map(slugOf),
-  }));
+  const sets = [];
+  for (const group of sidebarGroups()) {
+    const size = group.rels.reduce((sum, rel) => sum + readDoc(rel).length, 0);
+    if (size <= LLMS_SET_LIMIT) {
+      sets.push(llmsSet(group.key, group.label, group.rels));
+      continue;
+    }
+    // 大きすぎるグループは、タブの中のサブディレクトリ(docs/<tab>/<dir>/)ごとに分ける。入口(Home)は先頭の組に入れる
+    const parts = new Map();
+    for (const rel of group.rels) {
+      const segments = rel.split("/");
+      const part = segments.length > 2 ? segments[1] : "";
+      if (!parts.has(part)) parts.set(part, []);
+      parts.get(part).push(rel);
+    }
+    const home = parts.get("") ?? [];
+    parts.delete("");
+    let first = true;
+    for (const [part, rels] of parts) {
+      const label = DIR_LABELS.get(`${group.key}/${part}`) ?? part;
+      sets.push(llmsSet(`${group.key}-${part}`, `${group.label}(${label})`, first ? [...home, ...rels] : rels));
+      first = false;
+    }
+  }
+  return sets;
 }
+
+/** customSets の1件を作る */
+function llmsSet(key, label, rels) {
+  return {
+    label: key,
+    description: `${label}のページ(${rels.map((rel) => rel.split("/").pop()).join(" / ")})`,
+    paths: rels.map(slugOf),
+  };
+}
+
+/** customSets の1ファイルの目安の上限(文字数)。取得上限が 10 万文字前後の読ませ先でも、1 回で読めるようにする */
+const LLMS_SET_LIMIT = 70000;
 
 /**
  * llms.txt に載せる全ページの索引。各ページの素の Markdown(/<slug>.md)へのリンクと一行説明。
