@@ -6,7 +6,7 @@
 
 ## 作例の動かし方
 
-作例は [FloatSoda のリポジトリ](https://github.com/sumx21t-3310/FloatSoda)に入っています。リポジトリを clone し、SteamVR を起動してから、リポジトリのルートで次のコマンドを実行します。`<名前>` を、下の表の作例の名前(`FloatSoda.Samples.` に続く部分)に置き換えます。SteamVR が要らない作例は、[動作環境](requirements.md#steamvr-が要らない場面)で確かめられます。
+作例は [FloatSoda のリポジトリ](https://github.com/sumx21t-3310/FloatSoda)に入っています。リポジトリを clone し、SteamVR を起動してから、リポジトリのルートで次のコマンドを実行します。`<名前>` を、下の表の作例の名前(`FloatSoda.Samples.` に続く部分)に置き換えます。`PaintingSample` のように、画面を PNG に書き出すだけの作例は、SteamVR を起動しなくても動きます。SteamVR が要らない場面は、[動作環境](requirements.md#steamvr-が要らない場面)で確かめられます。
 
 ```powershell
 dotnet run --project samples/FloatSoda.Samples.<名前>
