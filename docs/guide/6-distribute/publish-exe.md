@@ -27,18 +27,6 @@
 
 ## 手順1: 配布用にビルドする
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: プロジェクト
-- このページが渡すもの: `dotnet publish` のコマンド1つと、出力先のフォルダー
-- 読み手がすること: コマンドを実行する
-- できた?: 出力先のフォルダーに exe と必要なファイルが並ぶ
-- 次へ進む先: 手順2
-- 【未決】自己完結の公開とランタイム依存の公開の、どちらを手順にするか。選ばなかったほうは、選択肢として添えるか省くか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 プロジェクトのフォルダーで、次のコマンドを実行します。
 
 ```powershell
@@ -53,7 +41,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:DebugType=none -p:
 - .NET のランタイム(`coreclr.dll`、`hostfxr.dll` など)
 - ネイティブライブラリ(`openvr_api.dll`、`glfw3.dll`、`libSkiaSharp.dll`、`libHarfBuzzSharp.dll`)
 
-SkiaSharp と HarfBuzz のネイティブライブラリには、デバッグ用の `.pdb` ファイルが付いてきて、大きさが配布物の大半を占めます。配るときは不要なので、削除します。
+上のコマンドの `-p:DebugType=none` は、自分のプロジェクトの `.pdb` を作らない指定です。SkiaSharp と HarfBuzz のネイティブライブラリ(`libSkiaSharp.pdb`、`libHarfBuzzSharp.pdb`)には、デバッグ用の `.pdb` が付いてきて、出力全体の約半分の大きさを占めます。配るときは使わないので、削除します。
 
 ```powershell
 Remove-Item publish\*.pdb
@@ -63,9 +51,8 @@ Remove-Item publish\*.pdb
 
 **できた?** `publish` フォルダーに、`.exe` と必要なファイルが並んでいる。
 
+<!-- ※要確認: .pdb の大きさの割合は、samples/FloatSoda.Samples.GettingStarted を上のコマンドで publish した出力で測った(.pdb 2つで約 105 MB、出力全体で約 210 MB)。依存ライブラリの版で変わる。出力に .pdb が残ることを確かめた後で削除しても exe が動くかは、実機で確かめていない -->
 <!-- ※要確認: 上の publish コマンドで exe とネイティブライブラリが出力されることは、samples/FloatSoda.Samples.GettingStarted で確かめた(ビルドと出力のファイル一覧まで)。出力した exe を実際に起動して、オーバーレイが出ることは確かめていない。単一ファイルの公開(PublishSingleFile)は、確かめていないため手順に含めない -->
-
-</details>
 
 ## 手順2: 開発環境のない PC で動かして確かめる
 

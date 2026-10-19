@@ -98,18 +98,6 @@ logger.LogInformation("起動します");
 
 ## 手順3: サービスを登録して、画面で使う
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 画面のウィジェット
-- このページが渡すもの: `builder.Services` への登録と、`ServiceProvider` ウィジェットで包んでから `context.GetRequiredService<T>()` で取り出す流れ
-- 読み手がすること: サービスを登録し、画面で取り出す
-- できた?: 画面にサービスの値が出る
-- 次へ進む先: 手順4
-- 【未決】`ServiceProvider` で包む手順を毎回書かせる形のままにするか、FloatSoda 側に自動挿入を求める Issue を立てるか。後者は読み手ではなく開発側の判断
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 自分のクラスは、`builder.Services` に登録します。画面のウィジェットから取り出すには、ウィンドウの `Child` を `ServiceProvider` ウィジェットで包んで、`IServiceProvider` を渡します。
 
 ```csharp
@@ -162,9 +150,7 @@ app.CreateWindow(new DashboardWindow
 <details>
 <summary>できなかったら</summary>
 
-`ServiceScopeが祖先に見つかりません。` というメッセージで例外が出るときは、`GetRequiredService<T>()` を呼ぶウィジェットが、`ServiceProvider` の子孫に置かれているかを確かめます。サービスが登録されていないという例外のときは、`builder.Services.Add...` の行があるかを確かめます。
-
-</details>
+`ServiceScopeが祖先に見つかりません。` というメッセージで例外が出るときは、`GetRequiredService<T>()` を呼ぶウィジェットが、`ServiceProvider` ウィジェットの子孫に置かれているかを確かめます。メッセージにある `ServiceScope` は、この `ServiceProvider` を指しています(文言と型名が食い違っています)。サービスが登録されていないという例外のときは、`builder.Services.Add...` の行があるかを確かめます。
 
 </details>
 
@@ -222,9 +208,9 @@ public record StatusView : StatelessWidget
 
 別のスレッドから `SetState()` を呼ぶ書き方は避けます。この手順の方法なら、`Task` の完了は、ウィジェットのツリーを処理するメインスレッドに戻されて、`TaskBuilder<T>` が受け取ります。この手順で扱うのは、1回きりの結果の反映です。値を何度も更新し続ける方法は、ここでは扱いません。
 
-<!-- ※要確認: 別スレッドから SetState() を呼んで安全か。BuildOwner の dirty リストが排他制御されていないことをコードで読んだ。実行して確かめる -->
+<!-- ※要確認: 別スレッドから SetState() を呼んで安全か。BuildOwner の dirty リストが排他制御されていないことをコードで読んだ。実行して確かめる。なお、TaskBuilder<T> が Task の完了を受け取る処理は、BuildOwner の TaskScheduler 経由でメインスレッドの BuildScope の先頭で実行されることを、BuildOwner.cs と TaskBuilder.cs で確かめた -->
 
-**できた?** 裏の処理が終わるまでは `読み込み中`、終わったあとは `完了しました` と表示されれば、手順4は完了です。`Worker` は起動から3秒ほどで処理を終えます。
+**できた?** `Worker` の処理が終わるまでは `読み込み中`、終わったあとは `完了しました` と表示されれば、手順4は完了です。`Worker` は、動き出してから3秒後に処理を終えます。画面が出る前に処理が終わっていれば、`読み込み中` を経ずに `完了しました` が出ることがあります。
 
 <details>
 <summary>できなかったら</summary>

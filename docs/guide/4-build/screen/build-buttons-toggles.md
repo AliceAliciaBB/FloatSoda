@@ -121,19 +121,7 @@ public class ToggleButtonState : State<ToggleButton>
 
 ## 手順3: 押せる範囲を決める
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 余白が多いボタン
-- このページが渡すもの: `Behaviour = HitTestBehaviour.Opaque` の意味と、押せない範囲ができる理由
-- 読み手がすること: 余白の部分を押しても反応するように指定する
-- できた?: ボタンの余白を押しても反応する
-- 次へ進む先: 「結果を確かめる」
-- 【未決】ドラッグ(`OnPanUpdate`)もこのページで扱うか。見本の `DragBoxWidget.cs` はあるが、読み手の目的は「ボタンやトグル」
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-`GestureDetector` は、既定では、色や文字のように描かれている部分だけが押せます。余白だけの部分は、押しても反応しません。余白を含む領域全体で反応させるには、`Behaviour = HitTestBehaviour.Opaque` を指定します。
+`GestureDetector` の `Behaviour` の既定は `HitTestBehaviour.DeferToChild` で、子が押された位置を受け取れるときだけ反応します。`ColoredBox` と `Text` は、自分の範囲全体で押された位置を受け取ります。`Padding` や `SizedBox` は受け取らないので、これらの余白だけが残る位置は、押しても反応しません。余白を含む領域全体で反応させるには、`Behaviour = HitTestBehaviour.Opaque` を指定します。
 
 ```csharp
 new GestureDetector
@@ -153,8 +141,6 @@ new GestureDetector
 **できた?** 文字の周りの余白を押しても、押した回数が増えれば、手順3は完了です。
 
 ボタンを押したまま動かすドラッグは、`OnPanUpdate` で受け取ります。コードは[サンプルの DragBoxWidget.cs](../../../../samples/FloatSoda.Samples.OverlayApp/DragBoxWidget.cs) にあります。ホバーや生のポインターイベントが要るときは、`Listener` と `PointerRegion` を使います。
-
-</details>
 
 ## 結果を確かめる
 

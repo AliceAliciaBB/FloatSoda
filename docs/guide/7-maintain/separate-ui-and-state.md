@@ -77,17 +77,6 @@ public sealed class CounterModel : INotifyPropertyChanged
 
 ## 画面の外の状態を、画面から取り出す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 外に出した状態
-- このページが渡すもの: `ServiceProvider` と `InheritedWidget` で取り出す2つの手段。「Generic Host の仕組みを使う」へのリンク
-- 読み手がすること: 自分の物に合う手段を選ぶ
-- 次へ進む先: 次の節
-- 【未決】選択肢を並べるだけにするか、`ServiceProvider` を主にして `InheritedWidget` は一言触れるだけにするか。手順書ではなく解説なので、並べて違いを説明する案で骨組みを作った
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 外に置いた状態を画面から取り出す手段は、2 つあります。違いは、取り出すものの性質です。
 
 | 手段 | 向いているもの | 値が変わったときの動き |
@@ -95,7 +84,7 @@ public sealed class CounterModel : INotifyPropertyChanged
 | `ServiceProvider` | アプリの間ずっと使うオブジェクト(通信、保存、状態を持つクラス) | 取り出しただけでは画面は変わらない。`ListenableBuilder` などで変更通知を受ける |
 | `InheritedWidget` | 画面の上から下へ渡す値(設定、見た目の指定など) | 値が変わると、その値に依存する子孫が作り直される |
 
-`ServiceProvider` は、画面のルートを包み、`IServiceProvider` を子孫へ渡します。子孫は `context.GetRequiredService<T>()` で取り出します。取り出した状態の変更は、`ListenableBuilder` で受け取ります。`ListenableBuilder` は、`INotifyPropertyChanged` の通知のたびに、直下のウィジェットだけを作り直します。
+`ServiceProvider` は、画面のルートを包み、`IServiceProvider` を子孫へ渡します。子孫は `context.GetRequiredService<T>()` で取り出します。取り出した状態の変更は、`ListenableBuilder` で受け取ります。`ListenableBuilder` は、`INotifyPropertyChanged` の通知のたびに、自分自身を作り直し、`ChildBuilder` で新しいウィジェットを作ります。`ChildBuilder` が返したウィジェットから下は、通常の作り直しと同じ規則で更新されます。
 
 ```csharp
 app.CreateWindow(new DashboardWindow
@@ -129,13 +118,11 @@ public record CounterScreen : StatelessWidget
 
 `CounterModel` は、起動のコードで `builder.Services.AddSingleton<CounterModel>()` として登録します。登録の手順は [Generic Host の仕組みを使う](../4-build/mechanics/use-generic-host.md) にあります。
 
-`ListenableBuilder` は、変更通知を、ウィジェットがマウントされたスレッド(通常は FloatSoda のメインループ)から出すことを前提にしています。バックグラウンドのスレッドで状態を更新するときは、メインループに処理を戻してから `PropertyChanged` を起こします。
+`ListenableBuilder` は、変更通知を、ウィジェットがマウントされたスレッド(通常は FloatSoda のメインループ)から出すことを前提にしています。別のスレッドから `PropertyChanged` を起こすと、`InvalidOperationException` になります。バックグラウンドのスレッドで状態を更新するときは、メインループに処理を戻してから `PropertyChanged` を起こします。
 
-`InheritedWidget` は、自作の `record` で作ります。子孫は `context.DependOnInheritedWidgetOfExactType<T>()` で取り出し、その値に依存します。値が変わった(`UpdateShouldNotify` が `true` を返した)ときだけ、依存した子孫が作り直されます。
+`InheritedWidget` は、自作の `record` で作ります。子孫は `context.DependOnInheritedWidgetOfExactType<T>()` で取り出し、その値に依存します。`InheritedWidget` の中の値を書き換えても、通知は起きません。親が作り直されて、新しい `InheritedWidget` が渡され、`UpdateShouldNotify` が `true` を返したときだけ、依存した子孫が作り直されます。
 
 <!-- ※要確認: 上のコードは、ServiceProvider / ListenableBuilder / StatelessWidget の公開 API の定義を読んで書いた。ビルドして動かして確かめていない。ServiceProvider で包んだルートを CreateWindow の Child に渡す書き方は、src/ にその例がなく、実行して確かめていない。InheritedWidget を自作する例は、ここには載せていない -->
-
-</details>
 
 ## 分けると、HMD を被らずに確かめられる
 
