@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Changed (Breaking)
+
+- `Container` の `Decoration` に `Border` があるとき、ボーダーの太さを `Padding` に加算するようにした。`Padding` を省略しても、子がボーダーの内側に収まる。Flutter の `Container` と同じ挙動で、`Border` 付きの `Container` では子のレイアウト領域がボーダーの太さぶん狭くなる(#267)
+
 ## [0.4.0] - 2026-09-22
 
 ### Added
