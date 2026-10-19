@@ -33,7 +33,7 @@
 各項目の理由は次のとおりです。
 
 - 窓の種類: ポインタの座標が届くのは `DashboardWindow` だけです。`WorldSpaceWindow` と `DeviceTrackedWindow` では、`GestureDetector` のコールバックが呼ばれません(追跡: #182)。デスクトップの窓で反応しても、ダッシュボードで反応する証明にはなりません。
-- 押す範囲: `Behaviour` の既定は `HitTestBehaviour.DeferToChild` で、子がヒットした範囲でだけ反応します。空白を含む領域全体で反応させるには、`Behaviour = HitTestBehaviour.Opaque` を指定します。
+- 押す範囲: `Behaviour` の既定は `HitTestBehaviour.DeferToChild` で、子が押された位置を受け取れる範囲でだけ反応します。`ColoredBox` と `Text` は自分の範囲全体で受け取りますが、`Padding` や `SizedBox` の余白は受け取りません。空白を含む領域全体で反応させるには、`Behaviour = HitTestBehaviour.Opaque` を指定します。
 - 重なり: `Stack` などで重ねたウィジェットの上側に、`AbsorbPointer` や `Opaque` の `GestureDetector` があると、下側に入力が届きません。入力を素通りさせたい上側のウィジェットは、`IgnorePointer` で包みます。
 - `OnTap`: 押した時点ではなく、離した時点でタップが成立して呼ばれます。押したまま 18 ピクセル(`GestureConstants.TouchSlop`)を超えて動かすと、タップは成立せず、`OnTap` は呼ばれません。そのとき `OnPanUpdate` などを指定していれば、ドラッグとして扱われます。
 
@@ -86,31 +86,29 @@ SetState(() => _count++);
 <details>
 <summary>できなかったら</summary>
 
-`SetState()` を呼んでいるのに変わらないときは、値を書き換えた先が、画面に表示している値と同じ場所かを確かめます。ウィジェットは作り直されるたびに新しいインスタンスに置き換わるため、ウィジェットのフィールドに持たせた値は引き継がれません。変わる値は `State` に持たせます。それでも変わらないときは、[それでも直らないとき](#それでも直らないとき) へ進みます。
+`SetState()` を呼んでいるのに変わらないときは、値を書き換えた先が、画面に表示している値と同じ場所かを確かめます。ウィジェットは、作り直しで新しいインスタンスに置き換わることがあり、そのときウィジェットのフィールドに持たせた値は引き継がれません。変わる値は `State` に持たせます。それでも変わらないときは、[それでも直らないとき](#それでも直らないとき) へ進みます。
 
 </details>
 
 ## 文字や画像が出ない
-
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 文字や画像が出ない画面。チュートリアルの段2の「文字が出ない」からここへ来る
-- このページが渡すもの: 確かめる順番(色が背景と同じでないか、大きさ、画像の読み込みが終わっているか)。画像は `Paint.Image`、アイコンは `Paint.Icon` を使うこと
-- 読み手がすること: 順に確かめる
-- できた?: 文字や画像が出る
-- 次へ進む先: 「それでも直らないとき」
-- 【未決】文字が出ない原因の節を、このページに置くか、「見た目を整える」の「うまくいかないとき」に置くか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
 文字や画像が出ないときは、次の順に確かめます。
 
 1. **文字の色が背景と同じではないか。** `Text` の既定の色は黒です(`TextStyle` の `Color` を省略したとき)。背景も暗い色だと、文字が見えません。`Color` を明るい色にして試します。
 2. **文字の大きさが小さすぎないか。** `TextStyle` の `FontSize` の既定は 30 です。0 以下の値を入れると、描かれないのではなく `ArgumentOutOfRangeException` が出ます。
 3. **ウィンドウの `Title` が重複していないか。** 同じ `Title` で 2 つのウィンドウを作ると、後から作ったウィンドウは描画されません。`Title` はウィンドウごとに別の値にします。
-4. **画像は、読み込みが終わるまで何も出ないことを踏まえているか。** `Image` の読み込みは非同期です。`LoadingBuilder` と `ErrorBuilder` を指定しなければ、読み込み中も、読み込みに失敗したときも、何も表示されません。失敗してもアプリは停止しません。`ErrorBuilder` に文字を返すウィジェットを渡すと、失敗に気づけます。
+4. **画像は、読み込みが終わるまで何も出ないことを踏まえているか。** `Image` の読み込みは非同期です。`LoadingBuilder` と `ErrorBuilder` を指定しなければ、読み込み中も、読み込みに失敗したときも、何も表示されません。失敗してもアプリは停止しません。`ErrorBuilder` を指定すると、失敗に気づけます。
 5. **画像とアイコンに、`FloatSoda.Widgets.Paint` 名前空間の `Image` と `Icon` を使っているか。** 画像は `Image` に `FileImageProvider` を渡して表示します。
+
+`ErrorBuilder` には、エラーを受け取ってウィジェットを返す関数(`Func<IBuildContext, Exception, Widget>`)を渡します。次の例は、読み込みに失敗したときに、エラーの文を `Text` で出します。
+
+```csharp
+new Image
+{
+    Provider = new FileImageProvider("photo.png"),
+    ErrorBuilder = (context, error) => new Text($"読み込めません: {error.Message}"),
+}
+```
 
 **できた?** 文字や画像が出る。
 
@@ -122,8 +120,6 @@ SetState(() => _count++);
 </details>
 
 <!-- ※要確認: 文字が出ない原因として、Text の既定色(黒)と背景色の一致、FontSize 0、Title 重複を挙げた。いずれもコード(TextStyle の既定値、CHANGELOG、FloatSodaApp.CreateWindow の _bindings.TryAdd)を読んで書いたもので、samples/FloatSoda.Samples.Text で再現して確かめていない。フォント未解決など、ほかの原因は確かめていない -->
-
-</details>
 
 ## 表示の大きさが更新されない
 

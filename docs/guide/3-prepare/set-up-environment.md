@@ -2,7 +2,7 @@
 
 # 開発環境を用意する
 
-この手順で、自分の PC に .NET の SDK を入れ、FloatSoda を足した空のコンソールアプリを作って、SteamVR のダッシュボードに色の四角を出せます。手順は5つです。終わると、FloatSoda を足し、ダッシュボードに色の四角を出すコンソールアプリが手元にそろいます。チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)の最初に要る「空のコンソールアプリ」は、手順2と手順3で作るものと同じです。
+この手順で、自分の PC に .NET の SDK を入れ、FloatSoda を足したコンソールアプリを作って、SteamVR のダッシュボードに色の四角を出せます。手順は5つです。終わると、FloatSoda を足し、ダッシュボードに色の四角を出すコンソールアプリが手元にそろいます。チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)の最初に要る「空のコンソールアプリ」は、手順2と手順3で作るものと同じです。
 
 エディター(IDE)は指定しません。好きなものを使ってください。必要な設定も、この手順にはありません。
 
@@ -53,19 +53,7 @@ cd MyOverlayApp
 
 ## 手順3: FloatSoda を足す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: コンソールアプリ
-- このページが渡すもの: FloatSoda を足す方法を1つ(NuGet)。プロジェクト参照の方法は、コード例を脇に置くだけ
-- 読み手がすること: コマンドを実行する
-- できた?: プロジェクトファイルに FloatSoda の参照が入った
-- 次へ進む先: 手順4
-- 【未決】NuGet 参照とプロジェクト参照を併記するか。手順書は1つに決めるが、公開版が古いときの扱いが未確認
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-`MyOverlayApp` フォルダーで、NuGet から FloatSoda を足します。
+`MyOverlayApp` フォルダーで、NuGet から FloatSoda を足す。
 
 ```powershell
 dotnet add package FloatSoda
@@ -76,14 +64,12 @@ dotnet add package FloatSoda
 <details>
 <summary>できなかったら</summary>
 
-「パッケージが見つかりません」と出たときは、ネットワークと NuGet の接続を確かめてください。FloatSoda のリポジトリを取得して使うときは、`dotnet add reference <リポジトリ>/src/FloatSoda/FloatSoda.csproj` で、プロジェクト参照として足せます。
+「パッケージが見つかりません」と出たときは、ネットワークと NuGet のパッケージソース(`dotnet nuget list source` で確かめられる)への接続を確かめてください。FloatSoda のリポジトリを取得して使うときは、`dotnet add reference <リポジトリ>/src/FloatSoda/FloatSoda.csproj` で、プロジェクト参照として足せます。この場合、使うのは取得したリポジトリの版の API です。公開されている版と API が違うことがあるので、チュートリアルのコードがビルドできないときは、[CHANGELOG.md](../../../CHANGELOG.md) で変更を確かめてください。
 
 </details>
 
 <!-- ※要確認: `dotnet add package FloatSoda` が通ること。PackageId は src/FloatSoda/FloatSoda.csproj の FloatSoda で、CHANGELOG の 0.4.0 が公開済みの版。確かめ方: nuget.org で FloatSoda のページを開き、新規プロジェクトで実行する -->
 <!-- ※要確認: プロジェクト参照の手順が今も有効か。確かめ方: リポジトリを取得して dotnet add reference を実行し、dotnet build を通す -->
-
-</details>
 
 ## 手順4: ビルドして確かめる
 
@@ -104,40 +90,7 @@ dotnet build
 
 ## 手順5: SteamVR で色の四角を出す
 
-SteamVR を起動してから、`Program.cs` を次のコードに書き換える。
-
-```csharp
-using FloatSoda;
-using FloatSoda.Widgets;
-using FloatSoda.Widgets.Layout;
-using FloatSoda.Widgets.Paint;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using SkiaSharp;
-
-var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddFloatSoda();
-
-using var host = builder.Build();
-var app = host.Services.GetRequiredService<FloatSodaApp>();
-
-Widget root = new Align
-{
-    Child = new SizedBox
-    {
-        Width = 100,
-        Height = 100,
-        Child = new ColoredBox
-        {
-            Color = SKColors.Tomato
-        }
-    }
-};
-
-app.CreateWindow(new DashboardWindow { Title = "MyDashboard", Child = root });
-
-await host.RunAsync();
-```
+SteamVR を起動してから、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)の[「1. オーバーレイを SteamVR に出す」](../../tutorials/first-overlay.md#1-オーバーレイを-steamvr-に出す)にあるコードを、このアプリの `Program.cs` に貼る。コードの意味は、チュートリアルで説明している。
 
 SteamVR を起動したまま、次を実行する。
 
@@ -147,7 +100,7 @@ dotnet run
 
 SteamVR のダッシュボードを開く。
 
-**できた?** ダッシュボードに、トマト色(赤みのあるだいだい色)の四角が出た。
+**できた?** ダッシュボードに、青い四角が出た。
 
 <details>
 <summary>できなかったら</summary>
@@ -156,6 +109,7 @@ SteamVR のダッシュボードを開く。
 
 </details>
 
-<!-- ※要確認: 手順5の結果(ダッシュボードに四角が出る)。HMD と SteamVR でしか確かめられない。確かめ方: 空のコンソールアプリで上のコードを実行し、ダッシュボードを開く。コードは README.md の最小構成と同じ -->
+<!-- ※要確認: 手順5の結果(ダッシュボードに青い四角が出る)。HMD と SteamVR でしか確かめられない。確かめ方: 空のコンソールアプリにチュートリアル段1のコードを貼って実行し、ダッシュボードを開く -->
 
-最後まで進めたら、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)へ進んでください。リポジトリを取得した人は、リポジトリのルートに移動して `dotnet run --project samples/FloatSoda.Samples.GettingStarted` を実行すると、同じ四角を出す作例も動かせます。
+最後まで進めたら、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)へ進んでください。リポジトリを取得した人は、リポジトリのルートに移動して `dotnet run --project samples/FloatSoda.Samples.GettingStarted` を実行すると、色の四角を出す作例も動かせます。
+

@@ -14,41 +14,24 @@ FloatSoda で書いた画面は、SkiaSharp で描かれ、OpenGL を経て、Op
 
 ## UI がすべてコードであること
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: Unity か、ほかの UI の作り方の経験
-- このページが渡すもの: シーンとプレハブがないこと、コードだけで UI が決まることの意味(diff、レビュー、検索、AI の生成がそのままできる)。宣言的な書き方の短い例
-- 読み手がすること: 自分の作り方(Unity、コードのみ、AI 任せ)と照らす
-- 次へ進む先: 「向いている人」。ほかの作り方との違いは「ほかの作り方と比べる」
-- 【未決】宣言的な書き方の例を何行にするか。チュートリアルのコードとの重複を避けるため、1つのウィジェットの入れ子だけにする案
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 FloatSoda の UI は、すべて C# のコードで決まります。シーンもプレハブも持ちません。そのため、変更の差分を読む、レビューする、検索する、AI に生成させる、といった作業がコードの扱いのままできます。
 
-書き方は宣言的です。画面を「どんな部品がどう入れ子になっているか」で書きます。たとえば、中央に 100 × 100 の色の四角を出す画面は、次のとおりです。
+書き方は宣言的です。画面を「どんな部品がどう入れ子になっているか」で書きます。たとえば、100 × 100 の色の四角を出す画面は、次のとおりです。
 
 ```csharp
-Widget root = new Align
+Widget root = new SizedBox
 {
-    Child = new SizedBox
-    {
-        Width = 100,
-        Height = 100,
-        Child = new ColoredBox
-        {
-            Color = SKColors.Tomato
-        }
-    }
+    Width = 100,
+    Height = 100,
+    Child = new ColoredBox { Color = SKColors.Tomato }
 };
 ```
 
-`Align` が子を中央に置き、`SizedBox` が大きさを決め、`ColoredBox` が色を塗ります。Unity の経験がある人は、シーンの Hierarchy に当たるものがコードの入れ子になった、と読んでください。Flutter や React を触ってきた人には、見慣れた形です。
+`SizedBox` が大きさを決め、`ColoredBox` が色を塗ります。`SizedBox` の `Child` に `ColoredBox` を入れる、という入れ子です。Unity の経験がある人は、シーンの Hierarchy に当たるものがコードの入れ子になった、と読んでください。Flutter や React を触ってきた人には、見慣れた形です。
+
+入れ子を重ねた書き方は、C# の読み方を[C# がほぼ初めての人へ](../3-prepare/csharp-primer.md)で、動くコードをチュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)で説明しています。
 
 ほかの作り方との違いは、[ほかの作り方と比べる](../2-adopt/compare-approaches.md)で説明しています。
-
-</details>
 
 ## 向いている人
 
@@ -79,3 +62,4 @@ FloatSoda が想定する作り手は、3タイプです。
 FloatSoda は Alpha の段階にあり、API は予告なく変わります。変更の内容は、リリースごとに CHANGELOG に書かれます。使うバージョンを決めたら、更新の前に [CHANGELOG.md](../../../CHANGELOG.md) で、今の版から更新先の版までの変更を読んでください。
 
 ライセンスは MIT です。使うかどうかを決めるときは、[ほかの作り方と比べる](../2-adopt/compare-approaches.md)で引き受けることを確かめてください。
+
