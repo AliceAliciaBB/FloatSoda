@@ -2,77 +2,100 @@
 
 # uGUI から来た人へ
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+uGUI は「オブジェクトを置いて、スクリプトから書き換える」作り方で、FloatSoda は「状態を変えて、画面を作り直す」作り方です。このページは、uGUI の語彙で FloatSoda の考え方を説明し、最初のコードを書くときの食い違いを減らします。シーン、プレハブ、Inspector、`Update` を知っていて、C# の基本が書ける人を読み手にしています。
 
-## 設計シート
+## uGUI と FloatSoda の考え方の違い
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / Unity でワールドやギミックを作れる人(Booth クリエイター)。uGUI は知っているが、宣言的な UI は初めて / 何を知っている / シーン、プレハブ、Inspector、Update の考え方を知っている。C# の基本は書ける / 読んで何をしたい / uGUI の考え方を、FloatSoda の考え方に置き換えて理解し、最初のコードを書けるようになりたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: uGUI の考え方(配置して書き換える)から、FloatSoda の考え方(状態を変えて作り直す)への切り替えを説明する
-- 依頼の解釈: 対応表は uGUI の概念を起点に、FloatSoda の対応する概念と、違う点を並べる。Flutter の読み替えは、リファレンスの「Flutter の読み替え表」に任せる
-- テーマファイル: explanation
-- Why(目的): uGUI の癖(オブジェクトを探して値を書き換える)で FloatSoda を書いて詰まる手戻りを防ぐ
-- What(目標・結果): シーン、Hierarchy、Inspector、Update などの概念が、FloatSoda でどうなるかを言える。「状態を変える」が基本だと言える
-- How(手段): 概念ごとの対応表に、考え方の切り替えを説明する節を添える。uGUI の語彙で書く(他分野の比喩は使わない)
-- 要素:
-  - FloatSoda にシーンとプレハブはない。UI は C# のコードで宣言する(AGENTS.md の「Target Users」の3番目)
-  - Hierarchy に当たるのは、コードの上のウィジェットの木である(再編前の `docs/TargetUsers.md`)
-  - uGUI は、オブジェクトを置き、スクリプトから書き換える(`text.text = ...`)。FloatSoda は、状態を変えると UI が作り直される(`SetState`)(再編前の `docs/TargetUsers.md`)
-  - Inspector で設定する値は、ウィジェットのプロパティとして、オブジェクト初期化子で書く(`new SizedBox { Width = 100, Height = 100 }`)(README.md の「最小構成のコード」)
-  - Canvas に当たるのは、ウィンドウ(`DashboardWindow`、`WorldSpaceWindow`、`DeviceTrackedWindow`)である。※要確認(対応の妥当性)
-  - レイアウトは、親が制約を渡し、子がサイズを返す。`Row`/`Column`/`Wrap` などが LayoutGroup に近い。※要確認(対応の妥当性)
-  - ボタンは `Button` ではなく、`GestureDetector` で組み立てる(AGENTS.md の「Widget/Element Tree」)
-  - 毎フレームの処理(`Update`)は、`AnimationController` と `Ticker` で時間を進める。毎フレームの再ビルドではなく、描画だけを更新する(再編前の `docs/Animation.md`)。※要確認(`Update` の代替として説明してよいか)
-  - コントローラーの入力は、`InputActionMap` と `InputAction<T>` で受け取る。Unity Input System の語彙(ActionMap、Action、DefaultBinding)に近い(再編前の `docs/Input.md`)
-  - 外部のアセット(シーン、プレハブ)を持たないことで、diff、レビュー、検索がそのまま使える(AGENTS.md の「Target Users」の3番目)
-- 見出し:
-  - uGUI と FloatSoda の考え方の違い
-  - 置いて書き換えるから、状態を変えて作り直すへ
-  - 概念の対応表
-  - 入力と時間の対応
-  - 落とし穴
-- ※要確認:
-  - Canvas、RectTransform、LayoutGroup、Update との対応(筆者の案。Unity 経験者によるレビューが要る)
-  - FloatSoda が `Update` に当たる毎フレームの処理を、どの書き方で推奨するか
-  - Booth クリエイターが uGUI の語彙で理解できるかの確認(再編前の `TestStrategy` に、確かめる手段がまだないと書かれていた)
+違いの要点は1つです。uGUI では画面のオブジェクトを探して値を書き換えますが、FloatSoda では `SetState` の中で状態の値を変えると、画面が作り直されます。
 
-## ト書き
+FloatSoda にシーンとプレハブはありません。UI は C# のコードで宣言します。この違いから、このページの対応表と、書き換えの癖の直し方が出てきます。
 
-### uGUI と FloatSoda の考え方の違い
+## 置いて書き換えるから、状態を変えて作り直すへ
 
-- 読み手が持って来るもの: uGUI の経験(シーン、プレハブ、Inspector)
-- このページが渡すもの: 違いの要点の1文(置いて書き換えるのではなく、状態を変えて作り直す)と、このページで得られる対応表の予告
-- 読み手がすること: 自分の uGUI の経験と照らす
-- 次へ進む先: 「置いて書き換えるから、状態を変えて作り直すへ」
+「数字が増えるボタン」を2つの作り方で書いて、違いを見ます。
 
-### 置いて書き換えるから、状態を変えて作り直すへ
+uGUI では、シーンにテキストを置き、スクリプトからそのテキストを書き換えます。
 
-- 読み手が持って来るもの: `text.text = ...` で値を書き換える癖
-- このページが渡すもの: 同じ「数字が増える」を uGUI と FloatSoda で書いた2つの短い例の対比。FloatSoda の側は `SetState` を使う
-- 読み手がすること: 2つを読み比べ、FloatSoda では書き換える対象を探さないことを理解する
-- できた?: 「状態を持つクラスの中で値を変える」と言える
-- 次へ進む先: 「概念の対応表」。仕組みの詳細は、ガイドの「値が変わると、画面が変わる仕組み」
+```csharp
+// uGUI: 置いたテキストを、スクリプトから書き換える
+public Text label;
+int count;
 
-### 概念の対応表
+public void OnClick()
+{
+    count++;
+    label.text = count.ToString();
+}
+```
 
-- 読み手が持って来るもの: uGUI の概念の名前
-- このページが渡すもの: 概念(シーン、プレハブ、Hierarchy、Inspector、Canvas、LayoutGroup、Button)ごとの、FloatSoda の対応と違う点の表
-- 読み手がすること: 自分が使ってきた概念を引いて、FloatSoda での対応を確かめる
-- 次へ進む先: 対応するウィジェットは「部品を目的から探す」
+FloatSoda では、数字を状態として持ち、状態を変えます。画面を書き換える対象を探す必要はありません。次のコードは、ウィジェット定義の抜粋です。`using` とアプリの起動処理は省略しています。押して動かすには、`DashboardWindow` の `Child` に `new CounterWidget()` を置きます。
 
-### 入力と時間の対応
+```csharp
+public record CounterWidget : StatefulWidget<CounterWidget>
+{
+    public override State<CounterWidget> CreateState() => new CounterState();
+}
 
-- 読み手が持って来るもの: `Update`、EventSystem、Input System
-- このページが渡すもの: ポインタ入力(ヒットテスト)、アクション入力、時間の進め方(`AnimationController`)の対応
-- 読み手がすること: 対応を確かめる
-- 次へ進む先: ガイドの「コントローラーの入力を受け取る」、「アニメーションを付ける」
+public class CounterState : State<CounterWidget>
+{
+    private int _count;
 
-### 落とし穴
+    public override Widget Build(IBuildContext context)
+    {
+        return new GestureDetector
+        {
+            OnTap = () => SetState(() => _count++),
+            Child = new Text(_count.ToString())
+        };
+    }
+}
+```
 
-- 読み手が持って来るもの: これから最初のコードを書く
-- このページが渡すもの: uGUI の癖で起きやすい食い違い(オブジェクトを探して書き換えようとする、`Button` がない、押せるのはダッシュボードだけ)
-- 読み手がすること: 食い違いを避ける
-- 止まる箇所: なし
-- 次へ進む先: チュートリアル「最初のオーバーレイを作る」
+`SetState` の中で `_count` を変えると、`Build` がもう一度呼ばれ、新しい数字の画面ができます。`label.text = ...` のように、画面の部品へ手を伸ばす行は、FloatSoda のコードには出てきません。
+
+**できた?** 「`SetState` の中で、状態を持つクラスの値を変える」と言える。
+
+<details>
+<summary>できなかったら</summary>
+
+`Build` が呼ばれるタイミングが分からないときは、[状態と作り直し](../4-build/mechanics/state-and-rebuild.md)を読んでください。`record` や `=>` の書き方が分からないときは、[C# がほぼ初めての人へ](csharp-primer.md)を読んでください。
+
+</details>
+
+## 概念の対応表
+
+uGUI で使ってきた概念が、FloatSoda でどうなるかを表にしました。
+
+| uGUI | FloatSoda | 違う点 |
+| :-- | :-- | :-- |
+| シーン、プレハブ | なし | UI の構造を C# のコードで宣言する。シーンやプレハブに当たる外部ファイルはない |
+| Hierarchy | コードの上のウィジェットの入れ子 | 親子関係は `Child` と `Children` で書く |
+| Inspector で設定する値 | ウィジェットのプロパティ | `new SizedBox { Width = 100, Height = 100 }` のように、コードで設定する |
+| Canvas | ウィンドウ(`DashboardWindow`、`WorldSpaceWindow`、`DeviceTrackedWindow`) | 置き場所を、ウィンドウの種類で選ぶ |
+| LayoutGroup | `Row`、`Column`、`Wrap` など | 親が制約を渡し、子が大きさを返す |
+| Button | `GestureDetector` で組み立てる | `Button` は提供していない |
+
+`Button` は今は使えません(追跡: #102)。見た目をつけたボタンは、[ボタンやトグルを組み立てる](../4-build/screen/build-buttons-toggles.md)で作ります。対応する部品は、リファレンスの[部品を目的から探す](../../reference/find-widgets.md)で探せます。
+
+<!-- ※要確認: Canvas、LayoutGroup との対応(RectTransform は表に載せていない)。筆者の案で、Unity 経験者の確認が済んでいない。確かめ方: Unity の経験者に表を読んでもらい、違和感のある行を拾う -->
+
+## 入力と時間の対応
+
+uGUI の EventSystem に当たるのは、ウィジェットの入力の受け取り口です。押す、離す、ドラッグするといった操作は、`GestureDetector` と `Listener` が受け取ります。ポインタが届くのは、ダッシュボードのオーバーレイだけです(追跡: #182)。
+
+コントローラーのボタンやスティックの入力は、`InputActionMap` と `InputAction<T>` で受け取ります。Unity の Input System の ActionMap、Action、DefaultBinding に近い語彙です。受け取り方は、[コントローラーの入力を受け取る](../4-build/input/controller-input.md)で説明しています。
+
+`Update` に当たる毎フレームの処理は、`AnimationController` と `WidgetTicker` が時間を進めます。書き方は、[アニメーションを付ける](../4-build/screen/add-animation.md)で説明しています。
+
+<!-- ※要確認: アニメーション中に、画面を作り直すのか、描画だけを更新するのか。以前の本文は「描画だけ」と書いていたが、src/ で確かめられず削った。確かめ方: src/FloatSoda/Animation/AnimationController.cs の Changed を購読する側(SetState を呼ぶか、描画の更新だけか)を読む -->
+<!-- ※要確認: Update の代わりに AnimationController と Ticker を勧めてよいか。毎フレームの処理を書く推奨の形を確かめていない。確かめ方: docs/Animation.md と src/FloatSoda/Animation/ を読み、Update 相当の処理を書く例をオーナーに確認する -->
+
+## 落とし穴
+
+uGUI の癖で、最初のコードに出やすい食い違いは3つあります。次の3つを守ってください。
+
+- 画面の部品を直接書き換えず、`SetState` の中で状態を変えること
+- `Button` を探さず、`GestureDetector` でボタンを組み立てること
+- 押せる画面は `DashboardWindow` に置くこと(追跡: #182)
+
+コンパイルは通り、例外も出ないのに押しても動かない、というのが、3つ目を守らなかったときの症状です。ここまで読んだら、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)を始めてください。

@@ -2,79 +2,123 @@
 
 # C# がほぼ初めての人へ
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+FloatSoda のコードを読むのに要る C# の書き方は、オブジェクト初期化子と `init`、`record` と `with`、ラムダの3つです。このページは、この3つだけを FloatSoda の実際のコードで説明し、AI が書いたコードを読んで直せるようにします。変数、関数、`if` は分かっている前提で書いています。
 
-## 設計シート
+型システム、LINQ、非同期処理(`async` / `await`)、ジェネリクスは、このページでは扱いません。必要になったときに、Microsoft Learn の該当ページを引いてください。分からない言葉は、リファレンスの[用語集](../../reference/glossary.md)でも引けます。
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / uGUI も Flutter も経験がなく、C# もほぼ初めての人。AI が書いたコードを読んだり、直したりしたい / 何を知っている / プログラムの基本(変数、関数、if)は知っている。C# の書き方は知らない / 読んで何をしたい / FloatSoda のコードに出てくる C# の書き方の意味が分かり、AI のコードを読めるようになりたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: FloatSoda のコードに出てくる3つの C# の書き方(オブジェクト初期化子と `init`、`record` と `with`、ラムダ)だけを説明する
-- 依頼の解釈: C# 全体の入門にはしない。3つに限り、深いところは Microsoft Learn へリンクする。用語集とは分けたまま、相互にリンクする
-- テーマファイル: explanation
-- Why(目的): FloatSoda のコードが読めずに、AI のコードを直せない状態を解く
-- What(目標・結果): 3つの書き方を、FloatSoda の実際のコードの断片で読める。分からない言葉が出たときの調べ先(用語集、Microsoft Learn)が分かる
-- How(手段): 3つの書き方を、FloatSoda のコードの断片から1つずつ説明する。各節は「見た目、意味、FloatSoda での使われ方、詳しい説明へのリンク」の順にする
-- 要素:
-  - オブジェクト初期化子: `new Align { Child = new SizedBox { Width = 100, Height = 100 } }` のように、`new 型 { プロパティ = 値 }` で、作りながら値を設定する(README.md の「最小構成のコード」)
-  - `init`: 作るときだけ値を設定でき、あとから変えられないプロパティ。FloatSoda のウィジェットのプロパティは `init` である(AGENTS.md の「API Design Conventions」)
-  - `required`: 作るとき必ず設定するプロパティ(AGENTS.md の「API Design Conventions」)
-  - `record` と `with`: 値の入れ物を宣言する書き方と、一部だけ変えた複製を作る書き方。FloatSoda のウィジェットと設定は `record` である(`src/FloatSoda/FloatSodaOptions.cs` の `public sealed record FloatSodaOptions`、AGENTS.md の「API Design Conventions」)
-  - ラムダ: `() => ...` の形で書く、名前のない小さな関数。`OnTap = () => SetState(...)` のように、押されたときの処理を渡す(`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - イベントハンドラの型は `Action?` と `Action<T>?` で、名前は `On` で始まる(AGENTS.md の「API Design Conventions」)
-  - 説明しないもの: 型システム、LINQ、非同期処理(`async`/`await`)、ジェネリクス。必要になったとき Microsoft Learn を引く(docs 再編の決定、2026-10-17)
-  - 用語集とは相互にリンクする。用語集には名前と1文の意味、このページには書き方の説明を置く(docs 再編の決定、2026-10-17)
-- 見出し:
-  - このページで分かるようになること
-  - 値を設定しながら作る書き方(オブジェクト初期化子と `init`)
-  - 値の入れ物と複製(`record` と `with`)
-  - 押されたときの処理を渡す書き方(ラムダ)
-  - これより先は
-- ※要確認:
-  - `with` が FloatSoda の利用者のコードに出てくる場面(`TextStyle` や設定の変更で出るか。`src/` で確かめる)
-  - Microsoft Learn の該当ページの URL(リンク先は、書くときに実在を確かめる)
-  - 3つに絞って足りるか(ジュニアコーダーテストで、AI が書いたコードで読み手が止まった箇所を拾う)
+## このページで分かるようになること
 
-## ト書き
+AI が書いた FloatSoda のコードには、次の3つの形がたくさん出てきます。
 
-### このページで分かるようになること
+| コードの形 | 読めるようになること | 節 |
+| :-- | :-- | :-- |
+| `new Align { Child = ... }` | 作りながら値を設定する書き方 | 値を設定しながら作る書き方 |
+| `style with { FontSize = 60 }` | 一部だけ変えたコピーを作る書き方 | 値の入れ物と複製 |
+| `OnTap = () => ...` | 押されたときの処理を渡す書き方 | 押されたときの処理を渡す書き方 |
 
-- 読み手が持って来るもの: AI が書いたコードが読めないという困りごと
-- このページが渡すもの: 取り上げる3つの書き方の予告と、取り上げないものの一覧(それは Microsoft Learn を引く)
-- 読み手がすること: 自分が止まった書き方が3つに入っているかを確かめる
-- 次へ進む先: 自分の止まった節
+自分が止まった形の節へ進んでください。
 
-### 値を設定しながら作る書き方(オブジェクト初期化子と `init`)
+## 値を設定しながら作る書き方(オブジェクト初期化子と `init`)
 
-- 読み手が持って来るもの: `new 型 { A = 1 }` の形のコード
-- このページが渡すもの: 見た目の分解(`new`、型名、`{}`、`名前 = 値`)、`init` と `required` の意味、入れ子になる理由(子を持つため)
-- 読み手がすること: チュートリアルのコードの1か所を読み解く
-- できた?: 入れ子のウィジェットの、どれが親でどれが子かを言える
-- できなかったら: 括弧の対応が分からない → 用語集の「ウィジェット」、Microsoft Learn
-- 次へ進む先: 「値の入れ物と複製」
+`new 型 { 名前 = 値 }` の形は、部品を作りながら、プロパティに値を入れる書き方です。この形をオブジェクト初期化子と呼びます。FloatSoda のほとんどのコードは、この形でできています。
 
-### 値の入れ物と複製(`record` と `with`)
+README の最小のコードを分解して読みます。
 
-- 読み手が持って来るもの: `record` と書かれた型、または `with` を含むコード
-- このページが渡すもの: `record` が値の入れ物であること、`with` で一部だけ変えた複製を作ること、FloatSoda の設定やスタイルでの使われ方
-- 読み手がすること: `FloatSodaOptions` の例を読み、`with` で1つの値を変える書き方を確かめる
-- できた?: 元の値が変わらず、新しい値ができると言える
-- 次へ進む先: 「押されたときの処理を渡す書き方」
-- 【未決】`with` が利用者のコードにほとんど出ないなら、この節を短くするか、削るか(※要確認の結果で決める)
+```csharp
+Widget root = new Align
+{
+    Child = new SizedBox
+    {
+        Width = 100,
+        Height = 100,
+        Child = new ColoredBox
+        {
+            Color = SKColors.Tomato
+        }
+    }
+};
+```
 
-### 押されたときの処理を渡す書き方(ラムダ)
+`new Align { ... }` で `Align` という部品を作ります。`{ }` の中の `Child = ...` は、`Align` の `Child` に値を入れる指定です。`Child` には別の部品が入るので、`new SizedBox { ... }` が入れ子になります。`SizedBox` の `Width = 100` と `Height = 100` は大きさの指定で、その `Child` に `ColoredBox` が入ります。
 
-- 読み手が持って来るもの: `OnTap = () => ...` の形のコード
-- このページが渡すもの: `() => ...` が名前のない小さな関数であること、`On` で始まるプロパティに渡すと、そのときに実行されること、チュートリアルのボタンの1行
-- 読み手がすること: ボタンの処理を1行書き換える
-- できた?: 押したときに増える数を変えられた
-- 次へ進む先: 「これより先は」
+つまり、外側が親、`Child` に入っている内側が子です。この例では、`Align` の子が `SizedBox`、`SizedBox` の子が `ColoredBox` です。
 
-### これより先は
+FloatSoda の部品のプロパティは、`init` で宣言されています。`init` のプロパティは、作るとき(`{ }` の中)にだけ値を設定でき、作ったあとに別の値を代入し直せません。ただし、プロパティに入れたリストのような、中身を書き換えられる型の中身までは、固定されません。画面を変えたいときは、値を書き換えるのではなく、新しい部品を作り直します。その仕組みは[状態と作り直し](../4-build/mechanics/state-and-rebuild.md)で説明しています。
 
-- 読み手が持って来るもの: 3つ以外で分からない書き方
-- このページが渡すもの: 調べ先(用語集、Microsoft Learn)と、AI に「この行を説明して」と頼む方法
-- 読み手がすること: 調べ先を選ぶ
-- 止まる箇所: なし。ここでページは終わる
-- 次へ進む先: チュートリアル「最初のオーバーレイを作る」、リファレンスの「用語集」
+`required` が付いたプロパティは、作るとき必ず設定します。たとえば、ウィンドウの `Title` は `required` なので、`new DashboardWindow { Child = root }` のように書くと、ビルドでエラーになります。
+
+**できた?** チュートリアルのコードを見て、入れ子になった部品のどれが親でどれが子かを言える。
+
+<details>
+<summary>できなかったら</summary>
+
+括弧の対応が分からないときは、`{` と `}` の組を探して、1つの `new` が閉じる位置を見てください。「部品」という言葉が分からないときは、用語集の[ウィジェット](../../reference/glossary.md)を引いてください。書き方そのものの詳しい説明は、Microsoft Learn の[オブジェクト初期化子とコレクション初期化子](https://learn.microsoft.com/ja-jp/dotnet/csharp/programming-guide/classes-and-structs/object-and-collection-initializers)と、[init キーワード](https://learn.microsoft.com/ja-jp/dotnet/csharp/language-reference/keywords/init)にあります。
+
+</details>
+
+<!-- ※要確認: Microsoft Learn の URL が実在するか。確かめ方: ブラウザーで3つの URL(オブジェクト初期化子、init、record、ラムダ)を開く -->
+
+## 値の入れ物と複製(`record` と `with`)
+
+`record` は、値を入れておく型を宣言する書き方です。FloatSoda の部品と設定は、`record` で宣言されています。`record` の値どうしは、プロパティの値を1つずつ比べて、すべて等しければ等しいものとして扱われます。`List<T>` のように、中身が同じでも別のインスタンスなら等しくならない型のプロパティは、同じインスタンスのときだけ等しくなります。
+
+`with` は、`record` の値から、一部だけ変えたコピーを作る書き方です。元の値は変わりません。
+
+```csharp
+var options = new FloatSodaOptions();
+var fast = options with { TargetFrameRate = 90 };
+```
+
+`options` の `TargetFrameRate` は既定の 60 のままで、`fast` は 90 になります。`TextStyle` のように、書式をまとめた `record` でも同じです。
+
+```csharp
+var title = new TextStyle { FontSize = 60, FontWeight = 700 };
+var subtitle = title with { FontSize = 30 };
+```
+
+`subtitle` は、`title` の `FontWeight` を引き継いで、`FontSize` だけを 30 にしたコピーです。
+
+**できた?** `with` を使ったあと、元の値が変わらず、新しい値ができると言える。
+
+<details>
+<summary>できなかったら</summary>
+
+`record` の詳しい説明は、Microsoft Learn の[record 型](https://learn.microsoft.com/ja-jp/dotnet/csharp/language-reference/builtin-types/record)にあります。
+
+</details>
+
+<!-- ※要確認: with が利用者のコードに出てくる頻度。src/ では TextStyle や FloatSodaOptions に with を使えることは確かめたが、samples/ の利用者向けコードに with は出てこない。確かめ方: ジュニアコーダーテストで AI が書いたコードに with が出るかを数える -->
+
+## 押されたときの処理を渡す書き方(ラムダ)
+
+`() => ...` は、名前のない小さな関数を、その場で書く書き方です。ラムダと呼びます。FloatSoda では、ボタンが押されたときの処理を渡すときに使います。
+
+`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs` に、次の1行があります。
+
+```csharp
+OnTap = () => SetState(() => _count = 0),
+```
+
+`OnTap` は、`GestureDetector` のプロパティで、タップされたときに実行する処理を受け取ります。右辺の `() => SetState(...)` が、その処理です。`()` は引数がないことを表し、`=>` の右が関数の中身です。この1行は、「タップされたら、`SetState` を呼んで、`_count` を 0 にする」という意味です。内側の `() => _count = 0` も、同じラムダの形です。
+
+FloatSoda では、イベントの処理を受け取るプロパティの名前は `On` で始まります。型は、引数がなければ `Action?`、引数が1つあれば `Action<T>?` です。`?` が付いた型は、`null`(何も渡さない状態)を許します。イベントのプロパティは `null` が既定なので、使わない処理は書かずに済みます。
+
+**できた?** 内側のラムダ `() => _count = 0` が、`_count` を 0 にする処理だと言える。
+
+<details>
+<summary>できなかったら</summary>
+
+`OnTap` に書いた処理が実行されないときは、そのウィンドウがダッシュボードかを確かめてください。ワールド座標固定と追従のオーバーレイでは、`OnTap` は呼ばれません。切り分けは[反応しないときに切り分ける](../5-troubleshoot/not-responding.md)にあります。ラムダの詳しい説明は、Microsoft Learn の[ラムダ式](https://learn.microsoft.com/ja-jp/dotnet/csharp/language-reference/operators/lambda-expressions)にあります。
+
+</details>
+
+## これより先は
+
+この3つ以外で分からない書き方に出会ったら、次の3つの調べ先があります。
+
+- リファレンスの[用語集](../../reference/glossary.md)で、言葉の意味を引く。
+- Microsoft Learn で、C# の書き方を引く。
+- AI に、分からない行を貼って「この行を説明して」と頼む。
+
+読めるようになったら、チュートリアル[最初のオーバーレイを作る](../../tutorials/first-overlay.md)で、実際にコードを書いてください。
+

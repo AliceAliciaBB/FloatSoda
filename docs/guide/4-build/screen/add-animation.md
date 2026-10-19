@@ -2,100 +2,164 @@
 
 # アニメーションを付ける
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この手順でできること
 
-## 設計シート
+画面の一部を、ふわっと出したり点滅させたりするには、`AnimationController` と `FadeTransition` で、子の不透明度を時間で変えます。フレームごとに `SetState()` を呼ぶ必要はありません。この手順を終えると、HMD の中で四角がフェードインとフェードアウトを繰り返します。片道は 1.5 秒です。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / VRChatter、Booth クリエイター、uGUI を避けたいエンジニア。最初のオーバーレイは動かし終えている / 何を知っている / `StatefulWidget` と `SetState()` で値を変えられる / 読んで何をしたい / 画面の一部を、ふわっと出す、点滅させるなど、時間で動かしたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: `AnimationController` と `FadeTransition` で、子の不透明度を時間で変える手順
-- 依頼の解釈: 「アニメーション」は、今ある `FadeTransition` による不透明度の変化だけを扱う。移動や拡大のアニメーションは書かない(`Tween` と暗黙的アニメーションは未提供で、解除の条件は Phase 3。追跡: #219)
-- テーマファイル: how-to
-- Why(目的): 画面の変化を、フレームごとの `SetState()` なしで滑らかに動かす
-- What(目標・結果): HMD の中で、四角が約1.5秒周期でフェードイン・フェードアウトを繰り返す
-- How(手段): `TickerProviderState` を継承した `State` で `AnimationController` を作り、`FadeTransition` に渡す
-- 要素:
-  - アニメーションを駆動する `State` は `TickerProviderState<T>` を継承し、`AnimationController` の `Vsync` に `this` を渡す(`src/FloatSoda/Animation/TickerProviderState.cs`)
-  - `AnimationController` の `Duration` は必須で、`Forward()` / `Reverse()` / `Stop()` で動かす(`src/FloatSoda/Animation/AnimationController.cs`)
-  - `StatusChanged` で `Completed` と `Dismissed` を受けて折り返すと、往復させられる(`samples/FloatSoda.Samples.OverlayApp/PulseWidget.cs`)
-  - `FadeTransition` は `Opacity` に `IAnimation<double>` を受け取り、`SetState()` なしでペイントだけを更新する(`src/FloatSoda/Widgets/Animation/FadeTransition.cs`)
-  - `Curve` を指定すると、変化の速さを変えられる(`src/FloatSoda/Animation/AnimationController.cs`、`src/FloatSoda/Animation/Curves.cs`)
-  - 不透明度の固定値だけ変えたいときは `Opacity` ウィジェットを使う(`README.md` の「描画系」)
-  - `AnimationController` は `IDisposable` で、`State` の破棄で解放する(`src/FloatSoda/Animation/AnimationController.cs`)
-- 見出し:
-  - この手順でできること
-  - 前提条件
-  - 手順1: アニメーションを動かす State を作る
-  - 手順2: AnimationController を作って動かす
-  - 手順3: FadeTransition で子に反映する
-  - 手順4: 往復させる
-  - 結果を確かめる
-  - うまくいかないとき
-- ※要確認:
-  - `State` の破棄時に `AnimationController.Dispose()` を呼ぶ位置(`State<T>` の `Dispose` に相当するメソッド名を `src/FloatSoda/Widgets/ComponentWidget.cs` で確かめる)
-  - `Curve` の指定コードが今の公開 API でコンパイルできるか(コード例を取り出してビルドして確かめる)
+この手順で扱うのは、不透明度を変えるアニメーションです。移動や拡大に使える専用のウィジェットは、まだありません(追跡: #219)。目的が移動や拡大の場合は、[できないこと・まだ使えないもの](../../../reference/limitations.md)で、今の範囲を確かめます。
 
-## ト書き
+## 前提条件
 
-### この手順でできること
+- `StatefulWidget` と `SetState()` で値を変えたことがあること。なければ、[最初のオーバーレイを作る](../../../tutorials/first-overlay.md)に戻る
+- 動かしたい部分が、ウィジェットとして書けていること
 
-- 読み手が持って来るもの: 「画面を時間で動かしたい」という目的
-- このページが渡すもの: 完成した動きの説明(往復するフェード)と、動かせるのは今は不透明度だけという範囲(追跡: #219)
-- 読み手がすること: 自分の目的が不透明度の変化で足りるかを確かめる
-- 止まる箇所: 移動や拡大を動かしたい読み手。ここでは書かず、リファレンスの「できないこと・まだ使えないもの」へ送る
-- 次へ進む先: 「前提条件」
+## 手順1: アニメーションを動かす State を作る
 
-### 前提条件
+アニメーションを動かす `State` は、`State<T>` の代わりに `TickerProviderState<T>` を継承します。`TickerProviderState<T>` は、フレームごとの時刻の知らせを、アニメーションに渡す役目を持ちます。
 
-- 読み手が持って来るもの: `StatefulWidget` を書いた経験(チュートリアルの段2)
-- このページが渡すもの: 要るものの短い一覧
-- 読み手がすること: 確かめて、足りなければチュートリアルへ戻る
-- 次へ進む先: 手順1
+```csharp
+public record BlinkBox : StatefulWidget<BlinkBox>
+{
+    public override State<BlinkBox> CreateState() => new BlinkBoxState();
+}
 
-### 手順1: アニメーションを動かす State を作る
+public class BlinkBoxState : TickerProviderState<BlinkBox>
+{
+    public override Widget Build(IBuildContext context) => new Align
+    {
+        Alignment = Alignment.Center,
+        Child = new SizedBox
+        {
+            Width = 200,
+            Height = 200,
+            Child = new ColoredBox { Color = SKColors.MediumSlateBlue },
+        },
+    };
+}
+```
 
-- 読み手が持って来るもの: `StatefulWidget` と `State`
-- このページが渡すもの: `State<T>` ではなく `TickerProviderState<T>` を継承する理由と書き方
-- 読み手がすること: `State` の基底を `TickerProviderState<T>` に替える
-- できた?: コンパイルが通る
-- 次へ進む先: 手順2
+`using` には、`FloatSoda.Animation`、`FloatSoda.Elements`、`FloatSoda.Geometrics`、`FloatSoda.Widgets`、`FloatSoda.Widgets.Animation`、`FloatSoda.Widgets.Layout`、`FloatSoda.Widgets.Paint`、`SkiaSharp` を足します。
 
-### 手順2: AnimationController を作って動かす
+起動のコードで、ウィンドウの `Child` を `new BlinkBox()` に置き換えます。
 
-- 読み手が持って来るもの: 手順1の `State`
-- このページが渡すもの: `AnimationController` の作り方(`Vsync`、`Duration`)と `Forward()`
-- 読み手がすること: `InitState()` で作り、`Forward()` を呼ぶ
-- できた?: 実行しても例外が出ない
-- 次へ進む先: 手順3
+**できた?** コンパイルが通れば、手順1は完了です。
 
-### 手順3: FadeTransition で子に反映する
+## 手順2: AnimationController を作って動かす
 
-- 読み手が持って来るもの: 手順2のコントローラー
-- このページが渡すもの: `FadeTransition` に `Opacity` として渡す書き方と、`SetState()` が要らないこと
-- 読み手がすること: 動かしたい部分を `FadeTransition` で包む
-- できた?: HMD の中で四角がフェードインする
-- 次へ進む先: 手順4
+`AnimationController` は、`InitState()` で作ります。`Vsync` には `this` を、`Duration` には片道にかける時間を渡します。作ったあとに `Forward()` を呼ぶと、動き始めます。
 
-### 手順4: 往復させる
+```csharp
+private AnimationController? _controller;
 
-- 読み手が持って来るもの: 一度だけ動くフェード
-- このページが渡すもの: `StatusChanged` で `Completed` なら `Reverse()`、`Dismissed` なら `Forward()` を呼ぶ書き方
-- 読み手がすること: 折り返しの処理を足す
-- できた?: フェードイン・フェードアウトが続く
-- 次へ進む先: 「結果を確かめる」
+public override void InitState()
+{
+    _controller = new AnimationController
+    {
+        Vsync = this,
+        Duration = TimeSpan.FromSeconds(1.5),
+    };
 
-### 結果を確かめる
+    _controller.Forward();
+}
+```
 
-- 読み手が持って来るもの: 手順を終えたコード
-- このページが渡すもの: HMD で見る観点(周期、止まらないこと)
-- 読み手がすること: HMD で確かめる。HMD を被らずに確かめたいときは、「HMD を被らずに確かめる」へ進む
-- 次へ進む先: 「ボタンやトグルを組み立てる」
+変化の速さを変えたいときは、`Curve` に `Curves.EaseInOut` のような値を渡します。次のコードは、`InitState()` にある `_controller` を作る部分を置き換えます。
 
-### うまくいかないとき
+```csharp
+_controller = new AnimationController
+{
+    Vsync = this,
+    Duration = TimeSpan.FromSeconds(1.5),
+    Curve = Curves.EaseInOut,
+};
+```
 
-- 読み手が持って来るもの: 動かない、または途中で止まる
-- このページが渡すもの: ガイドの「5. 困ったとき」の「反応しないときに切り分ける」と「負荷を抑える」へのリンク
-- 読み手がすること: 症状に合うページへ進む
-- 止まる箇所: なし
+`AnimationController` の解放の条件は、次のとおりです。
+
+- 作成した `AnimationController` は、`State` の `Dispose()` で解放すること
+
+`State` の `Dispose()` に書くと、ウィジェットが画面から外れるときに解放されます。
+
+```csharp
+public override void Dispose()
+{
+    _controller?.Dispose();
+    base.Dispose();
+}
+```
+
+**できた?** 実行して、例外が出なければ、手順2は完了です。この段階では画面は変わりません。コントローラーが動いているかは、手順3のフェードインで確かめます。
+
+<details>
+<summary>できなかったら</summary>
+
+`Vsync` や `Duration` を書き忘れると、コンパイルが通りません。どちらも必須です。例外が出るときは、[エラーを読んで直す](../../5-troubleshoot/read-errors.md)で原因を切り分けます。
+
+</details>
+
+## 手順3: FadeTransition で子に反映する
+
+動かしたい部分を `FadeTransition` で包み、`Opacity` にコントローラーを渡します。`FadeTransition` は、`SetState()` なしで、描画だけを更新します。
+
+```csharp
+public override Widget Build(IBuildContext context) => new FadeTransition
+{
+    Opacity = _controller!,
+    Child = new Align
+    {
+        Alignment = Alignment.Center,
+        Child = new SizedBox
+        {
+            Width = 200,
+            Height = 200,
+            Child = new ColoredBox { Color = SKColors.MediumSlateBlue },
+        },
+    },
+};
+```
+
+不透明度を変えない固定値だけでよい場合は、`Opacity` ウィジェットを使います。
+
+**できた?** HMD の中で、四角が1.5秒かけてフェードインすれば、手順3は完了です。フェードインのあとは、そのまま止まります。
+
+<!-- ※要確認: HMD の中でフェードインが見えること。実機で確かめる -->
+
+## 手順4: 往復させる
+
+往復させるには、コントローラーの `StatusChanged` で、終わりに着いたら戻し、始めに戻ったら進め直します。`Completed` なら `Reverse()`、`Dismissed` なら `Forward()` を呼びます。
+
+次のコードは、手順2の `InitState()` にある `_controller.Forward();` の1行を置き換えます。
+
+```csharp
+_controller.StatusChanged += status =>
+{
+    switch (status)
+    {
+        case AnimationStatus.Completed:
+            _controller.Reverse();
+            break;
+        case AnimationStatus.Dismissed:
+            _controller.Forward();
+            break;
+    }
+};
+
+_controller.Forward();
+```
+
+`StatusChanged` の購読は、`Forward()` を呼ぶ前に書きます。書き終えた `InitState()` と `Dispose()` は、[サンプルの PulseWidget.cs](../../../../samples/FloatSoda.Samples.OverlayApp/PulseWidget.cs) と同じ形です。
+
+**できた?** フェードインとフェードアウトが、止まらずに続けば、手順4は完了です。
+
+## 結果を確かめる
+
+HMD で、次の2点を見ます。
+
+- 四角が、薄くなったり濃くなったりを、繰り返している
+- しばらく見ていても、途中で止まらない
+
+HMD を被らずに確かめたいときは、[HMD を被らずに確かめる](../input/test-without-hmd.md)に進みます。作った部品を押せるようにするには、[ボタンやトグルを組み立てる](build-buttons-toggles.md)に進みます。
+
+## うまくいかないとき
+
+動かない、または途中で止まるときは、症状に合うページに進みます。画面が反応しない場合は[反応しないときに切り分ける](../../5-troubleshoot/not-responding.md)、動作が重い場合は[負荷を抑える](../../5-troubleshoot/reduce-load.md)です。
