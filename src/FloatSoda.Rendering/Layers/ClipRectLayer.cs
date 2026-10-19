@@ -39,8 +39,6 @@ public class ClipRectLayer(SKRect clipRect) : ContainerLayer
         {
             PaintBounds = clipPathBounds;
         }
-
-        context.Canvas.Restore();
     }
 
     /// <summary>
@@ -123,8 +121,6 @@ public class ClipRoundRectLayer(SKRoundRect clipRect) : ContainerLayer
         {
             PaintBounds = clipPathBounds;
         }
-
-        context.Canvas.Restore();
     }
 
     /// <summary>

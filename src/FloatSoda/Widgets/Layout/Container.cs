@@ -39,8 +39,12 @@ public record Container : StatelessWidget
 
     /// <summary>
     /// 装飾の内側で子ウィジェットの周囲へ確保する余白を取得します。
-    /// <see langword="null"/>の場合、余白ウィジェットを追加しません。
+    /// <see langword="null"/>の場合、指定による余白を追加しません。
     /// </summary>
+    /// <remarks>
+    /// <see cref="Decoration"/>に<see cref="BoxDecoration.Border"/>がある場合、各辺のボーダーの太さをこの余白に加算します。
+    /// そのため、余白を省略しても子ウィジェットはボーダーの内側に収まります。
+    /// </remarks>
     public EdgeInsets? Padding
     {
         get;
@@ -156,7 +160,7 @@ public record Container : StatelessWidget
             };
         }
 
-        if (Padding is { } padding)
+        if (PaddingIncludingDecoration() is { } padding)
         {
             current = new Padding
             {
@@ -197,6 +201,27 @@ public record Container : StatelessWidget
         }
 
         return current;
+    }
+
+    // FlutterのContainer._paddingIncludingDecorationに相当する。
+    private EdgeInsets? PaddingIncludingDecoration()
+    {
+        if (Decoration is null)
+        {
+            return Padding;
+        }
+
+        var decorationPadding = Decoration.Padding;
+        if (Padding is not { } padding)
+        {
+            return decorationPadding;
+        }
+
+        return new EdgeInsets(
+            padding.Left + decorationPadding.Left,
+            padding.Top + decorationPadding.Top,
+            padding.Right + decorationPadding.Right,
+            padding.Bottom + decorationPadding.Bottom);
     }
 
     private static bool IsValidPadding(EdgeInsets padding) =>
