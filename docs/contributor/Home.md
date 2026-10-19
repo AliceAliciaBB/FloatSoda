@@ -20,7 +20,7 @@ FloatSoda を一緒に育ててもらうための案内です。コントリビ�
 - [1フレームが SteamVR に届くまで(読んで学ぶ)](2-understand/frame-to-steamvr.md)
 - [決定の記録(ADR)の一覧](2-understand/adr-index.md)
 
-層ごとの解説は [フレームワーク層](2-understand/framework-layer.md)、[描画層](2-understand/rendering-layer.md)、[エンジン層](2-understand/engine-layer.md)、[OVR 層](2-understand/ovr-layer.md)、[UI 層](2-understand/ui-layer.md) にあります。層ごとの実験は [フレームワーク層](2-understand/experiment-framework.md)、[描画層](2-understand/experiment-rendering.md)、[OVR 層](2-understand/experiment-ovr.md) にあります。
+層ごとの解説は [フレームワーク層](2-understand/framework-layer.md)(入力は [入力が届くまでを追う](2-understand/framework-input.md))、[描画層](2-understand/rendering-layer.md)、[エンジン層](2-understand/engine-layer.md)、[OVR 層](2-understand/ovr-layer.md)、[UI 層](2-understand/ui-layer.md) にあります。層ごとの実験は [フレームワーク層](2-understand/experiment-framework.md)、[描画層](2-understand/experiment-rendering.md)、[OVR 層](2-understand/experiment-ovr.md) にあります。
 
 ## 3. 準備する
 
@@ -50,20 +50,7 @@ FloatSoda を一緒に育ててもらうための案内です。コントリビ�
 
 ## 6. 提案する
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 新しい機能や設計の変更を提案したい
-- このページが渡すもの: 提案を書く(`6-propose/write-proposal.md`)、決定を ADR に書く(`6-propose/write-adr.md`)へのリンク
-- 読み手がすること: 提案が通る前なら前者、通った後なら後者を開く
-- 止まる箇所: なし。ここでこのページは終わる
-- 【未決】グループごとの1文の説明を、このページに書くか、各グループの先頭ページにだけ書くか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 新しい機能や設計の変更を提案し、決まったことを記録するグループです。提案が通る前なら「提案を書く」、通った後なら「ADR を書く」を開きます。
 
 - [提案を書く](6-propose/write-proposal.md)
 - [決定を ADR に書く](6-propose/write-adr.md)
-
-</details>

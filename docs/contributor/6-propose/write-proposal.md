@@ -82,16 +82,7 @@ Flutter と違う設計にするときは、記録必須の5項目を、分か�
 
 ## 手順5: Issue を出す
 
-機能要望のテンプレート(`.github/ISSUE_TEMPLATE/feature_request.yml`)に書いて出します。テンプレートの欄は次のとおりです。
-
-| 欄 | 書くこと |
-| :-- | :-- |
-| 欲しい挙動 / API | 望む書き方と挙動(想定するコードがあれば併記) |
-| 動機 / ユースケース | 手順3の3点 |
-| Flutter に対応する API はありますか | 「ある」「FloatSoda 独自」「わからない」から選ぶ |
-| 対応する Flutter API | 手順4の Flutter 側の情報 |
-| なぜ FloatSoda に必要か | Flutter に相当するものがない機能の場合の理由 |
-| 検討した代替案 | 既存の API で回避を試した結果 |
+機能要望のテンプレート [.github/ISSUE_TEMPLATE/feature_request.yml](../../../.github/ISSUE_TEMPLATE/feature_request.yml) に書いて出します。欄の一覧と必須の別は、テンプレートを開いて確かめます。「動機 / ユースケース」には手順3の3点を、「対応する Flutter API」には手順4の Flutter 側の情報を書きます。
 
 種別ラベルは、機能要望のテンプレートが `feature` を付けます。Flutter と違う設計なら、`flutter-divergence` も必要です。ラベルを付ける権限がない場合は、付けたいラベルを Issue に書いて頼みます。public API や observable behavior を変える提案は、breaking change の有無も Issue に書いてください。Alpha であることは、判定を省略する理由になりません。
 

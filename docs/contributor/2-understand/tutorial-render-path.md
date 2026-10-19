@@ -32,76 +32,34 @@
 - FloatSoda を clone したフォルダー
 - SteamVR と HMD(段2だけは、HMD なしで進められる)
 
-コンソールアプリは、clone したフォルダーと同じ階層に作ります。参照先は、clone したフォルダーの名前に合わせて書き換えます。準備の詳細は [開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) にあります。SteamVR が起動できない、HMD がつながらない場合の直し方は、ここでは扱いません。
+4段のコードは、1つの作例 [samples/FloatSoda.Samples.RenderPath](../../../samples/FloatSoda.Samples.RenderPath/) にまとまっています。コードの全文は、このページに載せません。作例のファイルを読みながら進めます。リポジトリのルートで、`--step N` を付けて段を選びます。準備の詳細は [開発環境を用意する](../3-prepare/dev-environment.md) にあります。SteamVR が起動できない、HMD がつながらない場合の直し方は、ここでは扱いません。
+
+<!-- ※要確認: 作例は PR #313 にあり、main にはまだない。--step N と png の引数は #313 の実際の引数に合わせた。各段の出力は、移す前のコードに基づくので、#313 がマージされたら実物と照らす -->
 
 ## 1. OVR 層だけでオーバーレイを出す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 空のコンソールアプリと、`FloatSoda.OVR` へのプロジェクト参照
-- このページが渡すもの: `OVRApplication`、`OverlayIdentity`、`DeviceTrackedOverlay`、`Texture.FromFile`、`Visibility.Show` の最小のコード。png を1枚用意する方法
-- 読み手がすること: コードを貼って `dotnet run` し、HMD の中でオーバーレイを探す
-- できた?: HMD の 1 m 前に付いたオーバーレイに、png の絵が出た(`Target` の既定が HMD のため。※要確認)
-- できなかったら: `Init_HmdNotFound` が出る、オーバーレイが見つからない → OVR 層の解説の「落とし穴」の節、SteamVR の状態の確認
-- クイズ: 段1のオーバーレイの絵は、だれが描いたか。(a) Skia (b) OpenVR が png を読んで表示した (c) OpenGL。正解は (b)。`overlay.Texture.FromFile` が `SetOverlayFromFile` を呼ぶため(`src/FloatSoda.OVR/Overlay/Capability.cs` の 190 行目)
-- 次へ進む先: 段2。OVR 層の詳細は `ovr-layer.md` へリンクする
-- 【未決】段1の png を、段2を先に済ませて作る順にするか、固定の画像を `docs/assets/` に置いて使うか。段の順(依存の向き)は変えない
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-段1は、FloatSoda のほかの層を使わず、`FloatSoda.OVR` だけで、png の画像をオーバーレイとして HMD の前に出します。
-
-まず、オーバーレイに出す png を用意します。サンプルの `PaintingSample` を1回動かすと、デスクトップに `layer_tree_output.png` ができます。
+段1は、FloatSoda のほかの層を使わず、`FloatSoda.OVR` だけで、png の画像をオーバーレイとして HMD の前に出します。出す png は段2が作るので、先に次のコマンドを1回動かします。png は、カレントディレクトリの `my_layer_tree.png` に保存されます。段2の内容は、次の節で説明します。
 
 ```powershell
-dotnet run --project FloatSoda/samples/FloatSoda.Samples.PaintingSample
-```
-
-次に、コンソールアプリを作り、`FloatSoda.OVR` を参照します。
-
-```powershell
-dotnet new console -o RenderPath1
-dotnet add RenderPath1 reference ./FloatSoda/src/FloatSoda.OVR/FloatSoda.OVR.csproj
-```
-
-`RenderPath1/Program.cs` を、次のコードに置き換えます。
-
-```csharp
-using System.Numerics;
-using FloatSoda.OVR;
-using FloatSoda.OVR.Overlay;
-
-// 表示する png のパス。省略するとデスクトップの layer_tree_output.png を使う
-var imagePath = args.Length > 0
-    ? Path.GetFullPath(args[0])
-    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "layer_tree_output.png");
-
-using var app = new OVRApplication(new OVRAppInfo(new AppKey("com.example.render_path")));
-
-var identity = new OverlayIdentity($"com.example.render_path.step1.{Guid.NewGuid()}", "RenderPath step 1");
-using var overlay = new DeviceTrackedOverlay(identity);
-
-overlay.Transform.Position = new Vector3(0, 0, -1); // 追従先(既定は HMD)の 1 m 前
-overlay.Texture.FromFile(imagePath);
-overlay.Visibility.Show();
-
-Console.WriteLine("HMD の中でオーバーレイを探してください。Enter キーで終了します。");
-Console.ReadLine();
+dotnet run --project samples/FloatSoda.Samples.RenderPath -- --step 2
 ```
 
 SteamVR を起動してから、動かします。HMD の中で、オーバーレイを探します。
 
 ```powershell
-dotnet run --project RenderPath1
+dotnet run --project samples/FloatSoda.Samples.RenderPath -- --step 1
 ```
 
-**できた?** HMD の 1 m 前に付いたオーバーレイに、png の絵が出た。
+別の png を出したいときは、`-- --step 1 <png のパス>` の形でパスを渡します。省略すると、カレントディレクトリの `my_layer_tree.png` を使います。
+
+作例は、`DeviceTrackedOverlay` を HMD から 1 m 前の位置に置き、`overlay.Texture.FromFile` で png を渡します。
+
+**できた?** HMD の 1 m 前に付いたオーバーレイに、段2で作った png の絵が出た。
 
 <details>
 <summary>できなかったら</summary>
 
-`Init_HmdNotFound` の例外が出る場合や、オーバーレイが見つからない場合は、SteamVR の状態と HMD の接続を確かめます。原因の見分け方は、[OVR 層](ovr-layer.md) の「つまずきやすい点」にあります。
+`Init_HmdNotFound` の例外が出る場合や、オーバーレイが見つからない場合は、SteamVR の状態と HMD の接続を確かめます。原因の見分け方は、[OVR 層](ovr-layer.md) の「つまずきやすい点」にあります。段2の png がない場合は、段2に戻ります。
 
 </details>
 
@@ -123,77 +81,22 @@ dotnet run --project RenderPath1
 
 OVR 層の型の詳細は、[OVR 層](ovr-layer.md) にあります。
 
-</details>
-
 ## 2. Layer ツリーを組んで png に描く
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 段1で動いたコード(png を読んで出す)
-- このページが渡すもの: `ContainerLayer`・`PictureLayer`・`SKPictureRecorder` で Layer ツリーを組み、`LayerBitmapRenderer.Render` で `SKBitmap` にして png で保存するコード。`Layout` のあとに `Paint` が走ること
-- 読み手がすること: 別のコンソールアプリでコードを動かし、できた png を段1のオーバーレイで表示する
-- できた?: 自分で組んだ Layer ツリーの絵が、HMD の中のオーバーレイに出た
-- できなかったら: png が空、真っ黒 → 描画層の解説の「Layer の種類」の節。オーバーレイが出ない → 段1に戻る
-- クイズ: `LayerBitmapRenderer.Render` が `root` に対して最初に呼ぶのはどれか。(a) `Paint` (b) `Layout` (c) `Clone`。正解は (b)(`src/FloatSoda.Rendering/LayerRenderer.cs` の 33〜34 行目)
-- 次へ進む先: 段3。Layer の詳細は `rendering-layer.md` へリンクする
-- 【未決】`samples/FloatSoda.Samples.PaintingSample` と段2が同じことをしている。段2の本文を書くときに、PaintingSample を案内するか、段2で別のコードを書かせるかを決める(docs 再編の決定、2026-10-17)
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-段2は、HMD も SteamVR も使わずに、自分で組んだ Layer ツリーを png にします。`PaintingSample` が行っていることと同じ仕組みを、自分のコードで書きます。
-
-別のコンソールアプリを作り、`FloatSoda.Rendering` を参照します。
+段2は、HMD も SteamVR も使わずに、自分で組んだ Layer ツリーを png にします。`FloatSoda.Rendering` だけを使います。Layer ツリーを組んで png にする基本は、[samples/FloatSoda.Samples.PaintingSample](../../../samples/FloatSoda.Samples.PaintingSample/) のコードで読めます。このページでは、同じ説明を繰り返しません。段2の作例は、その流れを最小にしたものです。
 
 ```powershell
-dotnet new console -o RenderPath2
-dotnet add RenderPath2 reference ./FloatSoda/src/FloatSoda.Rendering/FloatSoda.Rendering.csproj
+dotnet run --project samples/FloatSoda.Samples.RenderPath -- --step 2
 ```
 
-`RenderPath2/Program.cs` を、次のコードに置き換えます。
+コンソールに、png の保存先のパスが出ます。保存先を変えたいときは、`-- --step 2 <png の保存先>` の形で渡します。省略すると、カレントディレクトリの `my_layer_tree.png` です。保存される絵は、白っぽい地に緑の四角です。
 
-```csharp
-using FloatSoda.Rendering;
-using FloatSoda.Rendering.Layers;
-using SkiaSharp;
-
-var size = new SKSizeI(400, 300);
-
-using var recorder = new SKPictureRecorder();
-var canvas = recorder.BeginRecording(new SKRect(0, 0, size.Width, size.Height));
-canvas.Clear(SKColors.WhiteSmoke);
-using var paint = new SKPaint { Color = SKColors.DarkSeaGreen };
-canvas.DrawRect(new SKRect(100, 75, 300, 225), paint);
-
-var root = new ContainerLayer
-{
-    Children = { new PictureLayer { Picture = recorder.EndRecording() } }
-};
-
-using var bitmap = new LayerBitmapRenderer().Render(root, size);
-bitmap.Save("my_layer_tree.png");
-
-Console.WriteLine($"保存しました: {Path.GetFullPath("my_layer_tree.png")}");
-```
-
-コードは、`SKPictureRecorder` で描画を記録して `PictureLayer` に入れ、`ContainerLayer` の子にして Layer ツリーを組みます。`LayerBitmapRenderer.Render` は、ツリーに `Layout` を呼んでから `Paint` を呼び、`SKBitmap` に描きます。
-
-```powershell
-dotnet run --project RenderPath2
-```
-
-コンソールに、png の保存先のパスが出ます。そのパスを、段1のアプリに渡して、自分の絵をオーバーレイに出します。
-
-```powershell
-dotnet run --project RenderPath1 -- <保存先のパス>
-```
-
-**できた?** 自分で組んだ Layer ツリーの絵(白っぽい地に緑の四角)が、HMD の中のオーバーレイに出た。
+**できた?** 保存先のパスが出て、その png を画像ビューアーで開くと、白っぽい地に緑の四角が見えた。
 
 <details>
 <summary>できなかったら</summary>
 
-png が空になる、真っ黒になる場合は、`PictureLayer` に `Picture` を設定したか、描画の範囲(`BeginRecording` に渡した矩形)がサイズと合っているかを確かめます。仕組みは [描画層](rendering-layer.md) の「CPU の Bitmap に描く」にあります。オーバーレイが出ない場合は、段1に戻ります。HMD がなくても、保存された png を画像ビューアーで開けば、段2の結果は確かめられます。
+png が空になる、真っ黒になる場合は、作例の中で `PictureLayer` に `Picture` を設定したか、描画の範囲(`BeginRecording` に渡した矩形)がサイズと合っているかを確かめます。仕組みは [描画層](rendering-layer.md) の「CPU の Bitmap に描く」にあります。
 
 </details>
 
@@ -212,109 +115,30 @@ png が空になる、真っ黒になる場合は、`PictureLayer` に `Picture`
 
 Layer の種類と `Clone` の共有範囲は、[描画層](rendering-layer.md) にあります。合成の Layer を同じ絵に使って見比べる実験は、[実験: 描画層](experiment-rendering.md) です。
 
-</details>
-
 ## 3. Layer ツリーをエンジン層に差し込んで SteamVR に出す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 段2で組んだ Layer ツリーと、段1で作ったオーバーレイ
-- このページが渡すもの: 描画スレッドで `GLView` と `Renderer` を作り、`OverlayWindow` に包み、`RenderPostTaskRunner` で `PostRender` するコード。png ではなく、GL テクスチャ経由で絵が出ること。`FramePacer` が描画ループの間隔を決めること
-- 読み手がすること: 段1の `FromFile` を、エンジン層を使うコードに置き換えて動かす
-- できた?: 段1と同じ絵が、`FromFile` を呼ばずにオーバーレイに出た
-- できなかったら: 絵が出ない、例外が出る → エンジン層の解説の「スレッド」の節。`GLView` を描画スレッド以外で作っていないかを見る
-- 止まる箇所: `OverlayWindow` の名前が、フレームワークの型と重なること。段4に進む前に、別名の付け方を示す
-- クイズ: GL テクスチャのハンドルを `Texture_t` に包んでオーバーレイに渡すのは、どの型か。(a) `GLView` (b) `Renderer` (c) `OverlayWindow`。正解は (c)(`src/FloatSoda.Engine/OverlayWindow.cs` の 54〜61 行目)
-- 次へ進む先: 段4。エンジン層の詳細は `engine-layer.md` へリンクする
-- 【未決】段3を、フレームワークなしで書けるかの確認が終わるまで、本文に進めない。確認の結果、書けなければ段3を解説に回すか決める
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-段3は、段2で組んだ Layer ツリーを、png ではなく GL テクスチャとしてオーバーレイに出します。段1の `FromFile` の代わりに、エンジン層の `RenderPostTaskRunner`、`GLView`、`Renderer`、`OverlayWindow` を使います。
-
-コンソールアプリを作り、`FloatSoda.Engine` を参照します。`FloatSoda.Engine` は、フレームワーク(`FloatSoda`)を参照しないので、フレームワークなしで書けます。
+段3は、段2で組んだ Layer ツリーを、png ではなく GL テクスチャとしてオーバーレイに出します。段1の `FromFile` の代わりに、エンジン層の `RenderPostTaskRunner`、`GLView`、`Renderer`、`OverlayWindow` を使います。`FloatSoda.Engine` は、フレームワーク(`FloatSoda`)を参照しないので、フレームワークなしで書けます。
 
 ```powershell
-dotnet new console -o RenderPath3
-dotnet add RenderPath3 reference ./FloatSoda/src/FloatSoda.Engine/FloatSoda.Engine.csproj
+dotnet run --project samples/FloatSoda.Samples.RenderPath -- --step 3
 ```
 
-`RenderPath3/Program.cs` を、次のコードに置き換えます。
-
-```csharp
-using System.Numerics;
-using FloatSoda.Abstractions.Geometries;
-using FloatSoda.Engine;
-using FloatSoda.OVR;
-using FloatSoda.OVR.Overlay;
-using FloatSoda.Rendering.Layers;
-using SkiaSharp;
-
-var size = new SKSizeI(400, 300);
-
-using var app = new OVRApplication(new OVRAppInfo(new AppKey("com.example.render_path")));
-
-var identity = new OverlayIdentity($"com.example.render_path.step3.{Guid.NewGuid()}", "RenderPath step 3");
-using var overlay = new DeviceTrackedOverlay(identity);
-overlay.Transform.Position = new Vector3(0, 0, -1);
-
-using var cts = new CancellationTokenSource();
-var renderThread = new RenderPostTaskRunner("RenderThread", new FramePacer(60));
-renderThread.Start(cts.Token);
-
-// GLView と Renderer は描画スレッドで作る
-renderThread.PostTask(() =>
-{
-    var renderer = new Renderer { GLView = new GLView(size) };
-    var window = new OverlayWindow(overlay, renderer, new Dpm(1000));
-
-    window.Resize(size); // 画像の幅(400 px / 1000 dpm = 0.4 m)をオーバーレイに反映する
-    renderThread.PostRender(window, CreateLayerTree(size)); // Present は描画スレッドで走る
-});
-
-overlay.Visibility.Show();
-
-Console.WriteLine("HMD の中でオーバーレイを探してください。Enter キーで終了します。");
-Console.ReadLine();
-
-renderThread.Stop();
-
-static ILayer CreateLayerTree(SKSizeI size)
-{
-    using var recorder = new SKPictureRecorder();
-    var canvas = recorder.BeginRecording(new SKRect(0, 0, size.Width, size.Height));
-    canvas.Clear(SKColors.WhiteSmoke);
-    using var paint = new SKPaint { Color = SKColors.DarkSeaGreen };
-    canvas.DrawRect(new SKRect(100, 75, 300, 225), paint);
-
-    return new ContainerLayer
-    {
-        Children = { new PictureLayer { Picture = recorder.EndRecording() } }
-    };
-}
-```
-
-コードの要点は3つです。
+作例のコードの要点は3つです。
 
 - `RenderPostTaskRunner` が、描画スレッドを作る。`Start` のあと、`PostTask` に渡した処理が、描画スレッドで実行される
 - `GLView`、`Renderer`、`OverlayWindow` は、描画スレッドの中で作る。`OverlayWindow` は、`Present` のたびに GL テクスチャを OpenVR に渡す
 - `FramePacer(60)` が、描画ループの周期を 60 回/秒にそろえる
 
-この最小のコードは、GL のリソースの後始末を省いています。
+作例は、GL のリソースの後始末を省いた最小のコードです。
 
-```powershell
-dotnet run --project RenderPath3
-```
-
-`OverlayWindow` は、エンジン層の型です。フレームワーク(`FloatSoda`)にも、同じ名前の `FloatSoda.Widgets.OverlayWindow` があります。段4は別のプロジェクトで作るので、ここでは重なりません。同じプロジェクトに両方を入れるときは、フレームワークと同じように、`using EngineOverlayWindow = FloatSoda.Engine.OverlayWindow;` と別名を付けます。
+`OverlayWindow` は、エンジン層の型です。フレームワーク(`FloatSoda`)にも、同じ名前の `FloatSoda.Widgets.OverlayWindow` があります。同じプロジェクトに両方を入れるときは、フレームワークと同じように、`using EngineOverlayWindow = FloatSoda.Engine.OverlayWindow;` と別名を付けます。
 
 **できた?** 段2と同じ絵が、`FromFile` を呼ばずに、オーバーレイに出た。
 
 <details>
 <summary>できなかったら</summary>
 
-絵が出ない、例外が出る場合は、`GLView` を描画スレッド以外で作っていないかを確かめます。GL を使う処理は、`PostTask` に入れます。スレッドの制約は、[エンジン層](engine-layer.md) の「描画スレッドは、キューのタスクを実行する」にあります。
+絵が出ない、例外が出る場合は、`GLView` を描画スレッド以外で作っていないかを、作例のコードで確かめます。GL を使う処理は、`PostTask` に入れます。スレッドの制約は、[エンジン層](engine-layer.md) の「描画スレッドは、キューのタスクを実行する」にあります。
 
 </details>
 
@@ -336,61 +160,14 @@ dotnet run --project RenderPath3
 
 エンジン層の詳細は、[エンジン層](engine-layer.md) にあります。
 
-</details>
-
 ## 4. ウィジェットで描く
 
 段4は、段3で手書きしたものを、フレームワークに任せます。ウィジェットで色の四角を書き、ダッシュボードに出します。
 
-コンソールアプリを作り、`FloatSoda` を参照します。
-
-```powershell
-dotnet new console -o RenderPath4
-dotnet add RenderPath4 reference ./FloatSoda/src/FloatSoda/FloatSoda.csproj
-```
-
-`RenderPath4/Program.cs` を、次のコードに置き換えます。
-
-```csharp
-using FloatSoda;
-using FloatSoda.Abstractions.Geometries;
-using FloatSoda.Geometrics;
-using FloatSoda.Widgets;
-using FloatSoda.Widgets.Layout;
-using FloatSoda.Widgets.Paint;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using SkiaSharp;
-
-var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddFloatSoda();
-
-using var host = builder.Build();
-var app = host.Services.GetRequiredService<FloatSodaApp>();
-
-app.CreateWindow(new DashboardWindow
-{
-    Dpm = new Dpm(100),
-    Title = "RenderPath",
-    Child = new Align
-    {
-        Alignment = Alignment.Center,
-        Child = new SizedBox
-        {
-            Width = 100,
-            Height = 100,
-            Child = new ColoredBox { Color = SKColors.CornflowerBlue }
-        }
-    }
-});
-
-await host.RunAsync();
-```
-
 SteamVR を起動してから、動かします。HMD の中でダッシュボードを開き、`RenderPath` のタブを選びます。
 
 ```powershell
-dotnet run --project RenderPath4
+dotnet run --project samples/FloatSoda.Samples.RenderPath -- --step 4
 ```
 
 段3で書いた処理は、フレームワークの次の箇所が受け持っています。

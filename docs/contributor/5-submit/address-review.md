@@ -24,18 +24,9 @@ PR についたレビューの指摘を、重さで見分けて、直すもの�
 
 指摘を「blocking」と「非 blocking」に分けます。非 blocking のうち、PR の範囲外のものは「別 Issue 向け」とします。
 
-重要度は上ほど重くなります(順序の正本は REVIEW.md の「1. 重要度の順序」)。
+重要度は8段あり、上ほど重くなります。順序と各段の内容は、REVIEW.md の「1. 重要度の順序」を開いて確かめます。このページには写しません。
 
-1. behavioral correctness
-2. tree lifecycle / state transitions
-3. incremental update correctness
-4. public API consistency
-5. test coverage
-6. documentation consistency
-7. performance
-8. style / maintainability
-
-blocking になるのは、重要度が1〜5で、concrete failure mode を説明できる指摘です。concrete failure mode とは、どの入力や状態で何が壊れるかのことです。6〜8は、原則として非 blocking の提案です。concrete failure mode を書けない指摘は、書けるようになるまで格下げされます(REVIEW.md の「2. finding の基準」)。
+blocking になるのは、重要度が上位5段(1〜5)で、concrete failure mode を説明できる指摘です。concrete failure mode とは、どの入力や状態で何が壊れるかのことです。下位3段(6〜8)は、原則として非 blocking の提案です。concrete failure mode を書けない指摘は、書けるようになるまで格下げされます(REVIEW.md の「2. finding の基準」)。
 
 スコープ外の改善要求は、「別 Issue 向け」と明示した非 blocking として伝えられます。
 

@@ -12,30 +12,19 @@ FloatSoda は、SteamVR のオーバーレイ UI を、Flutter のような宣�
 
 ## Flutter の考え方を写す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: Flutter の三つのツリーの名前(知らなくても読める)
-- このページが渡すもの: 写す範囲(語彙、ツリー、観測できる挙動)と、写さないもの(C# の表現手段、Semantics など非移植と決めたもの)。理由は、読み手と LLM が Flutter の挙動を期待して書くため、差異がバグでも意図でも利用者の負担が同じこと
-- 読み手がすること: 「Flutter と同じ」が何を指すかをつかむ
-- 次へ進む先: 「UI をすべて C# のコードで書く」。三つのツリーの話は、「1フレームが SteamVR に届くまで」(../2-understand/frame-to-steamvr.md)へリンクする
-- 【未決】Flutter との差異を残すときの手順(ADR)をここで予告するか、リンクだけにするか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 FloatSoda は、Flutter の Widget・Element・RenderObject という三つのツリーと、ウィジェットの語彙、そこから観測できる挙動を写しています。Flutter 由来の Widget と RenderObject は、明示された理由がない限り、Flutter と観測できる挙動を変えません。「実装しやすい」「こちらの方が自然」だけを理由にした独自仕様は受け入れません。
 
 理由は、FloatSoda を使う人も、その人の代わりにコードを書く LLM も、Flutter の挙動を期待して書くからです。Flutter との違いは、バグでも意図した差異でも、利用者にとっては同じ手間になります。
 
 写さないものもあります。C# や .NET として自然な表現への置き換え(`event`、`init` / `required`、`record`)は、挙動の差異に数えません。Semantics のように、移植しないと明示した機能もあります。
 
+Flutter との差異を残すときは、今ある差異の台帳([known-divergences.md](../../../.agents/skills/floatsoda-device-test-gen/references/known-divergences.md))に記録します。決定の記録(ADR)の置き場所と番号の付け方は、決まっていません。
+
 三つのツリーが C# でどう写されているかは、[1フレームが SteamVR に届くまで](../2-understand/frame-to-steamvr.md)で読めます。
 
 次は「UI をすべて C# のコードで書く」です。
 
 <!-- ※要確認: 「Flutter を写す」方針の理由を、1か所にまとめた文書がリポジトリにない。上の理由の段落は AGENTS.md の Target Users と REVIEW.md の「Flutter parity」から組み立てており、オーナーの意図と合うかを確かめる必要がある -->
-
-</details>
 
 ## UI をすべて C# のコードで書く
 

@@ -15,131 +15,14 @@
 
 先に予想を立てます。2 と 3 で、リストに何が入るかを考えてください。2つの四角を縦に並べて、片方の色だけを変えます。それぞれを `RepaintBoundary` で包みます。
 
-## 用意するもの
+## 作例を動かす
 
-FloatSoda を clone したフォルダーと同じ階層に、コンソールアプリを作ります。`FloatSoda` のプロジェクトへの参照を足します。
+作例は [samples/FloatSoda.Samples.ExperimentFramework](../../../samples/FloatSoda.Samples.ExperimentFramework/) にあります。コードの全文は、このページに載せず、作例のファイルを読みます。作例は、パイプラインを自分で組み、`BuildScope`、`FlushLayout`、`FlushPaint` を順に呼びます。2つの四角を `Column` に並べ、上の四角の色を `SetState` で切り替えます。それぞれの四角は `RepaintBoundary` で包みます。
 
-```powershell
-dotnet new console -o ExpFramework
-dotnet add ExpFramework reference ./FloatSoda/src/FloatSoda/FloatSoda.csproj
-```
-
-参照先は、clone したフォルダーの名前に合わせて書き換えます。.NET の SDK のバージョンなど、開発の準備は [開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) にあります。
-
-**できた?** `dotnet build ExpFramework` が成功した。
-
-<details>
-<summary>できなかったら</summary>
-
-SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。
-
-</details>
-
-## 動かす
-
-`ExpFramework/Program.cs` を、次のコードに置き換えます。パイプラインを自分で組み、`BuildScope`、`FlushLayout`、`FlushPaint` を順に呼びます。
-
-```csharp
-using FloatSoda.Core;
-using FloatSoda.Elements;
-using FloatSoda.RenderObjects;
-using FloatSoda.Widgets;
-using FloatSoda.Widgets.Layout;
-using FloatSoda.Widgets.Paint;
-using SkiaSharp;
-
-var useBoundary = args.Length == 0 || args[0] != "no-boundary";
-
-var renderView = new RenderView(400, 300);
-var pipeline = new RenderPipeline
-{
-    OnNeedVisualUpdate = () => { },
-    RenderView = renderView
-};
-var owner = new BuildOwner(() => { });
-
-TogglePanelState? state = null;
-new RenderObjectToWidgetAdapter
-{
-    Container = renderView,
-    Child = new TogglePanel
-    {
-        UseBoundary = useBoundary,
-        OnStateCreated = s => state = s
-    }
-}.AttachToRenderTree(owner, null);
-
-renderView.PrepareInitialFrame();
-owner.BuildScope();
-pipeline.FlushLayout();
-pipeline.FlushPaint();
-Show("初回フレーム後", pipeline);
-
-state!.Toggle();
-Show("SetState 直後", pipeline);
-
-owner.BuildScope();
-Show("BuildScope 後", pipeline);
-
-pipeline.FlushLayout();
-pipeline.FlushPaint();
-Show("FlushPaint 後", pipeline);
-
-static void Show(string label, RenderPipeline pipeline)
-{
-    var nodes = pipeline.NodesNeedingPaint
-        .Select(n => $"{n.GetType().Name}@depth{n.Depth}");
-    Console.WriteLine($"{label}: NodesNeedingPaint = [{string.Join(", ", nodes)}]");
-}
-
-record TogglePanel : StatefulWidget<TogglePanel>
-{
-    public bool UseBoundary { get; init; } = true;
-    public Action<TogglePanelState>? OnStateCreated { get; init; }
-
-    public override State<TogglePanel> CreateState() => new TogglePanelState();
-}
-
-class TogglePanelState : State<TogglePanel>
-{
-    private bool _flag;
-
-    // SetState は protected なので、外から呼べるように State を受け渡す
-    public override void InitState() => Widget!.OnStateCreated?.Invoke(this);
-
-    public void Toggle() => SetState(() => _flag = !_flag);
-
-    private Widget Panel(SKColor color) => new SizedBox
-    {
-        Width = 100,
-        Height = 100,
-        Child = new ColoredBox { Color = color }
-    };
-
-    private Widget Wrap(Widget child) =>
-        Widget!.UseBoundary ? new RepaintBoundary { Child = child } : child;
-
-    public override Widget Build(IBuildContext context) => new Column
-    {
-        Children =
-        {
-            Wrap(Panel(_flag ? SKColors.Tomato : SKColors.CornflowerBlue)),
-            Wrap(Panel(SKColors.DarkSeaGreen)),
-        }
-    };
-}
-```
-
-コードの流れは次のとおりです。
-
-- `RenderView`、`RenderPipeline`、`BuildOwner` を作り、`RenderObjectToWidgetAdapter` でウィジェットのツリーをつなぐ
-- `TogglePanel` は、`Column` に四角を2つ並べ、上の四角の色を `SetState` で切り替える
-- `UseBoundary` が真のとき、それぞれの四角を `RepaintBoundary` で包む
-
-次のコマンドで動かします。
+リポジトリのルートで、次のコマンドを実行します。.NET の SDK のバージョンなど、開発の準備は [開発環境を用意する](../3-prepare/dev-environment.md) にあります。
 
 ```powershell
-dotnet run --project ExpFramework
+dotnet run --project samples/FloatSoda.Samples.ExperimentFramework
 ```
 
 **できた?** 「初回フレーム後」「SetState 直後」「BuildScope 後」「FlushPaint 後」の4つの行が出た。
@@ -147,7 +30,7 @@ dotnet run --project ExpFramework
 <details>
 <summary>できなかったら</summary>
 
-コンパイルが通らない場合は、公開 API が変わった可能性があります。使っている型(`RenderPipeline`、`BuildOwner`、`RenderObjectToWidgetAdapter`、`StatefulWidget<T>`、`State<T>`)の名前と使い方を、[フレームワーク層](framework-layer.md) と、`src/FloatSoda` の現在のソースで照らします。
+SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。コンパイルが通らない場合は、公開 API が変わった可能性があります。作例が使っている型(`RenderPipeline`、`BuildOwner`、`RenderObjectToWidgetAdapter`、`StatefulWidget<T>`、`State<T>`)の名前と使い方を、[フレームワーク層](framework-layer.md) と、`src/FloatSoda` の現在のソースで照らします。
 
 </details>
 
@@ -177,17 +60,19 @@ FlushPaint 後: NodesNeedingPaint = []
 <details>
 <summary>できなかったら</summary>
 
-`BuildScope` のあとのリストが空の場合は、`Toggle()`、`BuildScope()`、`Show()` の呼び出し順を確かめます。`state!.Toggle()` で例外になる場合は、`OnStateCreated` が呼ばれたかを確かめます。`UseBoundary` が偽のログになっている場合は、実行コマンドに `no-boundary` を付けていないかを確かめます。
+`BuildScope` のあとのリストが空の場合は、作例の中で `Toggle()`、`BuildScope()`、各行を出す処理の呼び出し順を確かめます。`[RenderRepaintBoundary@depth2]` ではなく `[RenderView@depth0]` が出た場合は、実行コマンドに `no-boundary` を付けていないかを確かめます。
 
 </details>
 
 ## 壊してみる: RepaintBoundary を外す
 
-境界を外すと、結果がどう変わるかを予想してから実行します。コードの `Wrap` が、`RepaintBoundary` で包まずに、四角をそのまま返すようにします。引数 `no-boundary` を付けると同じ状態になります。
+境界を外すと、結果がどう変わるかを予想してから実行します。引数 `no-boundary` を付けると、作例は四角を `RepaintBoundary` で包まずに、そのまま並べます。
 
 ```powershell
-dotnet run --project ExpFramework -- no-boundary
+dotnet run --project samples/FloatSoda.Samples.ExperimentFramework -- no-boundary
 ```
+
+<!-- ※要確認: 作例は PR #313 にあり、main にはまだない。引数 no-boundary は #313 の実際の引数に合わせた。出力の4行の形は、移す前のコードに基づくので、#313 がマージされたら実物と照らす -->
 
 **できた?** 「`BuildScope` 後」の行が `[RenderView@depth0]` になった。描き直しの範囲が、境界から根の `RenderView` まで広がっている。
 
@@ -208,19 +93,7 @@ dotnet run --project ExpFramework -- no-boundary
 
 ## 次に読むもの
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 実験の結果
-- このページが渡すもの: `framework-layer.md`、`experiment-rendering.md`、`frame-to-steamvr.md` へのリンク
-- 読み手がすること: 続きを選ぶ
-- 止まる箇所: なし。ここでこのページは終わる
-- 【未決】実験のコードを、本文に全文で載せるか、`samples/` に置いてリンクするか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 - [フレームワーク層](framework-layer.md): ツリーの役割と、差分更新の仕組み
 - [実験: 描画層](experiment-rendering.md): Layer の合成を png で確かめる
 - [1フレームが SteamVR に届くまで](frame-to-steamvr.md): 描き直した結果が、SteamVR に届くまで
 
-</details>

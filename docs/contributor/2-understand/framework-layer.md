@@ -78,34 +78,9 @@ public SKColor Color
 
 `SetState` のあとに、どのノードが `NodesNeedingPaint` に入るかは、[実験: フレームワーク層](experiment-framework.md) で、ログで確かめられます。
 
-## 入力は、ヒットテストからジェスチャへ流れる
+## 入力の流れは別のページにある
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: `GestureDetector` のコールバックが呼ばれる体験
-- このページが渡すもの: `PointerController` → `HandlePointerEvent` → ヒットテスト → ジェスチャの調停の流れ。ダッシュボードのオーバーレイだけに届くという制約(追跡: #182)
-- 読み手がすること: ウィジェット側の入力が、どこまで FloatSoda の仕事で、どこから OpenVR の仕事かを見分ける(OpenVR 側は `ovr-layer.md`)
-- 次へ進む先: 「Flutter と違うところ」
-- 【未決】この節は量が多い。入力(ヒットテスト、ジェスチャ、ポインタ)を別ページ(例: `framework-input.md`)に分けるか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-入力は、フレームの先頭でウィジェットに届きます。`WidgetBinding.BeginFrame` は、`DrawFrame` の前に `FlushPointerEvents` を呼びます。流れは次のとおりです。
-
-1. `OverlayWindow.PollInputEvents` が、オーバーレイ宛の OpenVR のイベントをポーリングする。入力源が `RawPointerEvent` を発火し、`PointerController` のキューに積む。デスクトップウィンドウでは、GLFW のコールバックが描画スレッドで同じキューに積む
-2. `PointerController.Flush` が、キューを取り出して `PointerEvent` に変換する。変換は `Flush` を呼んだスレッド(メインスレッド)で行う
-3. `HandlePointerEvent` が、`RenderView.HitTest` でヒットしたノードのパス(ヒットパス)を求める。パスの末尾に `WidgetBinding` 自身を加える
-4. ヒットパスの各ノードへイベントを配る。押下中は、押した時点のヒットパスへ、移動と離す操作を配り続ける
-5. パスの末尾の `WidgetBinding.HandleEvent` が、`PointerRouter` でジェスチャ認識器へイベントを届ける。押下では `GestureArena` の参加受付を締め切り、離す操作では未確定のアリーナの既定勝者を確定する
-
-認識器は `src/FloatSoda/Gesture/` にあります。ウィジェットとして使うのは `GestureDetector` や `Listener` です。
-
-オーバーレイのうち、ポインターが届くのはダッシュボードだけです。エンジン層の `OverlayWindow` が入力源を作るのが、ダッシュボードのときだけだからです。ほかのオーバーレイへの接続は、Issue で追跡しています(追跡: [#182](https://github.com/sumx21t-3310/FloatSoda/issues/182))。
-
-OpenVR のイベントがポインター入力になるまでは、[エンジン層](engine-layer.md) と [OVR 層](ovr-layer.md) の担当です。ウィジェット側の仕事は、`PointerEvent` を受け取るところから始まります。
-
-</details>
+ポインター入力が、ヒットテストとジェスチャ認識器を経てウィジェットに届くまでは、[入力が届くまでを追う](framework-input.md) に書いています。
 
 ## Flutter と違うところ
 
@@ -121,17 +96,5 @@ Flutter のコードを移植するときは、次の3つの前提を持ち込�
 
 ## 実験で確かめる
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 読んだ内容を確かめたい気持ち
-- このページが渡すもの: `experiment-framework.md` へのリンクと、ほかの層の解説へのリンク(描画層、エンジン層)
-- 読み手がすること: 実験に進む
-- 止まる箇所: なし。ここでこのページは終わる
-- 【未決】このページを1本にするか、「三つのツリーと差分更新」と「入力」の2本に分けるか。調査では、フレームワーク層は量が多いので分けたほうがよいと分かっている(docs 再編の決定、2026-10-17)。分け方の決定は、オーナーに確かめる
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 ここまでの内容は、[実験: フレームワーク層](experiment-framework.md) で動かして確かめられます。ほかの層は、[描画層](rendering-layer.md) と [エンジン層](engine-layer.md) に続きます。1フレームの流れ全体は [1フレームが SteamVR に届くまで](frame-to-steamvr.md) にあります。
 
-</details>

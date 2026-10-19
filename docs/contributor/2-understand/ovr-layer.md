@@ -100,17 +100,6 @@ SteamVR にはマニフェストが2種類あり、FloatSoda での扱いが違�
 
 ## つまずきやすい点
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: OpenVR まわりで詰まった経験、またはこれから書く不安
-- このページが渡すもの: 選んだ落とし穴ごとに、症状、原因、取る行動
-- 読み手がすること: 自分の症状に合う項目を探す
-- 止まる箇所: なし。ここでこのページは終わる。実験は `experiment-ovr.md`
-- 【未決】落とし穴の候補7つのうち、どれを書くか。1番は書くと決まっている。確かめた状況が「1回だけ」「コメントだけ」のものを、確かめてから載せるか、載せないか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 OpenVR まわりで詰まりやすい点を、症状、原因、取る行動の順に並べます。
 
 ### マニフェストが2種類あり、FloatSoda での扱いが違う
@@ -122,16 +111,18 @@ OpenVR まわりで詰まりやすい点を、症状、原因、取る行動の�
 ### `OpenVR.IsHmdPresent()` が `True` でも、初期化が失敗する
 
 - 症状: `OVRApplication` を作ると、`Init_HmdNotFound` の `VRInitializeException` になる
-- 原因: `IsHmdPresent()` が `True` でも起きる。条件は確かめられていない
+- 原因: `IsHmdPresent()` が `True` でも起きる。条件は分かっていない
 - 取る行動: 初期化の成否は、`IsHmdPresent()` ではなく、`OVRApplication` の例外で判断する。SteamVR の状態と HMD の接続を確かめる
+- 確かめた程度: 1台の環境で再現した。どの状態で起きるかは分かっていない
 
 <!-- ※要確認: 再現条件 / 確認は1台の環境だけで、どの状態で起きるかは分かっていない。HMD の接続と SteamVR の起動順を変えて確かめる -->
 
 ### 初期化が通ったあと、`OverlayIdentity` の作成で `NullReferenceException` になる
 
 - 症状: `OVRApplication` の作成は通り、`new OverlayIdentity(...)` で `NullReferenceException` になる。スタックトレースは `OverlayIdentity` のコンストラクターの `OpenVR.Overlay.CreateOverlay` の行を指す
-- 原因: 確かめられていない。`OpenVR.Overlay` が `null` だった可能性がある
+- 原因: 分かっていない。スタックトレースから、`OpenVR.Overlay` が `null` だった可能性を推定している
 - 取る行動: 起きたときは、SteamVR の起動状態とスタックトレースの全文を添えて、Issue に報告する(→ [不具合を切り分けて報告する](../1-get-involved/report-bugs.md))
+- 確かめた程度: 一度だけ再現した。同じ操作で起きないときもあった
 
 <!-- ※要確認: 再現条件 / 同じ操作で起きるときと、起きないときがあった。起きない場合と比べて、差を確かめる -->
 
@@ -140,17 +131,18 @@ OpenVR まわりで詰まりやすい点を、症状、原因、取る行動の�
 - 症状: 大文字を含む `AppKey` を作っても、例外にならない
 - 原因: 検証は `Value` の `init` アクセサーにあり、`new AppKey("...")` のコンストラクターは通らない
 - 取る行動: 小文字、数字、ドット、アンダースコアだけで、127 文字までの値を渡す
+- 確かめた程度: 実行して確かめた。大文字、200 文字、空文字の3通りで、例外にならなかった
 
 ### ポインター入力が届くのは、ダッシュボードのオーバーレイだけ
 
 - 症状: ダッシュボード以外のオーバーレイで、`GestureDetector` のコールバックが呼ばれない
 - 原因: エンジン層の `OverlayWindow` が入力源を作るのは、ダッシュボードのときだけ。`ControllerPointerSystem` は、どこからも呼ばれていない
 - 取る行動: ダッシュボード以外へのポインター入力は、Issue で追跡している(追跡: [#182](https://github.com/sumx21t-3310/FloatSoda/issues/182))
+- 確かめた程度: コードから読んだ。実機では確かめていない
 
-`ControllerPointerSystem` は、`MakeOverlaysInteractiveIfVisible` を使わずに、コントローラーのレイとオーバーレイの交差を毎フレーム計算します。SteamVR の入力の横取りが起きないので、VRChat の AFK 判定を避けられる、とクラスの説明に書かれています。
+`ControllerPointerSystem` は、`MakeOverlaysInteractiveIfVisible` を使わずに、コントローラーのレイとオーバーレイの交差を毎フレーム計算します。SteamVR の入力の横取りが起きないので、VRChat の AFK 判定を避けられる、とクラスの説明に書かれています。これはクラスの説明にあるだけで、VRChat では確かめていません。
 
 <!-- ※要確認: AFK 判定を避けられるかは、クラスの説明だけが根拠 / VRChat で、AFK 判定の挙動を確かめる -->
 
 OVR 層だけでオーバーレイを出して入力を受ける実験は、[実験: OVR 層](experiment-ovr.md) にあります。
 
-</details>

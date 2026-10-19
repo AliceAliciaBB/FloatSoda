@@ -62,30 +62,17 @@ Issue にマイルストーンが付いていないときは、その Issue は�
 
 ## 手順4: 決まったことを探す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 「これはもう決まったことか」という疑問
-- このページが渡すもの: 探す場所の順。Issue のコメント、ADR(../6-propose/write-adr.md)、規約(CONTRIBUTING.md)
-- 読み手がすること: 順に探す
-- 止まる箇所: 見つからないとき。提案として出す(../6-propose/write-proposal.md)
-- 【未決】ADR の置き場所が決まるまで、「決まったことの探し方」の順をどう書くか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 「これはもう決まったことか」を確かめるには、次の順に探します。
 
 1. 関係する Issue のコメント
-2. 決定の記録(ADR)。一覧は [決定の記録(ADR)の一覧](../2-understand/adr-index.md)にある
+2. 決定の記録(ADR)。ADR の置き場所と番号の付け方は決まっていない。Flutter との差異は、今ある台帳 [known-divergences.md](../../../.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) で探す。一覧の入口は [決定の記録(ADR)の一覧](../2-understand/adr-index.md)にある
 3. 規約。[CONTRIBUTING.md](../../../CONTRIBUTING.md) と [REVIEW.md](../../../REVIEW.md)
 
 リリースごとの変更は、[CHANGELOG.md](../../../CHANGELOG.md) にあります。
 
 見つからないときは、提案として出します。書き方は [提案を書く](../6-propose/write-proposal.md)にあります。
 
-<!-- ※要確認: ADR の置き場所が決まっていない(write-adr.md が未執筆)。決まったら、探す順と上のリンク先を見直す -->
-
-</details>
+<!-- ※要確認: ADR の置き場所と番号の付け方が決まっていない。決まったら、探す順と上のリンク先を見直す -->
 
 ## 手順5: 手伝える Issue を見つける
 

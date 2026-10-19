@@ -84,36 +84,13 @@ dotnet test tests/FloatSoda.Test --filter "FullyQualifiedName~AlignmentTest.Comp
 
 ## 手順4: Flutter の元の実装を引ける状態にする(移植をする人)
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
+Flutter の参照クローンの作り方は、[flutter/flutter](https://github.com/flutter/flutter) のリポジトリを参照してください。
 
-- 読み手が持って来るもの: 移植をしたいという目的
-- このページが渡すもの: 参照クローンの置き場所と、読み取り専用で扱うこと(`pull` と `checkout` をしない理由は、行番号とリンクが固定できなくなるため)。対応する実装を探す `flutter-widget-source` skill の使い方
-- 読み手がすること: 参照クローンを置き、ウィジェット名から Flutter の実装を1つ引いてみる
-- できた?: 指定したウィジェットの Widget / Element / RenderObject の位置が分かる
-- 次へ進む先: 移植の手順(../4-write/port-from-flutter.md)
-- 【未決】参照クローンの作り方をこのページに書くか、skill のページに任せるか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
-移植では、Flutter の元の実装を見ながら書きます。flutter/flutter のクローンを、参照専用に1つ用意します。
-
-1. 任意の場所に、flutter/flutter をクローンする
-2. そのクローンでは `pull` も `checkout` もしない
-
-参照専用にするのは、行番号とリンクを固定できるようにするためです。CONTRIBUTING.md と REVIEW.md は、参照クローンの例として `~/code_reading/flutter_reference` を挙げています。参照した版は、PR の本文の「Flutter reference」の欄に書きます。クローンの中で `git rev-parse HEAD` を実行すると、書く commit が分かります。
-
-ウィジェット名から Flutter の Widget / Element / RenderObject を特定する手順は、`flutter-widget-source` skill にあります。
-
-**できた?** 指定したウィジェットの Widget / Element / RenderObject の位置が、Flutter のクローンのファイルと行で分かる。
+**できた?** flutter/flutter のクローンが手元にあり、移植するウィジェットのファイルを開ける。
 
 <details><summary>できなかったら</summary>
 
-クローンのファイルが見つからないときは、クローンが完了しているかを確かめます。ウィジェット名が Flutter にないときは、FloatSoda 独自のウィジェットの可能性があります。移植の手順は [Flutter から移植する](../4-write/port-from-flutter.md)にあります。
-
-</details>
-
-<!-- ※要確認: 参照クローンの作り方(置き場所、固定する版)を示す文書がリポジトリにない。上の手順は一般的な取得方法。また flutter-widget-source skill はこのリポジトリの .agents/skills/ になく、読み手が入手できるかを確かめられていない -->
+ウィジェット名が Flutter のクローンに見つからないときは、FloatSoda 独自のウィジェットの可能性があります。移植の手順は [Flutter から移植する](../4-write/port-from-flutter.md)にあります。
 
 </details>
 

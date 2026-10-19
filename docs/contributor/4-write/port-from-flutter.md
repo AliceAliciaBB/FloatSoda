@@ -66,18 +66,6 @@ Flutter 由来かどうかの判断が割れるときは、実装を始める前
 
 ## 手順3: 差異を残すなら、記録する
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 差異が要るという判断
-- このページが渡すもの: 記録必須の5項目と、記録先。5項目のうち、差異を固定するテストがないと、次の移植で戻されること。差異は ADR にも書くこと(../6-propose/write-adr.md)
-- 読み手がすること: 5項目を書く。利用者に見える差異は、利用者向けの docs にも書く
-- できた?: 5項目がすべて埋まり、差異を戻すと落ちるテストがある
-- 次へ進む先: 手順4
-- 【未決】ADR への移し方が決まるまで、記録先を `known-divergences.md` と ADR のどちらで案内するか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 差異を残すときは、次の5項目を記録します(REVIEW.md の「6. Flutter parity」)。
 
 | 項目 | 書くこと |
@@ -90,15 +78,13 @@ Flutter 由来かどうかの判断が割れるときは、実装を始める前
 
 差異を固定するテストがないと、次の移植で差異が戻されます。テストは省かないでください。
 
-記録先は、差異の台帳 [known-divergences.md](../../../.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) です。エントリの形と、`deliberate` / `not ported` / `port mistake` / `unlabelled` のラベルの意味は、台帳の冒頭にあります。台帳を ADR にまとめる移行は決まっていません。移行が決まるまでは、台帳へ追記してください。設計判断として ADR も書く場合は [決定を ADR に書く](../6-propose/write-adr.md) を読んでください。
+記録先は、差異の台帳 [known-divergences.md](../../../.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) です。エントリの形と、`deliberate` / `not ported` / `port mistake` / `unlabelled` のラベルの意味は、台帳の冒頭にあります。台帳を ADR にまとめる移行と、ADR の置き場所と番号の付け方は、決まっていません。決まるまでは、台帳へ追記してください。設計判断として ADR も書く場合は [決定を ADR に書く](../6-propose/write-adr.md) を読んでください。
 
 <!-- ※要確認: 差異の記録先を台帳から ADR に移したあとの案内の書き方。確かめ方: 移行の決定後にオーナーへ確認する -->
 
 台帳の `Observation` 欄は、差異が HMD なしで観測できるか(`HEADLESS`)、SteamVR が要るか(`VR`)を示します。HMD が要る範囲の分け方は [テストの分け方](../3-prepare/test-strategy.md) にあります。
 
 **できた?** 5項目がすべて埋まり、差異を戻すと落ちるテストがあります。
-
-</details>
 
 ## 手順4: Flutter のテストを FloatSoda のテストに写す
 

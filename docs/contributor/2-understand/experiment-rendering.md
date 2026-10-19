@@ -17,90 +17,30 @@
 
 先に予想を立てます。3つの Layer が、それぞれ絵をどう変えるかを考えてください。特に、青と橙が重なる部分が、`OpacityLayer` でどう見えるかを予想します。
 
-## 用意するもの
-
-FloatSoda を clone したフォルダーと同じ階層に、コンソールアプリを作ります。`FloatSoda.Rendering` のプロジェクトへの参照を足します。
-
-```powershell
-dotnet new console -o ExpRendering
-dotnet add ExpRendering reference ./FloatSoda/src/FloatSoda.Rendering/FloatSoda.Rendering.csproj
-```
-
-参照先は、clone したフォルダーの名前に合わせて書き換えます。
-
-**できた?** `dotnet build ExpRendering` が成功した。
-
-<details>
-<summary>できなかったら</summary>
-
-SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する(コントリビューター)](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。
-
-</details>
-
 ## 4通りに包んで png に出す
 
-`ExpRendering/Program.cs` を、次のコードに置き換えます。`CreatePicture` が絵を作り、`Save` が絵を包んで png に出します。`PictureLayer` は絵の所有権を持たないので、`Save` が絵を保持し、保存が終わってから破棄します。
+作例は [samples/FloatSoda.Samples.ExperimentRendering](../../../samples/FloatSoda.Samples.ExperimentRendering/) にあります。コードの全文は、このページに載せず、作例のファイルを読みます。作例は、同じ絵を4通りに包み、`LayerBitmapRenderer.Render` で `SKBitmap` にして、png で保存します。あわせて、3つの点の色を出力します。
 
-```csharp
-using FloatSoda.Rendering;
-using FloatSoda.Rendering.Layers;
-using SkiaSharp;
+Layer ツリーを組んで png にする基本は、[samples/FloatSoda.Samples.PaintingSample](../../../samples/FloatSoda.Samples.PaintingSample/) のコードで読めます。この実験は、その流れに、絵を包む Layer を1枚足したものです。
 
-var size = new SKSizeI(400, 300);
-var renderer = new LayerBitmapRenderer();
-
-Save("plain", picture => picture);
-Save("opacity", picture => new OpacityLayer { Alpha = 128, Children = { picture } });
-Save("clip", picture => new ClipRectLayer(new SKRect(0, 0, 200, 150)) { Children = { picture } });
-Save("transform", picture => new TransformLayer
-{
-    Transform = SKMatrix.CreateRotationDegrees(15, 200, 150),
-    Children = { picture }
-});
-
-Console.WriteLine($"保存先: {Path.GetFullPath(".")}");
-
-void Save(string name, Func<ILayer, ILayer> wrap)
-{
-    // PictureLayer は SKPicture の所有権を持たないので、描画と保存が終わるまで呼び出し側が保持する
-    using var picture = CreatePicture();
-    var root = new ContainerLayer { Children = { wrap(new PictureLayer { Picture = picture }) } };
-
-    using var bitmap = renderer.Render(root, size);
-    bitmap.Save($"{name}.png");
-
-    Console.WriteLine($"{name}.png: 青(50,50)={bitmap.GetPixel(50, 50)} " +
-                      $"橙(300,230)={bitmap.GetPixel(300, 230)} 重なり(150,120)={bitmap.GetPixel(150, 120)}");
-}
-
-SKPicture CreatePicture()
-{
-    using var recorder = new SKPictureRecorder();
-    var canvas = recorder.BeginRecording(new SKRect(0, 0, size.Width, size.Height));
-
-    using var blue = new SKPaint { Color = SKColors.CornflowerBlue };
-    using var orange = new SKPaint { Color = SKColors.Orange };
-    canvas.DrawRect(new SKRect(20, 20, 220, 160), blue);
-    canvas.DrawRect(new SKRect(120, 100, 360, 260), orange);
-
-    return recorder.EndRecording();
-}
-```
-
-`Save` は、包んだ Layer をルートの `ContainerLayer` に入れ、`LayerBitmapRenderer.Render` で `SKBitmap` にして、png で保存します。あわせて、3つの点の色を出力します。
+リポジトリのルートで、次のコマンドを実行します。.NET の SDK のバージョンなど、開発の準備は [開発環境を用意する](../3-prepare/dev-environment.md) にあります。
 
 ```powershell
-dotnet run --project ExpRendering
+dotnet run --project samples/FloatSoda.Samples.ExperimentRendering -- <出力先フォルダー>
 ```
+
+出力先フォルダーは省略できます。省略すると、カレントディレクトリに png を保存します。
 
 **できた?** `plain.png`、`opacity.png`、`clip.png`、`transform.png` の4枚ができた。最後の行に出る保存先のフォルダーに、4枚がある。
 
 <details>
 <summary>できなかったら</summary>
 
-png が空になる、サイズが 0 になる場合は、`LayerBitmapRenderer.Render` に渡した大きさと、ルートに子を入れたかを確かめます。仕組みは [描画層](rendering-layer.md) の「CPU の Bitmap に描く」にあります。
+SDK が見つからない、またはビルドで例外が出る場合は、[開発環境を用意する](../3-prepare/dev-environment.md) で SDK と clone の状態を確かめます。png が空になる、サイズが 0 になる場合は、作例の中で `LayerBitmapRenderer.Render` に渡した大きさと、ルートに子を入れたかを確かめます。仕組みは [描画層](rendering-layer.md) の「CPU の Bitmap に描く」にあります。
 
 </details>
+
+<!-- ※要確認: 作例は PR #313 にあり、main にはまだない。引数は #313 の実際の引数に合わせた。保存先の行と点の色の出力は、移す前のコードに基づくので、#313 がマージされたら実物と照らす -->
 
 ## png を見比べる
 
@@ -128,7 +68,7 @@ transform.png: 青(50,50)=#ff6495ed 橙(300,230)=#ffffa500 重なり(150,120)=#f
 <details>
 <summary>できなかったら</summary>
 
-`opacity.png` の重なりの不透明度が `80` より大きい場合は、`OpacityLayer` で包んだ対象が、2つの矩形をまとめた `PictureLayer` になっているかを確かめます。矩形ごとに別の `PictureLayer` にして、それぞれを `OpacityLayer` で包むと、重なりは濃くなります。
+`opacity.png` の重なりの不透明度が `80` より大きい場合は、作例の中で `OpacityLayer` が包んでいる対象が、2つの矩形をまとめた `PictureLayer` になっているかを確かめます。矩形ごとに別の `PictureLayer` にして、それぞれを `OpacityLayer` で包むと、重なりは濃くなります。
 
 </details>
 
@@ -142,19 +82,7 @@ transform.png: 青(50,50)=#ff6495ed 橙(300,230)=#ffffa500 重なり(150,120)=#f
 
 ## 次に読むもの
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 実験の結果
-- このページが渡すもの: `rendering-layer.md`、`tutorial-render-path.md` の段2、`experiment-framework.md` へのリンク
-- 読み手がすること: 続きを選ぶ
-- 止まる箇所: なし。ここでこのページは終わる
-- 【未決】`PaintingSample` との重なり(どちらも Layer ツリーを png に出す)を、本文でどう扱うか。この実験の問いを変えることで重なりを減らす、と決めている(docs 再編の決定、2026-10-17)。`tutorial-render-path.md` の段2との分担は、段2の本文を書くときに決める
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 - [描画層](rendering-layer.md): Layer の種類と、`Clone` の共有範囲
-- [描画が届くまで(4段)](tutorial-render-path.md): 2段目で、Layer ツリーを組んで png に出す
+- [描画が届くまで(4段)](tutorial-render-path.md): 2段目で、自分で組んだ Layer ツリーを png に出す
 - [実験: フレームワーク層](experiment-framework.md): `SetState` のあとに描き直される範囲を確かめる
 
-</details>

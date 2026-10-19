@@ -33,24 +33,17 @@ dotnet run --project samples/FloatSoda.Samples.PaintingSample
 
 ## サンプルを動かす
 
-実験には、`samples/FloatSoda.Samples.PrimitiveOverlay` を使います。プロジェクトが参照するのは `FloatSoda.OVR` だけです。`Program.cs` の流れは次のとおりです。
+実験には、[samples/FloatSoda.Samples.PrimitiveOverlay](../../../samples/FloatSoda.Samples.PrimitiveOverlay/) を使います。プロジェクトが参照するのは `FloatSoda.OVR` だけです。`Program.cs` の流れは次のとおりです。
 
-1. `OVRApplication` を作って、SteamVR に接続する
+1. `OVRApplication` を作って、SteamVR に接続し、`Identify()` を呼ぶ
 2. `VRSystemEventDispatcher` に、終了を知らせる `VREvent_Quit` の処理を登録する
 3. `OverlayIdentity` と `DeviceTrackedOverlay` を作り、位置を `(0, 0, -1)` にする
 4. デスクトップの `layer_tree_output.png` を `Texture.FromFile` で読み、`Visibility.Show()` で出す
 5. `Input.Method` をマウスにして、`MakeOverlaysInteractiveIfVisible` を有効にする
 6. `FocusEnter`、`FocusLeave`、`MouseButtonDown`、`MouseButtonUp`、`MouseMove` の処理を登録する
-7. ループでホバー中の表示と、2つのディスパッチャーの `PollEvents` を行い、各周の終わりに `1000 / 72` ミリ秒待機する
+7. ループでホバー状態の変化の表示と、2つのディスパッチャーの `PollEvents` を行い、各周の終わりに `1000 / 72` ミリ秒待機する
 
-このサンプルは書きかけです。コードを読むと、次の点が見つかります。
-
-- 画像の読み込み先が、デスクトップの `layer_tree_output.png` に固定されている
-- ホバー中は、ループのたびに `hovered` が出力される
-- 例外が起きると、最後の `app.Dispose()` に届かない
-- `OVRApplication.Identify()` を呼ばないので、アプリケーションマニフェストとは結びつかない
-
-SteamVR を起動してから、サンプルを動かします。
+画像のパスは、第1引数で渡せます。省略すると、デスクトップの `layer_tree_output.png` を使います。SteamVR を起動してから、サンプルを動かします。
 
 ```powershell
 dotnet run --project samples/FloatSoda.Samples.PrimitiveOverlay
@@ -93,7 +86,8 @@ dotnet run --project samples/FloatSoda.Samples.PrimitiveOverlay
 | `クリック: (x, y) ボタン: Left` | `MouseButtonDown`。座標とボタンを出す |
 | `クリック離した` | `MouseButtonUp` |
 | `移動: (x, y)` | `MouseMove`。座標を出す |
-| `hovered` | ループのたびに、ホバー中に出る |
+| `hovered` | ホバーが始まったときに出る |
+| `unhovered` | ホバーが終わったときに出る |
 
 振動は、`FocusEnter` で 25 ミリ秒、`FocusLeave` で振幅を下げた 25 ミリ秒、`MouseButtonDown` で 25 ミリ秒(周波数 1500、振幅 0.5)に設定されています。
 
@@ -121,19 +115,7 @@ OVR 層が持たないのは、描画とレイアウトです。描画層が Lay
 
 ## 次に読むもの
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 実験の結果
-- このページが渡すもの: `ovr-layer.md`、`tutorial-render-path.md`、`experiment-rendering.md` へのリンク
-- 読み手がすること: 続きを選ぶ
-- 止まる箇所: なし。ここでこのページは終わる
-- 【未決】サンプルが書きかけのまま実験のページを書くか、先にサンプルを直すか。直す場合の範囲(画像の読み込み先、ログの量、後始末)
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 - [OVR 層](ovr-layer.md): OpenVR を包む型と、つまずきやすい点
 - [描画が届くまで(4段)](tutorial-render-path.md): 層を足して、描画が届くまでを作る
 - [実験: 描画層](experiment-rendering.md): HMD なしで確かめられる実験
 
-</details>
