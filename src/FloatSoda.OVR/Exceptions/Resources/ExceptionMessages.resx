@@ -811,6 +811,9 @@
   <data name="VRCompositorException_AlreadySet" xml:space="preserve">
     <value>コンポジター プロパティは既に設定されています。</value>
   </data>
+  <data name="VRCompositorException_UnexpectedError" xml:space="preserve">
+    <value>予期しないコンポジターエラーが発生しました: {0}</value>
+  </data>
   <data name="VRInputException_NameNotFound" xml:space="preserve">
     <value>指定された入力アクションまたはパスが見つかりません。</value>
   </data>
@@ -886,6 +889,12 @@
   <data name="VRNotificationException_SystemWithUserValueAlreadyExists" xml:space="preserve">
     <value>同じ UserValue を持つ通知がすでに存在しています。</value>
   </data>
+  <data name="VRNotificationException_ServiceUnavailable" xml:space="preserve">
+    <value>通知サービスを利用できません。</value>
+  </data>
+  <data name="VRNotificationException_UnexpectedError" xml:space="preserve">
+    <value>予期しない通知エラーが発生しました: {0}</value>
+  </data>
   <data name="VRRenderModelException_Loading" xml:space="preserve">
     <value>レンダーモデルは現在読み込み中です。</value>
   </data>
@@ -943,6 +952,9 @@
   <data name="VRScreenshotException_ScreenshotAlreadyInProgress" xml:space="preserve">
     <value>別のスクリーンショット処理が既に進行中です。</value>
   </data>
+  <data name="VRScreenshotException_UnexpectedError" xml:space="preserve">
+    <value>予期しないスクリーンショットエラーが発生しました: {0}</value>
+  </data>
   <data name="VRSettingsException_None" xml:space="preserve">
     <value>設定エラーは発生していません。</value>
   </data>
@@ -960,6 +972,12 @@
   </data>
   <data name="VRSettingsException_UnsetSettingHasNoDefault" xml:space="preserve">
     <value>設定値が未設定であり、既定値も存在しません。</value>
+  </data>
+  <data name="VRSettingsException_AccessDenied" xml:space="preserve">
+    <value>設定へのアクセスが拒否されました。</value>
+  </data>
+  <data name="VRSettingsException_UnexpectedError" xml:space="preserve">
+    <value>予期しない設定エラーが発生しました: {0}</value>
   </data>
   <data name="TrackedPropertyException_TrackedProp_Success" xml:space="preserve">
     <value>トラッキングプロパティ操作は正常に完了しました。</value>
@@ -1008,5 +1026,8 @@
   </data>
   <data name="TrackedPropertyException_TrackedProp_InvalidContainer" xml:space="preserve">
     <value>指定されたプロパティコンテナは無効です。</value>
+  </data>
+  <data name="TrackedPropertyException_UnexpectedError" xml:space="preserve">
+    <value>予期しないトラッキングデバイスのプロパティエラーが発生しました: {0}</value>
   </data>
 </root>

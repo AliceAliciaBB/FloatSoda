@@ -102,6 +102,9 @@ public sealed record Border
     };
 
     internal bool IsUniform => Top == Right && Top == Bottom && Top == Left;
+
+    // FlutterのBorder.dimensionsに相当する。ボーダーは常にボックスの内側へ描画するため、各辺の太さがそのまま内側の寸法になる。
+    internal EdgeInsets Dimensions => new(Left.Width, Top.Width, Right.Width, Bottom.Width);
 }
 
 /// <summary>
@@ -139,6 +142,9 @@ public sealed record BoxDecoration
     /// <see langword="null"/>の場合、ボーダーを描画しません。
     /// </summary>
     public Border? Border { get; init; }
+
+    // FlutterのBoxDecoration.paddingに相当する。Containerが子をボーダーの内側へ収めるために使う。
+    internal EdgeInsets Padding => Border?.Dimensions ?? EdgeInsets.Zero;
 
     internal void Paint(SKCanvas canvas, SKRect bounds)
     {

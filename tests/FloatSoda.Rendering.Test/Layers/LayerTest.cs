@@ -117,4 +117,59 @@ public class LayerTest
         Assert.Equal(SKColors.Blue, bitmap.GetPixel(55, 55));
         Assert.Equal(SKColors.Empty, bitmap.GetPixel(5, 5));
     }
+
+    private static ContainerLayer MakeClipLayer(string kind, SKRect clipRect) => kind switch
+    {
+        "rect" => new ClipRectLayer(clipRect) { ClipBehavior = Clip.HardEdge },
+        "rrect" => new ClipRoundRectLayer(new SKRoundRect(clipRect, 8)) { ClipBehavior = Clip.HardEdge },
+        _ => new ClipPathLayer(MakePath(clipRect)) { ClipBehavior = Clip.HardEdge },
+    };
+
+    private static SKPath MakePath(SKRect rect)
+    {
+        var path = new SKPath();
+        path.AddRect(rect);
+        return path;
+    }
+
+    [Theory]
+    [InlineData("rect")]
+    [InlineData("rrect")]
+    [InlineData("path")]
+    public void Layout_呼び出し元がSave済み_SaveCountを変えない(string kind)
+    {
+        // #296: Layout が対になる Save なしに Restore し、呼び出し元の状態を1段外していた(回帰テスト)
+        var clip = MakeClipLayer(kind, SKRect.Create(0, 0, 100, 100));
+        clip.Children.Add(MakePicture(SKColors.Red, SKRect.Create(0, 0, 100, 100)));
+        using var surface = SKSurface.Create(new SKImageInfo(Size.Width, Size.Height));
+        var canvas = surface.Canvas;
+        canvas.Save();
+        var before = canvas.SaveCount;
+
+        clip.Layout(LayerContext.Create(surface));
+
+        Assert.Equal(before, canvas.SaveCount);
+    }
+
+    [Theory]
+    [InlineData("rect")]
+    [InlineData("rrect")]
+    [InlineData("path")]
+    public void Render_呼び出し元がクリップ済み_クリップの外へ描かない(string kind)
+    {
+        var clip = MakeClipLayer(kind, SKRect.Create(0, 0, 100, 100));
+        clip.Children.Add(MakePicture(SKColors.Green, SKRect.Create(10, 10, 20, 20)));
+        using var surface = SKSurface.Create(new SKImageInfo(Size.Width, Size.Height));
+        var canvas = surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+        canvas.Save();
+        canvas.ClipRect(SKRect.Create(50, 0, 50, 100));
+        var before = canvas.SaveCount;
+
+        LayerRenderer.Render(clip, LayerContext.Create(surface));
+
+        Assert.Equal(before, canvas.SaveCount);
+        using var image = surface.Snapshot();
+        Assert.Equal(SKColors.Empty, image.PeekPixels().GetPixelColor(15, 15));
+    }
 }

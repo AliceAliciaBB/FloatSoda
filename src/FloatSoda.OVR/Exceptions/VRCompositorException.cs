@@ -27,7 +27,7 @@ public class VRCompositorException(string message, EVRCompositorError errorCode)
         EVRCompositorError.AlreadySubmitted => ExceptionMessages.VRCompositorException_AlreadySubmitted,
         EVRCompositorError.InvalidBounds => ExceptionMessages.VRCompositorException_InvalidBounds,
         EVRCompositorError.AlreadySet => ExceptionMessages.VRCompositorException_AlreadySet,
-        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+        _ => string.Format(ExceptionMessages.VRCompositorException_UnexpectedError, error)
     };
 
     /// <summary>Throws a <see cref="VRCompositorException"/> if <paramref name="error"/> indicates a failure.</summary>
