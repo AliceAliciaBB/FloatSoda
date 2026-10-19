@@ -58,17 +58,6 @@ OpenVR のネイティブ DLL(`openvr_api.dll`)は、`FloatSoda.OVR` のパッ�
 
 ## 確かめていないこと
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 自分の環境が、上の表に載っていない
-- このページが渡すもの: 確かめていない項目の一覧と、確かめた人が Issue に書ける場所
-- 読み手がすること: 自分の環境で動いたかどうかを知らせる
-- 止まる箇所: なし。ここでページは終わる
-- 【未決】この節を、確かめたら消すか、残して確かめた版を書くか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 次の項目は、動作を確かめていません。
 
 - Windows 以外の OS で動くか(同梱の OpenVR のネイティブ DLL は x64 の Windows 用だけ)<!-- ※要確認: Windows 以外の OS で動くか。DLL の同梱先しか確かめていない。Linux 環境で起動して確かめる -->
@@ -76,6 +65,4 @@ OpenVR のネイティブ DLL(`openvr_api.dll`)は、`FloatSoda.OVR` のパッ�
 - GPU と OpenGL の最低バージョン<!-- ※要確認: GLView が要求する OpenGL のバージョンをコードで確かめていない。src/FloatSoda.Engine/GLView.cs と Renderer.cs を読み、古い GPU で起動して確かめる -->
 - 自己完結形式で配ったアプリの実行要件<!-- ※要確認: 自己完結形式で配った exe を、.NET を入れていない PC で起動して確かめていない -->
 
-自分の環境が表にないときは、動いたかどうかを[Issue](https://github.com/sumx21t-3310/FloatSoda/issues)で知らせてください。書き方は、コントリビューター向けの[不具合を切り分けて報告する](../contributor/1-get-involved/report-bugs.md)にあります。確かめられた項目は、このページの表へ移します。
-
-</details>
+自分の環境が表にないときは、動いたかどうかを[Issue](https://github.com/sumx21t-3310/FloatSoda/issues)で知らせてください。書き方は、コントリビューター向けの[不具合を切り分けて報告する](../contributor/1-get-involved/report-bugs.md)にあります。確かめられた項目は、このページの表へ移します。
