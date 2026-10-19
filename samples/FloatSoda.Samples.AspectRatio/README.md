@@ -71,5 +71,5 @@ dotnet run --project samples/FloatSoda.Samples.AspectRatio
 
 ## 関連
 
-- [docs/WidgetSystem.md](../../docs/WidgetSystem.md) — 組み込みウィジェット一覧
+- [docs/reference/find-widgets.md](../../docs/reference/find-widgets.md) — 組み込みウィジェット一覧
 - [FloatSoda.Samples.FittedBox](../FloatSoda.Samples.FittedBox) — 子の描画自体を拡大縮小する場合

@@ -1,0 +1,376 @@
+← [Home](docs/Home.md)
+
+# ドキュメント執筆ガイド
+
+FloatSoda のドキュメントは、読者ごとに **User docs / Contributor docs / API Reference** の3系統に分かれています(情報設計の一次情報は [Issue #188](https://github.com/sumx21t-3310/FloatSoda/issues/188))。本ページは、新しい情報を書くときに「どの系統のどのページに書くか」「どこが一次情報か」「変更時に何を更新するか」を決めるための入口です。書き方の規約はそれぞれの置き場所に置いているため、ここには再掲しません。
+
+| 系統 | 読者 | 答える問い |
+|---|---|---|
+| User docs | FloatSoda でアプリを作る人 | **What / How** — 何であり、どう使うか |
+| Contributor docs | FloatSoda 本体を変える・レビューする人 | **How it works / Why / Must** — どう動き、なぜそう設計され、何を守るか |
+| API Reference | 利用者・コントリビュータ・Coding Agent の全員 | **Exactly what exists** — 公開 API の正確な契約 |
+
+> **実装状況** — 系統ごとのディレクトリ(`docs/user/`、`docs/contributor/`、`docs/api/`)への再編は、#188 の手順4で進めます。現行の `docs/` は Contributor 向けの詳細なリファレンスが中心です。そのため、再編では **現行ページを `contributor/` へ移し、User docs は新しく書きます**。それまでは [再編の地図](#再編の地図) で該当ページを選んでください。このガイド自体も、再編後は `docs/contributor/Documentation.md` へ移ります。種別ごとの「書くもの / 書かないもの」とテンプレートは、User 側が [4 章](#4-user-docs-の書くもの--書かないものとテンプレート)、Contributor 側が [5 章](#5-contributor-docs-の書くもの--書かないものとテンプレート)にあります。
+
+## 1. どこに書くか
+
+書こうとしている情報について、3つの問いに順に答えます。1問目では、どのズームまで見れば理解できる情報かを C4 Model のレベルに当てはめます。2問目は Lv3 の情報だけに使い、読者が何をしたいかで割ります。3問目では、系統の中の種別を Diátaxis で決めます。C4 と Diátaxis は書き手の判定基準です。サイトの見出しには出さず、読者には「導入する / 使う / 変える / 調べる」の区分で示します。Lv ごとの FloatSoda での中身は、[Issue #188](https://github.com/sumx21t-3310/FloatSoda/issues/188) の「情報の置き場所を決める順序」の表を一次情報とします。
+
+```text
+1. どのズームまで見れば理解できる情報か
+   Lv1  アプリと SteamVR・VRChat・HMD の関係、3ペルソナ          → 導入(Home、TargetUsers)
+   Lv2  参照するパッケージ、スレッド、ウィンドウ種別               → User
+   Lv3  三ツリー、BuildOwner、RenderPipeline、Layer、入力の流れ    → 2 へ
+   Lv4  型・メンバー・引数・戻り値・例外・nullability の契約       → XML ドキュメントコメント(API Reference の原稿)
+
+2. Lv3 の情報は、読者が何をしたいかで割る
+   使う   — 正しく使うために必要                                   → User
+   変える — 変更とレビューに必要                                   → Contributor
+   調べる — 型どうしの対応関係                                     → XML ドキュメントコメントの <seealso>
+
+3. 系統の中の種別を Diátaxis で決める
+   完成物を作りながら学ぶ道筋                                       → User / Tutorial
+   特定の目的を達成する手順                                         → User / Guide(How-to)
+   概念を理解するための説明                                         → User / Concept(Explanation)
+   いまどう動いているか                                             → Contributor / Architecture(Explanation)
+   なぜそう設計したか                                               → Contributor / Design(Explanation)
+   変更後も何を維持するか                                           → Contributor / Requirements(Reference)
+   どう変更・レビュー・公開するか                                   → Contributor / Development(How-to)
+```
+
+境界で迷いやすい情報は、次のように分類します。
+
+- **利用者から観測できる制約**は User docs に書き、**その制約を成立させる内部要件**は Contributor docs に書きます。例: 「`WorldSpaceWindow` では現在ポインタ入力を使えない」は User docs、「`WorldSpaceWindow` の入力を Controller Ray → HitTest として接続する」は Contributor docs、`WorldSpaceWindow` のプロパティ・型・例外契約は API Reference
+- **Flutter との差異**は、判断原則を [APIDesign](API_DESIGN.md) に、確認済み差異の台帳を [`known-divergences.md`](.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) に置きます。利用者から見える差異は、該当する User docs のページと、対応するサンプルの「Flutterとの違い」節にも記載します(記録ルールは [APIDesign](API_DESIGN.md))
+- **同じテーマは1つの系統で詳述**し、ほかの系統からはリンクします。概念を Guide で説明し直したり、シグネチャを Concept に並べたりしません
+
+### User docs の範囲
+
+User docs は、公開 API および API Reference と合わせて、**#188 の層3(統合ミニアプリ型)のサンプルをジュニアコーダーテストで書ける範囲**を扱います。これが「どこまで書くか」の合格ラインです。テストで不足が判明した概念や制約は、User docs または API Reference の不足として回収します(手順は #188)。内部実装を知らないとコードを書けない箇所が見つかった場合、それは User docs の不足を意味します。
+
+### 再編の地図
+
+再編(#188 手順4)の出発点です。現行ページは内部の仕組みの説明が中心です。そのため、User 向けの部分だけを抜き出して新しいページに書き、本体は `contributor/` へ移します。種別は再編時に実物で確定します。
+
+**現行ページの行き先**
+
+| 現行ページ | 行き先 | 備考 |
+|---|---|---|
+| [Architecture](docs/contributor/2-understand/frame-to-steamvr.md) | Contributor / Architecture | 利用者向けの全体像は User の「Widget」へ書き下ろす |
+| [BuildPipeline](docs/contributor/2-understand/framework-layer.md) | Contributor / Architecture | |
+| [RenderObjects](docs/contributor/2-understand/framework-layer.md) | Contributor / Architecture | 制約モデルの利用者向け説明は User の「Layout」へ |
+| [WidgetSystem](docs/reference/find-widgets.md) | Contributor / Architecture | 組み込みウィジェット一覧と「押せるボタンを作る」は User 側へ |
+| [Animation](docs/guide/4-build/screen/add-animation.md) | Contributor / Architecture | 使い方は User の「Animation」へ |
+| [OVRIntegration](docs/contributor/2-understand/ovr-layer.md) | Contributor / Architecture | オーバーレイ種別と制約は User の「Window / Overlay」へ |
+| [UILayering](docs/contributor/2-understand/ui-layer.md) | Contributor / Design | 設計方針(未提供) |
+| [APIDesign](API_DESIGN.md) | Contributor / Design + Requirements | |
+| [DocumentationComments](DOCUMENTATION_COMMENTS.md) | Contributor / Development | |
+| [TestStrategy](docs/contributor/3-prepare/test-strategy.md) | Contributor / Development | テストの置き場所を決める地図。配置と件数は日付付きで更新する |
+| [Localization](LOCALIZATION.md) | Contributor / Design + Development | |
+| このページ | Contributor / Development | `contributor/Documentation.md` |
+| [TargetUsers](AGENTS.md#target-users) | User(入口) | 利用者向けに書かれているので、ほぼそのまま `user/` へ |
+| [GettingStarted](docs/tutorials/first-overlay.md) | User / Tutorial | 利用者向けに書き直す |
+| [Input](docs/contributor/2-understand/framework-input.md) | User / Concept + Guide | 利用者向けに書き直す。実装の説明は Contributor 側へ |
+
+**新しい User ページと元ネタ**(#188 の Concept の列挙に沿う)
+
+| User ページ | 種別 | 元ネタ(利用者が観測できる制約と使い方を抜き出す) |
+|---|---|---|
+| Widget(宣言的 UI と Widget ツリー) | Concept | WidgetSystem の組み込み一覧と「押せるボタンを作る」、Architecture の全体像、層1サンプル |
+| State(`SetState`、`InheritedWidget`) | Concept | WidgetSystem、BuildPipeline のうち利用者から観測できる再ビルドの挙動 |
+| Layout(制約・サイズ・配置) | Concept | RenderObjects の制約モデル、層1サンプル(レイアウト基本・制約変換系) |
+| Input(ポインタ・ジェスチャ・アクション入力) | Concept + Guide | Input、WidgetSystem の「ジェスチャとヒットテスト」、層1サンプル(入力系)。ダッシュボード限定の制約を明記する |
+| Animation | Concept | Animation |
+| Window / Overlay(ダッシュボード・ワールド座標・デバイス追従) | Concept + Guide | OVRIntegration、Home の実装状況(表示専用の制約)、[Issue #151](https://github.com/sumx21t-3310/FloatSoda/issues/151)(物理サイズの発見性) |
+| 〜するには(各種) | Guide | 層2(Cookbook 型)サンプル |
+| GettingStarted | Tutorial | 現行 GettingStarted、`samples/FloatSoda.Samples.GettingStarted` |
+| ミニアプリを作る | Tutorial | 層3(統合ミニアプリ型)サンプル(Phase 2 完了後) |
+
+## 2. 情報ごとの置き場所
+
+同じ情報は1箇所のみに書き、ほかの場所からはリンクします。
+
+| 情報 | 置き場所 |
+|---|---|
+| API のシグネチャ・引数・戻り値・例外・nullability・副作用・スレッド制約 | XML ドキュメントコメント(規約は [DocumentationComments](DOCUMENTATION_COMMENTS.md)) |
+| API の具体的な使い方 | User Guide |
+| 概念モデル(Widget、State、Layout、Input、Animation、Window / Overlay) | User Concept |
+| 完成物を作る手順 | User Tutorial とサンプル(`samples/`) |
+| ウィジェットの最小の使用例 | サンプルの README(構成は [CONTRIBUTING.md](CONTRIBUTING.md) の「サンプルを追加する場合の規約」) |
+| 内部の動作(ツリー、Build / Layout / Paint、入力、スレッド) | Contributor Architecture |
+| 設計理由と採用しなかった選択肢 | Contributor Design |
+| invariant、observable behavior、ライフサイクル・所有権・スレッドの必須条件 | Contributor Requirements。ただし、ツリーの不変条件(所有権・ライフサイクル・差分更新・Layer)の置き場所は [REVIEW.md](REVIEW.md) の「4. FloatSoda 固有の不変条件」([AGENTS.md](AGENTS.md) の規約表) |
+| API 設計の原則と Flutter parity / divergence の判断基準 | [APIDesign](API_DESIGN.md) |
+| 確認済みの Flutter との差異 | [`known-divergences.md`](.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) |
+| 開発・レビュー・リリースの手順 | [CONTRIBUTING.md](CONTRIBUTING.md) / [REVIEW.md](REVIEW.md) / [RELEASING.md](RELEASING.md) |
+| ドキュメントの分類とサンプルの3層構成 | [Issue #188](https://github.com/sumx21t-3310/FloatSoda/issues/188) |
+
+XML ドキュメントコメントは `internal` や `private` にも書きます([DocumentationComments](DOCUMENTATION_COMMENTS.md) の適用範囲)。公開サイトの API Reference に載せるのは `public` API のみであり、`internal` 側のコメントはコントリビュータ向けの内部資料として扱います。
+
+## 3. Documentation Impact Matrix
+
+変更の種別ごとに、更新を検討すべき文書の一覧です。**変更によって置き場所の文書の説明が変わる場合のみ更新します。** 全項目を機械的に更新する必要はありません。
+
+| 変更 | 更新対象 |
+|---|---|
+| public API を追加・変更する | XML ドキュメントコメント。利用者の使い方が増えるなら User Guide と Catalog 型サンプル |
+| observable behavior を変更する | User docs とテスト。API 契約に影響するなら XML ドキュメントコメント |
+| 公開制約・既知の制限を変更する | User docs。必要なら XML ドキュメントコメント |
+| 内部アルゴリズムだけを変更する | Contributor Architecture の説明が変わる場合のみ |
+| アーキテクチャの境界を変更する | Contributor Architecture と Requirements |
+| 設計判断を変更する | Contributor Design。必要なら Requirements と [APIDesign](API_DESIGN.md) |
+| invariant を追加・変更する | Contributor Requirements とテスト |
+| Flutter との差異を導入・変更する | [`known-divergences.md`](.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) と divergence テスト。利用者から観測できるなら User docs とサンプルの「Flutterとの違い」節 |
+| 新しい代表ユースケースを追加する | User Guide / Tutorial と、#188 の層に沿ったサンプル |
+| サンプルを追加・変更する | サンプルの README と `checks/items.jsonl`([CONTRIBUTING.md](CONTRIBUTING.md) の規約) |
+| ドキュメントのページを移動・改名する | リンク元のページと [Home](docs/Home.md) の「ページ一覧」表(公開サイトの検査がリンク切れを検出します) |
+
+PR では、テンプレートの `## Documentation` 節に、変更種別と更新した文書(更新が不要と判断した場合はその理由)を記載します。レビューでは、その判断がこの表と一致しているかを確認します。
+
+## 4. User docs の書くもの / 書かないものとテンプレート
+
+User docs は新しく書くページが多いため、先に骨格を定めます。ページの目的に不要な節は省きます。
+
+読者は [TargetUsers](AGENTS.md#target-users) で定義する3タイプです。**コードを書くのも読むのも LLM である**という前提を忘れず、「LLM がこの API を誤用しない」書き方を優先します。Unity の知識のみを持つ読者(Booth クリエイター)には、Unity や uGUI の語彙による読み替えを添えます。
+
+種別ごとに、書くものと書かないものを分けます。
+
+| 種別 | 書くもの | 書かないもの |
+|---|---|---|
+| Concept | 概念の目的、利用者から見たモデル、ほかの概念との関係、利用に必要な最低限の仕組み、最小例、観測できる制約 | `private` / `internal` の実装、内部アルゴリズム、設計判断の経緯、API メンバーの一覧 |
+| Guide | 「〜するには」への答え。目的に必要な手順と API の組み合わせ | Concept の説明のやり直し、シグネチャや引数の契約(API Reference へ) |
+| Tutorial | 具体的な完成物を作る一本道の学習体験 | API の網羅 |
+
+サンプルは #188 の3層と対応します。
+
+| 種別 | 対応するサンプル |
+|---|---|
+| Concept | 層1: Widget カタログ型(1サンプル = 1ウィジェット群の最小デモ) |
+| Guide | 層2: Cookbook 型(複数の Widget / API を組み合わせる) |
+| Tutorial | 層3: 統合ミニアプリ型(公開 API だけで本番に近い形を作る) |
+
+### Concept
+
+```text
+# 名前
+## 概要                        — 何であり、何を解決するか
+## いつ使うか
+## 基本モデル                  — 利用者から見た仕組み。内部実装は書かない
+## 最小例                      — 対応する層1(カタログ型)サンプルへのリンクと、必要なら最小の断片
+## Unity / uGUI からの読み替え — 対応する概念と、違う点
+## 制約と未実装                — 利用者から観測できる制限。使えるようになる Phase を添える
+## 関連ページ
+```
+
+### Guide
+
+```text
+# 〜する
+## 前提
+## 手順
+## 完成形          — 対応する層2(Cookbook 型)サンプルへのリンク
+## 注意点
+## 関連 API / サンプル
+```
+
+### Tutorial
+
+```text
+# 〜を作る
+## 作るもの
+## 前提
+## Step 1 …
+## Step 2 …
+## 完成            — 対応する層3(統合ミニアプリ型)サンプルへのリンク
+## 次に読むもの
+```
+
+サンプルコードは `samples/` をマスターとし、本文には必要最小限の断片のみを載せます。ドキュメント用に完全な実装を別途記述することはしません。
+
+## 5. Contributor docs の書くもの / 書かないものとテンプレート
+
+Contributor docs は、現行の `docs/` のページを `contributor/` へ移して作ります。ここに書く「書くもの / 書かないもの」とテンプレートは、[再編の地図](#再編の地図)で行き先が決まっている現行ページと、[REVIEW.md](REVIEW.md) の「4. FloatSoda 固有の不変条件」、[`known-divergences.md`](.agents/skills/floatsoda-device-test-gen/references/known-divergences.md) のエントリから逆算したものです。種別ごとに、いちばん近い実物のページを例として挙げます。新しいページを書くときも、既存のページを移すときも、その例に寄せてください。
+
+現行ページには複数の種別が混ざっています。例えば [RenderObjects](docs/contributor/2-understand/framework-layer.md) の「差分更新」節は、伝播の仕組み(Architecture)と「プロパティを変更したら `MarkNeedsLayout()` / `MarkNeedsPaint()` を呼ぶ」という契約(Requirements)が同じ節にあります。再編では、混ざっている節を種別ごとに分けるか、別種別のページへリンクします。
+
+### Architecture
+
+いま**どう動いているか**を書きます。読者は、そのコンポーネントを変更する前に境界と流れを把握したいコントリビュータです。
+
+書くもの:
+
+- **責務と境界** — 何を担い、何を担わないか(例: [Architecture](docs/contributor/2-understand/frame-to-steamvr.md) の「アセンブリ構成」表)
+- **処理の流れ** — フレーム、イベント、データが通る順序。図を使ってよい(例: Architecture の「レンダリングライフサイクル」、[BuildPipeline](docs/contributor/2-understand/framework-layer.md) の「全体の流れ」)
+- **所有権とライフサイクル** — 誰が何を持ち、いつ作られ、いつ捨てられるか。スレッドごとの所有物と通信方法(例: Architecture の「スレッドモデル」表)
+- **現在の実装の要点** — ソースのパスと型・メソッド名を添える(例: BuildPipeline の「BuildOwner と dirty list」)
+- **実装状況と未実装の領域** — Alpha の間は冒頭に置く。「動かないのは未実装だからか、バグか」を読者が切り分けるために必要となる(例: BuildPipeline の冒頭ブロックと「未実装の領域」表)
+- **テストでの駆動** — その仕組みを実時間や実機なしで動かす方法(例: [Animation](docs/guide/4-build/screen/add-animation.md) の「テストでの駆動」)
+- **Flutter との対応** — どこまで Flutter と同じ戦略か。差異は台帳のエントリ番号を指す
+
+書かないもの:
+
+- **なぜその設計にしたか** → Design。「Flutter と同じ戦略」と一言添えるのはよいが、比較した選択肢と理由は Design に置く(例: RenderObjects の Semantics の注記は、理由を書かずに APIDesign へリンクしている)
+- **変更後も守る条件の列挙** → Requirements。Architecture には現在の仕組みを書き、満たすべき条件は Requirements に書く
+- **利用者向けの使い方と注意** → User docs。「intrinsic 測定はコストに注意」のような利用者向けの注意は、再編で User 側へ抜き出す
+- **API のシグネチャと引数の契約** → XML ドキュメントコメント。組み込みの一覧表は API Reference と重なるため、再編で整理する
+
+コントリビュータ向けサンプル(#188 の分類で `PaintingSample` / `PrimitiveOverlay`)は、Architecture の実例として本文からリンクできます。
+
+```text
+# 名前
+## 実装状況               — Alpha の間は冒頭に。使える範囲と未実装
+## 責務と境界             — 何を担い、何を担わないか
+## 関係するコンポーネント — 型とソースのパス
+## 処理の流れ             — 順序。図を使ってよい
+## 所有権・ライフサイクル — 誰が持ち、いつ作られ、いつ捨てられるか。スレッド
+## Flutter との対応       — 同じ戦略か、差異は台帳のどれか
+## テストでの駆動         — 実時間や実機なしで動かす方法
+## 未実装の領域
+## 関連 Requirements / Design
+```
+
+### Design
+
+**なぜそうしたか**を書きます。読者は、その判断を知らずに「直したくなる」コントリビュータと、将来その判断を覆すかどうかを決める人です。
+
+書くもの:
+
+- **判断対象と背景** — 何を決めたか、どんな問題があったか(例: [UILayering](docs/contributor/2-understand/ui-layer.md) の「Material ロックイン」)
+- **採用した方針と、判定可能な手順** — 「〜が自然」のような主観に流れないよう、手順や判定基準を添える(例: [APIDesign](API_DESIGN.md) の「.NET が標準で提供する機構を再実装しない」の3ステップ、UILayering の「2つ目のデザインシステムが、1つ目のコードをコピーせずに同じコンポーネントを作れるか」)
+- **理由と、理由にならないもの** — FloatSoda 固有の事情(Flutter / .NET / VR オーバーレイ / [TargetUsers](AGENTS.md#target-users))に根拠を置く(例: APIDesign の「理由にならないもの」)
+- **採用しなかった選択肢と、その理由**(例: [Localization](LOCALIZATION.md) の「ニュートラル = 英語が定石だが、主客層と Booth 流通を優先した」)
+- **影響範囲と変更手続き** — この判断が効く範囲と、覆すときの手続き(例: Localization の「変更する場合は必ず issue で議論」)
+- **「コントリビュータへ」の注意書き** — 知らないと直したくなる判断には、意図的であることを明記する(例: Localization の 1 章末尾)
+
+書かないもの:
+
+- **現在の処理の流れの詳細** → Architecture
+- **Flutter との個別の差異** → [`known-divergences.md`](.agents/skills/floatsoda-device-test-gen/references/known-divergences.md)。Design は判断原則だけを持つ([APIDesign](API_DESIGN.md) と台帳の分担と同じ)
+- **手順** → Development
+- **議論の経過** — 決めたことと理由だけを書く。経過は Issue に残す
+
+```text
+# 判断対象
+## 背景                 — どんな問題があったか
+## 採用した方針         — 判定できる手順や基準を添える
+## 理由                 — FloatSoda 固有の事情。理由にならないものも書く
+## 採用しなかった選択肢 — 何を、なぜ採らなかったか
+## 影響範囲と変更手続き — 効く範囲と、覆すときの手続き
+## 関連 Requirements / Architecture
+```
+
+### Requirements
+
+実装を変えても**維持する条件**を書きます。読者は、変更が何を壊しうるかを確認するコントリビュータとレビュアーです。
+
+Requirements の独立したページはまだありません。いちばん近い実物は、[REVIEW.md](REVIEW.md) の「4. FloatSoda 固有の不変条件」、[APIDesign](API_DESIGN.md) の「差異が必要な場合の記録義務」、台帳のエントリ(`Test` 欄で検証方法と対になる)です。テンプレートはこれらの形から逆算したものです。ツリーの不変条件(所有権・ライフサイクル・差分更新・Layer)の置き場所は REVIEW.md の 4 章のままです([AGENTS.md](AGENTS.md) の規約表)。再編で Requirements のページを作るときは、4 章を複製せずにリンクします。4 章に無い条件(observable behavior、failure mode、検証方法、Flutter との関係)は Requirements 側に書きます。
+
+書くもの:
+
+- **適用範囲** — どのツリー、型、操作に効くか
+- **必須条件と不変条件** — 「常に成り立つ」条件の文で書く。REVIEW.md の 4 章にある確認の問い(「drop 後に `Parent` が `null` に戻るか」)を裏返した形にする。4 章にある条件は複製せずにリンクする
+- **Observable behavior** — 利用者とテストから観測できる契約(例: BuildPipeline の「Widget にも RenderObject にも変更がないフレームでは、レイアウト・ペイント・合成のすべてがスキップされます」は、Requirements へ移せる observable behavior)
+- **破ったときの failure mode** — どの入力・状態で、何が壊れるか。REVIEW.md の finding の基準(concrete failure mode)と同じ粒度で書く(例: REVIEW.md の「Layer の clone 後に可変オブジェクトを共有するとデータレースになり、テストではまず落ちない」)
+- **検証方法** — 条件を固定しているテストのファイルとメソッド名。無ければ「未設定」と明示する。台帳の `Test: — (not set)` と同じく、未設定は完了した記録ではなく未処理のタスクとして扱う
+- **Flutter との関係** — parity か、台帳のどのエントリか
+
+書かないもの:
+
+- **なぜその条件が要るか** → Design。一文の理由は添えてもよいが、比較と経緯は Design に置く
+- **現在の実装がどう満たしているか** → Architecture。Requirements は実装が変わっても残る条件だけを書く
+- **実装詳細に依存する条件** — `private` フィールドの状態や呼び出し回数。テストと同じく observable behavior で書く([CONTRIBUTING.md](CONTRIBUTING.md) の「テスト観点」)
+- **手順** → Development
+
+```text
+# 名前
+## 適用範囲                  — どのツリー、型、操作に効くか
+## 必須条件                  — 実装を変えても維持する条件
+## 不変条件                  — 常に成り立つ性質
+## Observable behavior       — 利用者とテストから観測できる契約
+## 破ったときの failure mode — どの入力・状態で、何が壊れるか
+## 検証方法                  — 固定しているテスト。無ければ「未設定」
+## Flutter との関係          — parity か、台帳のエントリ番号
+## 関連 Design / Architecture
+```
+
+### Development
+
+特定の作業の**手順と規約**を書きます。読者は、その作業にこれから取りかかるコントリビュータと Coding Agent です。
+
+開発・レビュー・リリースの規約は [CONTRIBUTING.md](CONTRIBUTING.md) / [REVIEW.md](REVIEW.md) / [RELEASING.md](RELEASING.md) に定められており、`docs/` 側の Development ページはそれを置き換えません。`docs/` に置くのは、特定の作業に絞った規約と手順です(例: [DocumentationComments](DOCUMENTATION_COMMENTS.md)、[TestStrategy](docs/contributor/3-prepare/test-strategy.md)、このページ)。
+
+書くもの:
+
+- **冒頭に、このページの責務と、隣接する規約の置き場所の表** — 読者が「この規約の置き場所はここか」を最初に確かめられるようにする(例: CONTRIBUTING.md と REVIEW.md の冒頭、TestStrategy の冒頭段落)
+- **規約の強度** — 必須(MUST)と推奨(SHOULD)を区別する
+- **手順** — 順番どおりに実行できる形(例: [Localization](LOCALIZATION.md) の「メッセージを追加する手順」)
+- **規約が守られる場所** — CI、PR テンプレート、lint、`npm run verify` など、破ると検出される仕組み。無ければ、レビューで確認する項目として書く(例: [3 章](#3-documentation-impact-matrix)の Impact Matrix と PR テンプレートの `## Documentation` 節)
+- **日付付きの現状** — 件数や配置のような変わる情報は、日付を添えて更新の責任を明示する(例: TestStrategy の「現在の配置(2026-09-09 時点)」)
+
+書かないもの:
+
+- **置き場所が別にある規約の再掲** — リンクに留める。二重に書くと、片方だけが更新されて食い違うためである
+- **仕組みの説明** → Architecture、**理由** → Design。理由は一文で添え、詳細はリンクする
+
+```text
+# 名前
+冒頭: このページの責務と、隣接する規約の置き場所の表
+## 規約               — 必須 / 推奨を明示
+## 手順               — 順番どおりに実行できる形
+## 規約が守られる場所 — CI、テンプレート、lint、verify
+## 関連
+```
+
+## 6. 文体
+
+FloatSoda の文書は日本語で書き、散文と箇条書きを使い分けます。この節では、`docs/` 配下、サンプルの README、Issue と PR の本文に共通する文体を定めます。XML ドキュメントコメントと例外メッセージの文体については、それぞれの規約を参照してください。
+
+| 対象 | 文体の規約の置き場所 |
+|---|---|
+| `docs/` 配下、サンプルの README、Issue と PR の本文 | この節 |
+| XML ドキュメントコメント | [DocumentationComments](DOCUMENTATION_COMMENTS.md)(敬体、日本語のみ) |
+| 例外メッセージ | [Localization](LOCALIZATION.md) の「メッセージの文体」 |
+| `AGENTS.md` | 英語。[CONTRIBUTING.md](CONTRIBUTING.md) の「エージェント向けファイルの言語」 |
+
+### 規約
+
+必須は「〜こと」、推奨は「〜が望ましい」で書き分けます。
+
+- 散文は敬体で書くこと
+- 箇条書きと表のセルは常体で書くこと。箇条書きは Markdown のリスト項目を指し、1項目を1文または体言止めにすること。2文以上になる場合は散文へ移すこと
+- 条件と制約は箇条書きで示し、必須は「〜こと」、推奨は「〜が望ましい」で終えること
+- 規約は、読者に求める行動として書くこと。禁止そのものが要点である場合のみ禁止形を使い、続けて代わりの行動を示すこと
+- 語彙は読者の領域の語で書くこと。読者の領域は [TargetUsers](AGENTS.md#target-users) の3ペルソナが知る Unity、Flutter、.NET、VRChat の語とする。他分野の用語を比喩として借りる代わりに、そのまま説明する。定義どおりに使う用語(不変条件、冪等、直交)はそのまま使う
+- 英語の慣用句は直訳せず、日本語の言い回しに置き換えること。技術用語(deploy、revert、worktree)は英語かカタカナのまま書く
+- 手順は「〜する」の形とし、実行する人の視点で書くこと。作業の経緯や結果は、手順とは別の節に置くこと
+- チェックリストの項目は、「はい」か「いいえ」で答えられる1つの事実にすること
+
+### 言い換える語
+
+次の語彙は、既存の文書から言い換えました（2026-09-15）。一覧にある語を新しく書く場合も、右の言い換えを使います。この一覧は [Issue #262](https://github.com/sumx21t-3310/FloatSoda/issues/262) で決定しました。機械による検査は [Issue #260](https://github.com/sumx21t-3310/FloatSoda/issues/260) で扱います。
+
+| 語 | 言い換え | 備考 |
+|---|---|---|
+| 正典 | 一次情報、置き場所 | 宗教の語を比喩に借りた表現 |
+| 担保する | 保証する | 法務の語を比喩に借りた表現 |
+| Litmus test | 判定基準 | 化学の語を比喩に借りた表現 |
+| 経路 | 読ませ先、手順、流れ | 「入力経路」のように信号の道筋を指す使い方は残す |
+| 直交する | 無関係 | `Wrap` の交差軸のように幾何の定義どおりの使い方は残す |
+
+### 規約が守られる場所
+
+- 敬体と常体の分担、文の長さ、禁止語は textlint で検査する。設定は `website/` に置き、`npm run verify` から呼ぶ(未導入。導入は [Issue #260](https://github.com/sumx21t-3310/FloatSoda/issues/260))
+- 必須と推奨の書き分け、視点、チェックリストの形式は、レビューで確認する
+- Issue と PR の本文は、テンプレートの見出しに従って手順と経緯を分ける
+
+## 関連
+
+- [DocumentationComments](DOCUMENTATION_COMMENTS.md) — XML ドキュメントコメントの規約
+- [Localization](LOCALIZATION.md) — 記述言語と例外メッセージの文体
+- [APIDesign](API_DESIGN.md) — API 設計の原則と Flutter parity
+- [TargetUsers](AGENTS.md#target-users) — 想定する3タイプの作り手
+- [CONTRIBUTING.md](CONTRIBUTING.md) — 開発・PR・テスト・サンプルの規約
+- [REVIEW.md](REVIEW.md) — レビューの判断基準と、ツリーの不変条件の置き場所(「4. FloatSoda 固有の不変条件」)
+- [TestStrategy](docs/contributor/3-prepare/test-strategy.md) — テストの置き場所を決める地図
+- [Issue #188](https://github.com/sumx21t-3310/FloatSoda/issues/188) — ドキュメント・サンプルの情報設計
+- [Issue #219](https://github.com/sumx21t-3310/FloatSoda/issues/219) — 公開サイト(`docs/` の構造がそのままサイトの構造になります)

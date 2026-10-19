@@ -94,6 +94,6 @@ dotnet run --project samples/FloatSoda.Samples.PointerRegion
 
 ## 関連
 
-- [docs/Input.md](../../docs/Input.md) — 入力イベントの流れ
+- [docs/contributor/2-understand/framework-input.md](../../docs/contributor/2-understand/framework-input.md) — 入力イベントの流れ
 - [FloatSoda.Samples.Listener](../FloatSoda.Samples.Listener) — Down / Up / Move も扱う場合
 - [FloatSoda.Samples.GestureDetector](../FloatSoda.Samples.GestureDetector) — タップ・ドラッグの意味付け
