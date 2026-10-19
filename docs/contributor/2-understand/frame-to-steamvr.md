@@ -2,104 +2,113 @@
 
 # 1フレームが SteamVR に届くまで
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## 1フレームを担う2つのスレッド
 
-## 設計シート
+1フレームの描画は、2つのスレッドの仕事です。メインスレッドが、ウィジェットのビルドから Layer ツリーの複製までを行い、描画スレッドが、複製を GL で描いて SteamVR のオーバーレイに提出します。変更したい処理がどの層のどの段にあるかは、この流れで見つけます。
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / FloatSoda のコードを読む、または直したい人 / 何を知っている / C# と、Flutter または宣言的 UI の基本。FloatSoda の層の名前は知らなくてよい / 読んで何をしたい / 1フレームの描画が、どのスレッドのどの層を通って SteamVR のオーバーレイに届くかをつかみ、変更したい箇所がどの層にあるかを判断したい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: メインスレッドで始まった1フレームが、描画スレッドを経て SteamVR のオーバーレイのテクスチャになるまでの流れを、層をまたいで説明する。入力とリサイズの流れも含める
-- 依頼の解釈: なし
-- テーマファイル: explanation
-- Why(目的): 層をまたぐ流れを知らないと、変更が効かない理由(スレッドの違い、複製のタイミング)を取り違える。層ごとの解説へ進む前の地図にする
-- What(目標・結果): 1フレームの流れが、メインスレッドと描画スレッドの2つのスレッドの仕事として説明され、各段が属する層の解説へリンクされている
-- How(手段): 時系列で、メインスレッド側(ビルド、レイアウト、描画、複製、投入)、描画スレッド側(Layer の描画、GL テクスチャ、オーバーレイへの提出)の順に説明する。入力とリサイズは、同じ流れの別の向きの話として別の節に置く
-- 要素:
-  - 層は6つの実装プロジェクトに分かれる。OVR、Rendering、Abstractions、Engine、フレームワーク(`src/FloatSoda`)、UI 系である(AGENTS.md の Project Structure)
-  - スレッドは主に2つ。メインスレッド(名前 `FloatSodaMainThread`、STA)と、描画スレッド(名前 `RenderThread`)である(`src/FloatSoda/FloatSodaHostedService.cs` の 30〜36 行目、`src/FloatSoda/FloatSodaApp.cs` の 63 行目)
-  - ほかに I/O スレッド(`IOTaskRunner`)がある。投入順に1件ずつ処理する、利用者のコード向けのスレッドである(`src/FloatSoda.Engine/TaskRunner.cs` の 46 行目の `IOTaskRunner`)。フレームの流れには入らない
-  - メインループは、1周ごとに次の順で動く。保留中のタスクを実行する → OpenVR のシステムイベントをポーリングし、アクション入力を更新する → 各ウィンドウの `BeginFrame` を呼ぶ → `FramePacer.WaitForNextFrame` で待つ(`src/FloatSoda/FloatSodaApp.cs` の 158〜197 行目)
-  - `WidgetBinding.BeginFrame` は、ポインタイベントの処理 → 登録済みのフレームコールバックの実行 → `DrawFrame` の順に動く(`src/FloatSoda/Core/WidgetBinding.cs` の 221〜235 行目)
-  - `WidgetBinding.DrawFrame` は、`BuildOwner.BuildScope()` を実行し、`NeedsVisualUpdate` が立っていて `Window` があれば、続けて `FlushLayout`、ホバー更新、リサイズの検知、`FlushPaint` を行う(`src/FloatSoda/Core/WidgetBinding.cs` の 177〜195 行目)
-  - `FlushLayout` と `FlushPaint` は、dirty なノードだけを `Depth` の昇順で処理する(`src/FloatSoda/Core/RenderPipeline.cs` の 35〜66 行目)
-  - `RenderView.Layer` を `Clone()` し、`RenderPostTaskRunner.PostRender(Window, layer)` で描画スレッドに渡す(`src/FloatSoda/Core/WidgetBinding.cs` の 199〜201 行目)
-  - Layer を複製するのは、描画スレッドが描いている間にメインスレッド側が次のフレームで同じツリーを変更しても、描画中のツリーに影響しないようにするため(AGENTS.md の「2. Layer Tree」の節の記述)。複製が共有するのは `SKPicture` などの描画リソースで、ツリーの構造は共有しない(`src/FloatSoda.Rendering/Layers/ILayer.cs` の 41〜44 行目、`src/FloatSoda.Rendering/Layers/PictureLayer.cs`)
-  - 描画スレッドは `PostTaskRunner` のループで動く。各周で `PreUpdate`(投入されたタスクの実行)→ `Update`(`GLFW.PollEvents`)→ `PostUpdate` → `FramePacer` の待機の順である(`src/FloatSoda.Engine/TaskRunner.cs` の 490〜494 行目(ループ本体)、575 行目(`PreUpdate` の上書き))
-  - `PostRender` が投入するタスクは `window.Present(layer)` を呼ぶ(`src/FloatSoda.Engine/TaskRunner.cs` の 562〜569 行目)
-  - `OverlayWindow.Present` は `Renderer.Render(layer)` を呼び、描画後の GL テクスチャのハンドルを `Overlay.Texture.FromTexture_t` で OpenVR に渡す(`src/FloatSoda.Engine/OverlayWindow.cs` の 50〜62 行目)
-  - `Renderer.Render` は `GLView.Clear()` → `LayerRenderer.Render`(`Layout` → `Paint`)→ `GLView.Flush()` の順に動く(`src/FloatSoda.Engine/Renderer.cs` の 27〜36 行目、`src/FloatSoda.Rendering/LayerRenderer.cs` の 33〜34 行目)
-  - ウィンドウの作成は `FloatSodaApp.CreateWindow` がメインスレッドのタスクとして行い、`GLView` と `Renderer` の作成は描画スレッドのタスクとして投入される。`Window` は描画スレッドで非同期に生成されるので、メインスレッド側からは生成が観測できたフレームから使える(`src/FloatSoda/FloatSodaApp.cs` の 98〜113 行目、`src/FloatSoda/Core/WidgetBinding.cs` の 110〜119 行目、264〜266 行目のコメント)
-  - リサイズの流れ: レイアウト結果のサイズが前回と変わったら、`PostTask` で `window.Resize(newSize)` を描画スレッドに投げる。`OverlayWindow.Resize` は `GLView` を作り直し、`WidthInMeters` を `Dpm` から更新する(`src/FloatSoda/Core/WidgetBinding.cs` の 204〜216 行目、`src/FloatSoda.Engine/OverlayWindow.cs` の 69〜78 行目)
-  - 入力の流れ(ダッシュボードのオーバーレイ): OpenVR のマウスイベント → `OverlayMouseRawPointerSource` → `PointerController`(`Flush` でキューを取り出す)→ `WidgetBinding.HandlePointerEvent` → ヒットテスト → ジェスチャの配送(`src/FloatSoda.Engine/OverlayWindow.cs` の 41 行目、`src/FloatSoda.Engine/OverlayMouseRawPointerSource.cs`、`src/FloatSoda.Abstractions/Input/PointerController.cs`、`src/FloatSoda/Core/WidgetBinding.cs` の 267〜290 行目)
-  - ダッシュボード以外のオーバーレイでは `PointerSource` が `null` で、ポインタは届かない。`ControllerPointerSystem` は `src`・`tests`・`samples` のどこからも呼ばれていない(`src/FloatSoda.Engine/OverlayWindow.cs` の 35〜42 行目、`src/FloatSoda.OVR/Overlay/ControllerPointerSystem.cs`、2026-10-17 の grep)。追跡: #182
-  - デスクトップウィンドウ(`DesktopWindow`)は、同じ `Present` の流れを、GL の既定フレームバッファへの転送で終える(`src/FloatSoda.Engine/DesktopWindow.cs` の 34〜50 行目)
-  - OpenVR のアクション入力(コントローラーのボタン)は、メインループの `_inputUpdater.Update()` が毎周更新する。UI のポインタ入力とは別の経路である(`src/FloatSoda/FloatSodaApp.cs` の 178 行目、`src/FloatSoda.OVR/Input/VRInputUpdater.cs`)
-  - 書くときの注意(前の docs との差。コードを正とする): `FloatSodaApp` は `WidgetBinding.BeginFrame` を呼び、`DrawFrame` はその中で呼ばれる。描画スレッドの型名は `RenderPostTaskRunner` である(`RenderThreadRunner` という型はない)。依存の向きは csproj の参照で決まり、OVR はほかの FloatSoda のプロジェクトを参照せず、Abstractions は Rendering を参照する(`src/FloatSoda.Abstractions/FloatSoda.Abstractions.csproj`)
-  - 別案: 複製せずに描画スレッドへ所有権を渡す案、またはツリーを二重化する案は、コードの上には検討の記録がない。理由は複製の記述(AGENTS.md)だけが一次情報である。※要確認
-- 見出し:
-  - 1フレームを担う2つのスレッド
-  - メインスレッド: ビルドから Layer の複製まで
-  - 描画スレッド: Layer を描いて SteamVR に渡す
-  - なぜ Layer を複製して渡すのか
-  - リサイズは同じ流れの別の枝
-  - 入力は逆向きに流れる
-  - 各層の解説へ
-- ※要確認:
-  - 複製の理由の根拠が AGENTS.md の1文だけで、コードのコメントや記録に出典がない(オーナーに確かめるか、ADR を探す)
-  - 描画スレッドと メインスレッドのフレームレートの関係(`TargetFrameRate` が両方の `FramePacer` に効く。`src/FloatSoda/FloatSodaServiceCollectionExtensions.cs` の 41 行目と `src/FloatSoda/FloatSodaOptions.cs` の 19 行目を読んで確かめる)
-  - OpenVR のコンポジターが、提出されたテクスチャをいつ取り込むか(OpenVR の仕様で、FloatSoda のコードからは分からない)
-  - 複数ウィンドウがあるとき、描画スレッドのタスクが投入順に実行される以外の順序保証があるか
+| スレッド | 名前 | 仕事 |
+| :-- | :-- | :-- |
+| メインスレッド | `FloatSodaMainThread`(Windows では STA) | OpenVR のイベント、入力、ビルド、レイアウト、描画命令の記録(Layer ツリーの更新)、Layer の複製 |
+| 描画スレッド | `RenderThread` | GL のコンテキストを持ち、Layer ツリーをテクスチャに描いてオーバーレイに渡す |
 
-## ト書き
+ほかに I/O スレッド(`IOTaskRunner`)があります。利用者のコード向けに、処理を投入順に1件ずつ実行するスレッドで、フレームの流れには入りません。
 
-### 1フレームを担う2つのスレッド
+```text
+メインスレッド                                      描画スレッド
+  タスクの実行
+  OpenVR のイベント、アクション入力
+  BeginFrame
+    入力の処理
+    ビルド → レイアウト → 描画命令の記録
+    Layer の複製 ── PostRender ──────────────▶        PreUpdate: 投入されたタスクの実行
+  待機                                                   (Present: Renderer.Render → OpenVR へ提出)
+                                                      Update: GLFW のイベント処理
+                                                      待機
+```
 
-- 読み手が持って来るもの: 「描画はどこで動くのか」という疑問
-- このページが渡すもの: メインスレッド(STA)と描画スレッドの2つ、I/O スレッドは別枠という整理と、全体の流れの図(メインスレッドの箱から描画スレッドの箱へ、Layer の複製が渡る)
-- 読み手がすること: 図で流れをつかむ
-- 次へ進む先: 「メインスレッド: ビルドから Layer の複製まで」
+層は、プロジェクトごとに分かれ、参照の向きは csproj が決めます。
 
-### メインスレッド: ビルドから Layer の複製まで
+- `FloatSoda.OVR`: ほかの FloatSoda のプロジェクトを参照しない
+- `FloatSoda.Rendering`: ほかの FloatSoda のプロジェクトを参照しない
+- `FloatSoda.Abstractions`: `FloatSoda.Rendering` を参照する
+- `FloatSoda.Engine`: Abstractions、OVR、Rendering を参照する
+- `FloatSoda`(フレームワーク): Abstractions、Engine、Rendering を参照する
+- `FloatSoda.UI`: `FloatSoda` を参照する
+- `FloatSoda.UI.Cream`、`FloatSoda.UI.FizzyPop`: `FloatSoda.UI` を参照する
 
-- 読み手が持って来るもの: 2つのスレッドの整理
-- このページが渡すもの: メインループの1周(タスク → イベント → `BeginFrame` → 待機)と、`DrawFrame` の中の順序(ビルド → レイアウト → 描画 → 複製 → 投入)。各段が属する層(フレームワーク層)の解説へのリンク
-- 読み手がすること: 順序を追い、変更したい処理がどの段にあるかを見つける
-- 止まる箇所: `NeedsVisualUpdate` が立っていないフレームは、レイアウトと描画を飛ばす。ここで「毎フレーム描き直すわけではない」と書く
-- 次へ進む先: 「描画スレッド: Layer を描いて SteamVR に渡す」。詳細は `framework-layer.md`
+メインループと描画ループの周期は、どちらも `FloatSodaOptions.TargetFrameRate`(既定は 60)から作った `FramePacer` が決めます。
 
-### 描画スレッド: Layer を描いて SteamVR に渡す
+## メインスレッド: ビルドから Layer の複製まで
 
-- 読み手が持って来るもの: メインスレッドが `PostRender` するところまでの流れ
-- このページが渡すもの: 描画スレッドのループ(タスクの実行 → GLFW のイベント → 待機)と、`Present` の中身(`Renderer.Render` → テクスチャのハンドル → `FromTexture_t`)
-- 読み手がすること: GL テクスチャが OpenVR に渡る箇所を見つける
-- 次へ進む先: 「なぜ Layer を複製して渡すのか」。詳細は `engine-layer.md`、`rendering-layer.md`、`ovr-layer.md`
+メインループは、1周ごとに次の順で動きます。
 
-### なぜ Layer を複製して渡すのか
+1. 保留中のタスクを実行する(`CreateWindow` や、ホットリロードの再ビルドの予約)
+2. OpenVR のシステムイベントをポーリングし、アクション入力を更新する
+3. ウィンドウごとの `WidgetBinding.BeginFrame` を呼ぶ
+4. `FramePacer.WaitForNextFrame` で次の周期まで待つ
 
-- 読み手が持って来るもの: 「複製のコードがあるが、必要なのか」という疑問
-- このページが渡すもの: 複製の理由(描画中のツリーを次のフレームの変更から守る)と、複製で共有されるもの(`SKPicture` の参照)。複製の細部は描画層の解説へリンクする
-- 読み手がすること: 複製を省く変更が、何を壊すかを判断する
-- 次へ進む先: 「リサイズは同じ流れの別の枝」
-- 【未決】複製の理由の出典が AGENTS.md の1文だけ。ADR として記録を足すか、このページで「理由」を断定せずに書くか
+`BeginFrame` は、ポインターイベントの処理、登録済みのフレームコールバックの実行、`DrawFrame` の順に動きます。`DrawFrame` の中の順序は、次のとおりです。各段の詳細は [フレームワーク層](framework-layer.md) にあります。
 
-### リサイズは同じ流れの別の枝
+| 段 | 内容 |
+| :-- | :-- |
+| ビルド | `BuildOwner.BuildScope` が、dirty な Element を再構築し、RenderObject のプロパティを更新する |
+| レイアウト | `RenderPipeline.FlushLayout` が、dirty なノードを `Depth` の昇順で再レイアウトする。続けて、ホバー状態を更新し、サイズが変わっていればリサイズを描画スレッドに投入する |
+| 描画命令の記録 | `RenderPipeline.FlushPaint` が、dirty なノードを `Depth` の昇順で再描画し、描画命令を記録して Layer ツリーを更新する。最終画像を描くのは描画スレッド |
+| 複製と投入 | `RenderView.Layer` を `Clone()` し、`RenderPostTaskRunner.PostRender` で描画スレッドに渡す |
 
-- 読み手が持って来るもの: 「ウィンドウの大きさはだれが決めるのか」という疑問
-- このページが渡すもの: レイアウト結果のサイズ → `PostTask` → `OverlayWindow.Resize`(`GLView` の作り直し、`WidthInMeters`、マウススケール)の流れ
-- 読み手がすること: サイズを変える処理が描画スレッドで走ることを確かめる
-- 次へ進む先: 「入力は逆向きに流れる」
+すべてのフレームで、レイアウトと描画が走るわけではありません。ビルドは毎フレーム確かめますが、レイアウトからあとは、`NeedsVisualUpdate` が立っているフレームだけです。ウィンドウがまだ作られていないフレームも、レイアウトからあとは飛ばします。
 
-### 入力は逆向きに流れる
+## 描画スレッド: Layer を描いて SteamVR に渡す
 
-- 読み手が持って来るもの: 「コントローラーのレーザーがボタンに届くまで」の疑問
-- このページが渡すもの: ダッシュボードのオーバーレイの入力経路(OpenVR → ポインタ入力源 → `PointerController` → ヒットテスト → ジェスチャ)。ダッシュボード以外には届かないという制約と、追跡: #182
-- 読み手がすること: 入力の各段がどのスレッドで動くかを、`Flush` を呼ぶスレッド(メインスレッド)で確かめる
-- 次へ進む先: 「各層の解説へ」。ウィジェット側は `framework-layer.md`、OpenVR 側は `ovr-layer.md`
+描画スレッドは `PostTaskRunner` のループで動き、1周ごとに、投入されたタスクの実行、`GLFW.PollEvents`、待機の順に進みます。`PostRender` が投入するタスクは、`window.Present(layer)` を呼びます。
 
-### 各層の解説へ
+`OverlayWindow.Present` は、`Renderer.Render(layer)` で Layer ツリーを GL テクスチャに描きます。`Render` は、`GLView.Clear()`、`LayerRenderer.Render`(`Layout` のあとに `Paint`)、`GLView.Flush()` の順に動きます。そのあと、GL テクスチャのハンドルを `Texture_t` に包み、`Overlay.Texture.FromTexture_t` で OpenVR に渡します。GL テクスチャが OpenVR に渡るのは、この呼び出しです。デスクトップウィンドウ(`DesktopWindow`)は、同じ `Present` の流れを、テクスチャを既定のフレームバッファに転送して、`SwapBuffers` で終えます。
 
-- 読み手が持って来るもの: 流れの全体像
-- このページが渡すもの: 層ごとの解説へのリンク(`framework-layer.md`、`rendering-layer.md`、`engine-layer.md`、`ovr-layer.md`、`ui-layer.md`)と、手を動かす入口(`tutorial-render-path.md`、各実験)
-- 読み手がすること: 変更したい層の解説へ進む
-- 止まる箇所: なし。ここでこのページは終わる
+ウィンドウの作成にも、2つのスレッドが関わります。`FloatSodaApp.CreateWindow` は、作成の処理をメインスレッドのタスクとして積みます。`WidgetBinding.EnsureInitialized` は、`GLView` と `Renderer` と、エンジン層のウィンドウの作成を、描画スレッドのタスクとして投入します。そのため、ウィンドウは描画スレッドで非同期に作られ、メインスレッドから見えるのは、作成が終わったフレームからです。
+
+エンジン層の詳細は [エンジン層](engine-layer.md)、Layer の描画は [描画層](rendering-layer.md)、OpenVR の型は [OVR 層](ovr-layer.md) にあります。
+
+## なぜ Layer を複製して渡すのか
+
+複製は、描画中の Layer を、次のフレームの変更から守るためにあります。メインスレッドは、再描画のたびに、同じ Layer のインスタンスの子を消して作り直します。描画スレッドが原本を読んでいる最中に、次のフレームの描画が始まると、読んでいる Layer が書き換わる可能性があります。これはコードの構造から読んだ推定で、複製を省いて実際に描画が崩れるかは再現していません。そこで、描画スレッドには、複製したツリーを渡します。AGENTS.md も、描画スレッドへ渡す前に複製して、データ競合を避けると説明しています。
+
+複製が共有するのは、`SKPicture` のような描画リソースの参照です。ツリーの構造は共有しません。共有の範囲は [描画層](rendering-layer.md) の「Clone は何を共有し、何を共有しないか」にあります。複製を省く変更は、メインスレッドの次のフレームと、描画スレッドの `Present` が、同じ Layer を同時に読み書きしないかを確かめます。
+
+<!-- ※要確認: 複製の理由の根拠は、AGENTS.md の1文と、Layer を再利用するコードの構造からの読み取りで、記録(ADR など)は見つかっていない。複製せずに所有権を渡す案や、ツリーを二重に持つ案を検討した記録の有無を、オーナーに確かめる -->
+
+## リサイズは同じ流れの別の枝
+
+ウィンドウの大きさは、既定ではウィジェットのレイアウト結果が決めます。`DrawFrame` は、レイアウトのあとに、サイズが前回投入した値と違うかを調べます。違えば、`PostTask` で `window.Resize(newSize)` を描画スレッドに投げます。この投入は、描画の投入より先なので、同じキューの順で、リサイズのあとに描画が走ります。
+
+`OverlayWindow.Resize` は、`GLView` の描画先 `Surface` と GL テクスチャを作り直して、オーバーレイの幅(ピクセル幅 ÷ `Dpm`)を更新します。入力を受けるオーバーレイでは、マウスのスケールもピクセルサイズに合わせます。サイズを変える処理は、描画スレッドで走ります。
+
+## 入力は逆向きに流れる
+
+ダッシュボードのオーバーレイでは、コントローラーのレーザーが、次の順でボタンに届きます。
+
+1. OpenVR のマウスイベントを、`OverlayWindow.PollInputEvents` がポーリングする
+2. `OverlayMouseRawPointerSource` が、`RawPointerEvent` に変換して発火する
+3. `PointerController` が、キューに積む。`Flush` で取り出し、`PointerEvent` に変換する
+4. `WidgetBinding.HandlePointerEvent` が、ヒットテストを行う
+5. ヒットパスの末尾で、ジェスチャ認識器にイベントが届く
+
+1 の `PollInputEvents` も、3 の `Flush` も、メインスレッドで `BeginFrame` から呼ばれます。つまり、これらの段は、すべてメインスレッドで動きます。デスクトップウィンドウでは、GLFW のコールバックが描画スレッドで `RawPointerEvent` を発火しますが、キューに積むだけで、変換とそれ以降はメインスレッドの `Flush` が行います。
+
+フレームワークの標準のポインター入力が接続されるのは、オーバーレイのうち、ダッシュボードだけです。ほかのオーバーレイでは、`PointerSource` が `null` です。コントローラーのレイで当たりを判定する `ControllerPointerSystem` は、どこからも呼ばれていません(追跡: [#182](https://github.com/sumx21t-3310/FloatSoda/issues/182))。
+
+コントローラーのボタンを読むアクション入力は、別の流れです。メインループが、1周ごとに `VRInputUpdater.Update` で更新します。
+
+ウィジェット側の入力は [入力が届くまでを追う](framework-input.md)、OpenVR 側は [OVR 層](ovr-layer.md) にあります。
+
+## 各層の解説へ
+
+変更したい層の解説に進みます。
+
+- [フレームワーク層](framework-layer.md): Widget、Element、RenderObject と、差分更新
+- [入力が届くまでを追う](framework-input.md): ヒットテスト、ジェスチャ、ポインター
+- [描画層](rendering-layer.md): Layer ツリーと、`Clone` の共有範囲
+- [エンジン層](engine-layer.md): 描画スレッド、GL の描画先、ウィンドウ
+- [OVR 層](ovr-layer.md): OpenVR の包み方と、つまずきやすい点
+- [UI 層](ui-layer.md): UI を3層に分けた理由
+
+手を動かして確かめるときは、[描画が届くまで(4段)](tutorial-render-path.md) と、各層の実験([フレームワーク層](experiment-framework.md)、[描画層](experiment-rendering.md)、[OVR 層](experiment-ovr.md))を使います。

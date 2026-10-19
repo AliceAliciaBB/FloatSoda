@@ -8,6 +8,8 @@ This file provides guidance to coding agents — Codex, Claude Code (claude.ai/c
 
 The repository owner develops hands-on and tracks the implementation themselves. By default, **investigate and explain — do not modify code.** When asked about a bug or behavior, report the root cause, the relevant files/lines, and (optionally) how a fix would look, but leave the actual implementation to the owner unless they explicitly ask you to make the change.
 
+When you are asked to implement, how much you may take on depends on the kind of work — see the tiers in `CONTRIBUTING.md` (「コーディングエージェントに任せる範囲」): new APIs that Flutter does not have are implemented by a human; bug fixes start with investigation only; porting Flutter widgets (with Flutter's tests) may be delegated fully.
+
 ## Output Language
 
 **Write all output to the repository owner in Japanese.** This is a hard requirement, not a preference.

@@ -2,97 +2,108 @@
 
 # エンジン層
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## エンジン層は、描画スレッドと GL の描画先を受け持つ
 
-## 設計シート
+エンジン層(`FloatSoda.Engine`)は、Layer ツリーを GL テクスチャに描き、SteamVR のオーバーレイまたはデスクトップのウィンドウに出す層です。参照するプロジェクトは Abstractions、OVR、Rendering の3つで、フレームワーク(`src/FloatSoda`)は参照しません。そのため、フレームワークなしでも組めます。実際に組む手順は [描画が届くまで(4段)](tutorial-render-path.md) の3段目にあります。
 
-- 分類: 説明型(Diátaxis: explanation)
-- 読み手: だれが / `src/FloatSoda.Engine` のコードを読む、描画スレッドや GL の周りを直したい人 / 何を知っている / C# のスレッドと、SkiaSharp の `SKSurface` の基本。OpenGL は詳しくなくてよい / 読んで何をしたい / Layer ツリーが GL テクスチャになり、描画スレッドで動く仕組みをつかみ、スレッドの制約を破らずに変更したい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: エンジン層(`FloatSoda.Engine`)が、描画スレッド、GL の描画先(`GLView`)、Layer ツリーの描画(`Renderer`)、ウィンドウ(`OverlayWindow`・`DesktopWindow`)、フレーム間隔(`FramePacer`)をどう受け持つかを説明する
-- 依頼の解釈: なし
-- テーマファイル: explanation
-- Why(目的): GL のコンテキストは作ったスレッドでしか使えないので、スレッドの制約を知らずに変更すると、描画が止まる、または描画が壊れる。Layer を複製して渡す理由もここに置く(描画層の解説からここへリンクする)
-- What(目標・結果): 描画スレッドが何を所有し、メインスレッドとどう通信し、`Present` が何をするかが説明されている
-- How(手段): 構成要素で分解する。スレッドと通信 → GL の描画先 → Layer を描く → ウィンドウ → フレーム間隔 → 入力源の順に説明する
-- 要素:
-  - エンジン層は Abstractions・OVR・Rendering を参照する。フレームワーク(`src/FloatSoda`)は参照しない(`src/FloatSoda.Engine/FloatSoda.Engine.csproj`)
-  - 描画スレッドは `RenderPostTaskRunner` が持つ。`PostTaskRunner` の専用スレッドで、`IsBackground` が真、名前は呼び出し側が決める(`src/FloatSoda.Engine/TaskRunner.cs` の 389、489 行目付近、551 行目。名前は `src/FloatSoda/FloatSodaApp.cs` の 63 行目で `RenderThread`)
-  - `PostTask(Action)` は `ConcurrentQueue<Action>` に積む。任意のスレッドから呼べる(`src/FloatSoda.Engine/TaskRunner.cs` の 459 行目)
-  - 描画スレッドのループは、`PreUpdate`(キューのタスクを実行)→ `Update`(`GLFW.PollEvents`)→ `PostUpdate` → `FramePacer` の待機の順である(`src/FloatSoda.Engine/TaskRunner.cs` の 490〜494 行目、575 行目、`RenderPostTaskRunner` の `Update` の上書き)
-  - 1つのタスクが例外を投げても、他のタスクとスレッドは続く。拾わないと `OnStop` が走り、以降の描画がすべて止まる(`src/FloatSoda.Engine/TaskRunner.cs` の 462〜478 行目)
-  - `OnStart` で `GLFW.Init()` を呼び、`OnStop` で `GLFW.Terminate()` を呼ぶ(`src/FloatSoda.Engine/TaskRunner.cs` の 197〜201、214 行目付近)
-  - `GLView` は、GLFW のウィンドウ(既定では非表示)、GL のコンテキスト、Skia の `GRContext`、GL テクスチャを描画先とする `SKSurface` を持つ。OpenGL リソースを持つ描画スレッド上で作成、使用、破棄する(`src/FloatSoda.Engine/GLView.cs` の 9、60〜75、77〜98 行目)
-  - `SKSurface` は `GRSurfaceOrigin.BottomLeft` で作る(`src/FloatSoda.Engine/GLView.cs` の 96 行目)
-  - `GLView.Resize` は、既存のテクスチャと Surface を破棄して再作成する(`src/FloatSoda.Engine/GLView.cs` の 110〜146 行目)
-  - `Renderer` は `GLView` を受け取り、`Render(ILayer)` で、クリア → `LayerRenderer.Render` → `Flush` を行う(`src/FloatSoda.Engine/Renderer.cs` の 27〜36 行目)
-  - `GLView.Flush` は `Surface.Flush()`、`GrContext.Flush()`、`GL.Flush()` を呼ぶ(`src/FloatSoda.Engine/GLView.cs` の 177〜183 行目)
-  - `IEngineWindow`(Abstractions)は、`Present(ILayer)`・`Resize(SKSizeI)`・`PointerSource` を持ち、`Present` と `Resize` は描画スレッドで呼ぶ(`src/FloatSoda.Abstractions/Engine/IEngineWindow.cs`)
-  - `OverlayWindow` は、`IOverlay` を描画先にする。ダッシュボードのオーバーレイなら入力方式をマウスにして `OverlayMouseRawPointerSource` を作り、ほかのオーバーレイでは `PointerSource` が `null` である(`src/FloatSoda.Engine/OverlayWindow.cs` の 29〜43 行目)
-  - `DesktopWindow` は、GLFW の可視ウィンドウに、描画結果を既定のフレームバッファへ転送して表示する(`src/FloatSoda.Engine/DesktopWindow.cs` の 34〜60 行目付近)。※要確認(転送の後半の行を読む)
-  - `FramePacer` は、`Sleep` と `Thread.Yield` のスピン待機を組み合わせ、目標のフレームレート(既定 60)に間隔をそろえる(`src/FloatSoda.Engine/FramePacer.cs` の 9、17〜50 行目)
-  - `OverlayMouseRawPointerSource` は、OpenVR のマウスイベントを `RawPointerEvent` に変換する。GL テクスチャが原点左上で届くので、y 座標を反転しない(実測で確認済み、ソースのコメント)。反転すると上下が鏡写しになる(`src/FloatSoda.Engine/OverlayMouseRawPointerSource.cs` の 13〜14 行目)。※要確認(コメントのみが根拠)
-  - `GLFWRawPointerSource` は、GLFW のマウスコールバックを `RawPointerEvent` に変換する。イベントは描画スレッドで発火する(`src/FloatSoda.Engine/GLFWRawPointerSource.cs` の 6〜9 行目)
-  - `IOTaskRunner` は、利用者向けの単一の専用スレッドで、投入順に処理する。描画のフレームには使わない(`src/FloatSoda.Engine/TaskRunner.cs` の 46 行目)
-  - Layer を複製して描画スレッドに渡す理由は、メインスレッドが `RenderPipeline` を持ち、次のフレームで同じツリーを変更するため(AGENTS.md の「2. Layer Tree」)。投入と描画のあいだにキューがあるので、描画が始まる時点のツリーはメインスレッドが変更している可能性がある。※要確認(「可能性がある」は、キューの構造からの推定)
-  - `EngineShell` は、`Start` の本体が空で、`Dispose` に TODO のコメントがあり、`src`・`tests`・`samples` のほかのどこからも使われていない(`src/FloatSoda.Engine/EngineShell.cs`、2026-10-17 の grep)
-  - 前の docs に「`RenderThreadRunner`」という型名があった。コードにこの名前の型はなく、実際は `RenderPostTaskRunner` である(`src/FloatSoda.Engine/TaskRunner.cs` の 551 行目)
-- 見出し:
-  - エンジン層は、描画スレッドと GL の描画先を受け持つ
-  - 描画スレッドは、キューのタスクを実行する
-  - GLView は、GL テクスチャを描画先の Surface にする
-  - Renderer と Present が、Layer を描いて SteamVR に渡す
-  - なぜ Layer を複製して描画スレッドに渡すのか
-  - フレーム間隔と入力源
-- ※要確認:
-  - 複製の理由の「描画が始まる時点のツリーを、メインスレッドが変更している可能性がある」の裏づけ(`RenderView.Layer` が再利用される経路を読み、`PostRender` から `Present` までのあいだの変更を確かめる)
-  - `DesktopWindow.Present` の後半(転送のあと、`SwapBuffers` を呼ぶか)
-  - `OverlayMouseRawPointerSource` のコメントの根拠(実測の再現は、HMD で確かめる)
-  - `EngineShell` を解説に載せるか(使われていない型の扱い)
-  - GL テクスチャが原点左下(`BottomLeft`)で作られ、SteamVR に届くときに上下がどう見えるか(OpenVR の仕様。コメントの記述だけが根拠)
+型の担当は次のとおりです。
 
-## ト書き
+| 型 | 担当 |
+| :-- | :-- |
+| `RenderPostTaskRunner` | 描画専用のスレッドを持ち、投入されたタスクを順に実行する |
+| `GLView` | GLFW のウィンドウ、GL のコンテキスト、Skia の描画先(Surface)と GL テクスチャを持つ |
+| `Renderer` | Layer ツリーを `GLView` の Surface に描く |
+| `OverlayWindow`、`DesktopWindow` | 描いた結果の出し先。どちらも `IEngineWindow` の実装 |
+| `FramePacer` | ループの周期をそろえる |
 
-### エンジン層は、描画スレッドと GL の描画先を受け持つ
+次の節から、この順に1つずつ説明します。
 
-- 読み手が持って来るもの: 「描画はどこで動くのか」という疑問
-- このページが渡すもの: エンジン層の1文の定義(Layer ツリーを GL テクスチャに描き、SteamVR のオーバーレイまたはデスクトップのウィンドウに出す層)と、型の見取り図(`RenderPostTaskRunner`、`GLView`、`Renderer`、`OverlayWindow`・`DesktopWindow`、`FramePacer`)。フレームワークを参照しないので、単独でも組めること
-- 読み手がすること: 見取り図で、各型の担当をつかむ
-- 次へ進む先: 「描画スレッドは、キューのタスクを実行する」
+## 描画スレッドは、キューのタスクを実行する
 
-### 描画スレッドは、キューのタスクを実行する
+`RenderPostTaskRunner` は、専用スレッドを1本だけ持ちます。スレッドはバックグラウンドスレッドで、名前は作る側が渡します。フレームワークは `RenderThread` という名前で作ります。`GLView` の説明が、OpenGL リソースの作成・使用・破棄を、リソースを所有するスレッドで行うよう求めています。
 
-- 読み手が持って来るもの: 型の見取り図
-- このページが渡すもの: `PostTask` のキュー、ループの順序、例外を拾う理由、`GLFW` の初期化と終了
-- 読み手がすること: GL の呼び出しを描画スレッドに投げる書き方(`PostTask`)を知る
-- 止まる箇所: GL の呼び出しを描画スレッド以外で行うと壊れる。ここは「してはいけないこと」として短く書く(禁止の文なので、代わりに取る行動として「`PostTask` に入れる」を続けて書く)
-- 次へ進む先: 「GLView は、GL テクスチャを描画先の Surface にする」
+- GL を使う処理は、描画スレッドで実行すること
 
-### GLView は、GL テクスチャを描画先の Surface にする
+ほかのスレッドから GL を使いたいときは、処理を `PostTask(Action)` に渡して、描画スレッドで実行させます。`PostTask` は `ConcurrentQueue<Action>` に積むだけなので、どのスレッドからでも呼べます。次の形は、フレームワークが `GLView` と `Renderer` を作る箇所と同じ生成処理だけの抜粋です。使い終わった `Renderer` と `GLView` は `Dispose` で破棄し、その呼び出しも描画スレッドで行います。
 
-- 読み手が持って来るもの: `PostTask` の書き方
-- このページが渡すもの: `GLView` の持ち物(GLFW のウィンドウ、`GRContext`、テクスチャ、`SKSurface`)、`Resize` が再作成すること、テクスチャの原点が左下であること
-- 読み手がすること: サイズ変更のとき、テクスチャのハンドルが変わることを確かめる
-- 次へ進む先: 「Renderer と Present が、Layer を描いて SteamVR に渡す」
+```csharp
+renderThread.PostTask(() =>
+{
+    var renderer = new Renderer { GLView = new GLView(size) };
+    // renderer を使う処理は、すべてこの描画スレッドの上で行う
+});
+```
 
-### Renderer と Present が、Layer を描いて SteamVR に渡す
+描画スレッドのループは、1周ごとに次の順で動きます。
 
-- 読み手が持って来るもの: `GLView`
-- このページが渡すもの: `Renderer.Render` の3段(クリア、`LayerRenderer.Render`、`Flush`)と、`OverlayWindow.Present` がテクスチャのハンドルを OpenVR に渡すこと。`DesktopWindow` との違い
-- 読み手がすること: `Present` が、どのウィンドウでも同じ入口(`IEngineWindow`)であることを確かめる
-- 次へ進む先: 「なぜ Layer を複製して描画スレッドに渡すのか」。OpenVR 側は `ovr-layer.md`
+1. `PreUpdate`: キューに積まれたタスクをすべて実行する
+2. `Update`: `GLFW.PollEvents` でウィンドウのイベントを処理する
+3. `PostUpdate`: 既定では何もしない
+4. `FramePacer` で次の周期まで待つ
 
-### なぜ Layer を複製して描画スレッドに渡すのか
+ループに入る前に `GLFW.Init()` を、抜けたあとに `GLFW.Terminate()` を、どちらも描画スレッド上で呼びます。1つのタスクが例外を投げても、ほかのタスクとスレッドは動き続けます。例外はログに記録されます。ここで拾わないと、ループの外まで例外が抜けて `OnStop` が走り、以降の描画がすべて止まるためです。
 
-- 読み手が持って来るもの: 描画層の解説で見た `Clone`
-- このページが渡すもの: メインスレッドがツリーを更新し続け、描画スレッドが後から描くので、複製を渡すという理由。共有されるもの(`SKPicture` の参照)は `rendering-layer.md` へリンクする
-- 読み手がすること: 複製を省く変更が、何を壊すかを判断する
-- 次へ進む先: 「フレーム間隔と入力源」
-- 【未決】理由の出典が AGENTS.md の1文と、コードからの推定だけ。ADR として記録を足すか、推定であると書くか
+ほかに、`IOTaskRunner` という専用スレッドもあります。利用者のコード向けで、投入された処理を投入順に1件ずつ実行します。フレームの描画には使いません。
 
-### フレーム間隔と入力源
+## GLView は、GL テクスチャを描画先の Surface にする
 
-- 読み手が持って来るもの: 描画スレッドのループ
-- このページが渡すもの: `FramePacer` の待ち方(`Sleep` とスピン)と既定の 60。ポインタの入力源2種(`OverlayMouseRawPointerSource`、`GLFWRawPointerSource`)と、座標の原点の注意
-- 読み手がすること: 入力の座標が上下鏡写しになる不具合の原因を、テクスチャの原点から推測できるようになる
-- 止まる箇所: なし。ここでこのページは終わる。入力の続きは `framework-layer.md`
+`GLView` は、GL のテクスチャを描画先とする Skia の `SKSurface` を作り、持ち続けます。持ち物は次のとおりです。
+
+- GLFW のウィンドウ
+- GL のコンテキストと、Skia の `GRContext`
+- 描画結果を保持する GL の 2D テクスチャ(`TextureHandle`)
+- テクスチャを描画先とする `SKSurface`(`Surface`)
+
+ウィンドウは、既定では画面に表示されません。表示の有無は、コンストラクターの `visible` 引数で指定します。
+
+- 表示の有無は、作成時に決めること(作成後は変更できない)
+
+`Surface` は、原点の指定を `GRSurfaceOrigin.BottomLeft` にして作ります。この向きは、最後の節で説明する入力の座標に関わります。
+
+`Resize` は、既存の `Surface` とテクスチャを破棄して作り直します。サイズが同じなら何もしません。幅か高さが 0 以下なら `ArgumentOutOfRangeException` です。作り直すとテクスチャのハンドルが変わるので、ハンドルを使う処理は、`Resize` のあとに `Renderer.GetTextureHandle()` で取り直す必要があります。`OverlayWindow.Present` は、描くたびに取り直しています。
+
+## Renderer と Present が、Layer を描いて SteamVR に渡す
+
+`Renderer.Render(ILayer)` は、次の3段で Layer ツリーを描きます。
+
+1. `GLView.Clear()` で、描画先を透明色でクリアする
+2. `LayerRenderer.Render` で、`Layout` のあとに `Paint` を実行する(詳細は [描画層](rendering-layer.md))
+3. `GLView.Flush()` で、Skia と GL に保留されたコマンドを送る
+
+描いた結果を出す入口は、`IEngineWindow`(Abstractions)の `Present(ILayer)` です。`RenderPostTaskRunner.PostRender(window, layer)` は、`window.Present(layer)` を描画スレッドで呼ぶタスクを投入します。呼ぶ側が知っている型は `IEngineWindow` だけなので、ウィンドウの種類が変わっても入口は変わりません。
+
+- `Present` と `Resize` は、描画スレッドで呼ぶこと
+
+`OverlayWindow` と `DesktopWindow` は、`Present` の後半が違います。
+
+| 型 | `Present` の後半 | `Resize` |
+| :-- | :-- | :-- |
+| `OverlayWindow` | GL テクスチャのハンドルを `Texture_t` に包み、`Overlay.Texture.FromTexture_t` で OpenVR に渡す | テクスチャを作り直し、オーバーレイの幅(ピクセル幅 ÷ `Dpm`)を更新する |
+| `DesktopWindow` | テクスチャを既定のフレームバッファに転送し、`SwapBuffers` を呼ぶ | テクスチャを作り直し、GLFW のウィンドウサイズを変える |
+
+`OverlayWindow` を作るとき、オーバーレイがダッシュボードなら、入力方式をマウスにして `OverlayMouseRawPointerSource` を作ります。ほかのオーバーレイでは、`PointerSource` は `null` です。OpenVR 側の型は [OVR 層](ovr-layer.md) で説明しています。
+
+## なぜ Layer を複製して描画スレッドに渡すのか
+
+メインスレッドは、Layer ツリーの原本を作り直し続けます。`PaintingContext.RepaintCompositedChild` は、再描画のたびに既存の `TransformLayer` を再利用し、`Children` を消してから子を描き直します。`WidgetBinding.DrawFrame` は、この原本を `Clone()` して `PostRender` に渡します。原本を直接渡すと、描画スレッドが読んでいる最中に、メインスレッドが次のフレームで `Children` を消す可能性があるためです。これはコードの構造から読んだ推定で、複製を省いて実際に描画が崩れるかは再現していません。AGENTS.md も、データ競合を避けるために描画スレッドへ渡す前に複製する、と説明しています。
+
+複製しても共有されるものがあります。それが `SKPicture` の参照です。何を共有して何を共有しないかは、[描画層](rendering-layer.md) の「Clone は何を共有し、何を共有しないか」にあります。複製を省く変更を入れるときは、メインスレッドの次のフレームと描画スレッドの `Present` が、同じ Layer を同時に読み書きしないかを確かめます。
+
+<!-- ※要確認: 複製を省いたときの実害は、キューと Layer の再利用の構造からの推論で、実行して再現していない / 複製を省く変更を試して、描画が崩れるかを確かめる -->
+
+## フレーム間隔と入力源
+
+`FramePacer` は、目標のフレームレート(既定は 60)から1フレームの時間を求め、前回からの経過時間との差だけ待ちます。待ち方は2段です。残りが長いあいだは `Sleep` で CPU を空け、最後の1ミリ秒ほどは `Thread.Yield` で回って待ちます。
+
+ポインターの入力源は2つあります。どちらも `RawPointerEvent` を発火し、フレームワーク側の `PointerController` が受け取ります。
+
+| 型 | 変換元 | イベントを発火するスレッド |
+| :-- | :-- | :-- |
+| `OverlayMouseRawPointerSource` | OpenVR のマウスイベント(ダッシュボードのレーザーポインター) | `PollEvents` を呼んだスレッド |
+| `GLFWRawPointerSource` | GLFW のカーソルとボタンのコールバック | GLFW を動かしている描画スレッド |
+
+`OverlayMouseRawPointerSource` は、OpenVR のマウス座標をそのまま使い、y 座標を反転しません。クラスのコメントは、y 座標を反転せずに左上原点の入力として扱う理由を、実測で確認済みと説明しています。この文書の筆者は再現していません。y を反転すると、入力の位置が上下に鏡写しになります。画像は正しいのに押した位置だけが上下逆になる不具合では、y の反転や、`GRSurfaceOrigin` を変える変更を疑ってください。
+
+<!-- ※要確認: 座標の向きは、ソースのコメント(実測で確認済み)だけが根拠で、こちらでは再現していない / HMD で、反転した場合のずれを確かめる -->
+
+ポインターの入力が、ヒットテストとジェスチャを経てウィジェットに届くまでは [入力が届くまでを追う](framework-input.md) にあります。1フレーム全体の流れは [1フレームが SteamVR に届くまで](frame-to-steamvr.md) にまとめています。

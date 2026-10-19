@@ -2,107 +2,112 @@
 
 # 開発環境を用意する(コントリビューター)
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+## この手順でできること
 
-## 設計シート
+この手順を終えると、手元で `dotnet build` と、CI と同じ手順のテストが通ります。移植をする人は、Flutter の元の実装をローカルのクローンから引けるようになります。手順は5つで、手順4は移植をする人だけ、手順5は任意です。
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / FloatSoda 本体を変えたい人、移植をする人、動作検証をする人 / 何を知っている / `git` と `dotnet` の基本操作。FloatSoda の中身は知らなくてよい / 読んで何をしたい / 手元でビルドとテストを通し、Flutter の元の実装を引ける状態にしたい
-- 出力言語と文体の指定: 日本語。敬体(CONTRIBUTING.md の「ドキュメントのトンマナ」の「文体」)
-- テーマ: FloatSoda をクローンして、ビルドとテストを通し、Flutter の元の実装を引ける状態にする
-- 依頼の解釈: 「開発環境」にエージェントの準備を含めるかは、別ページ(エージェントと一緒に作業する)に分ける
-- テーマファイル: how-to
-- Why(目的): 環境がそろわないと、CI と同じ結果が手元で出ず、PR を出してから落ちる。移植では Flutter の実装を見ながら書くので、引ける状態が先に要る
-- What(目標・結果): `dotnet build` と CI と同じ手順のテストが手元で通る。Flutter の元の実装を、ローカルのクローンから引ける。使いたければ Rider の MCP も使える
-- How(手段): 必要なものを入れる → クローンしてビルドする → CI と同じ手順でテストする → Flutter の参照クローンを置く → 道具(Rider など)を足す
-- 要素:
-  - 必要なものは .NET 10 / C# 14 の SDK。SteamVR は、サンプルを実行するときだけ要る(CONTRIBUTING.md の「開発環境のセットアップ」)
-  - ビルドは `dotnet build`、全テストは `dotnet test`(CONTRIBUTING.md の「開発環境のセットアップ」)
-  - CI は `dotnet build --configuration Release` のあと、`FloatSoda.Rendering.Test` と `FloatSoda.Test` を `--no-build` で順に実行する(`.github/workflows/ci.yml`)
-  - CI は `windows-latest` で動く(`.github/workflows/ci.yml`)
-  - 特定のテストだけを動かすには `dotnet test tests/FloatSoda.Test --filter "FullyQualifiedName~..."` を使う(AGENTS.md の「Build & Run Commands」)
-  - サンプルの実行は `dotnet run --project samples/FloatSoda.Samples.OverlayApp`。SteamVR を先に起動する(CONTRIBUTING.md の「開発環境のセットアップ」)
-  - Flutter の元の実装は、ローカル参照クローン `~/code_reading/flutter_reference` で引く。対応する Widget / Element / RenderObject は `flutter-widget-source` skill で特定できる(CONTRIBUTING.md の「テスト観点」)
-  - Flutter の参照クローンは読み取り専用にし、`pull` も `checkout` もしない(リポジトリ外の運用メモ。リポジトリ内の一次情報は※要確認)
-  - 参照クローンの置き場所と構築手順を示す文書がリポジトリにあるか(※要確認)
-  - Rider が入っていて MCP が使えるなら、C# のシンボル解決、リネーム、namespace の移動に使う。入っていなければ `dotnet` CLI と検索で続ける(AGENTS.md の「Rider MCP」)
-  - namespace の移動やリネームは、文字列置換より IDE の意味解析を使う(CONTRIBUTING.md の「namespace とディレクトリ」)
-  - ソリューションは `FloatSoda.slnx`(リポジトリ直下)
-- 見出し:
-  - この手順でできること
-  - 前提条件
-  - 手順1: SDK を入れる
-  - 手順2: クローンしてビルドする
-  - 手順3: CI と同じ手順でテストする
-  - 手順4: Flutter の元の実装を引ける状態にする
-  - 手順5: Rider などの道具を足す(任意)
-  - うまくいかないとき
-- ※要確認:
-  - `~/code_reading/flutter_reference` の作り方(クローン先、固定するバージョン)がリポジトリの文書にあるか。なければ、読み手が自分で flutter/flutter をクローンする手順として書くか、オーナーに確かめる
-  - `flutter-widget-source` skill が、リポジトリの `.agents/skills/` にない(`.claude/skills/` にもない)。skill の入手方法をどう案内するか
-  - SteamVR が要るのは「サンプルを実行するとき」だけか。`dotnet test` が SteamVR なしで通るか(CI は SteamVR なしで通っているので、通る見込み。手元で確かめる)
-  - `dotnet --version` の下限(`global.json` の有無と内容)
+環境がそろっていないと、CI と同じ結果が手元で出ず、PR を出してから落ちます。移植では Flutter の実装を見ながら書くので、引ける状態を先に作ります。
 
-## ト書き
+## 前提条件
 
-### この手順でできること
+- Windows の PC を用意すること(CI は `windows-latest` で動く)
+- `git` を使えること
 
-- 読み手が持って来るもの: 「手元でビルドとテストを動かしたい」という目的
-- このページが渡すもの: 手順が終わったときの状態(ビルドとテストが通る、Flutter の実装が引ける)と、手順の数
-- 読み手がすること: 自分に要る手順を確かめる(Flutter の参照は移植をする人だけ)
-- 次へ進む先: 「前提条件」
+この手順で実行するビルドとテストに、SteamVR は要りません。SteamVR が要るのは、サンプルの実行と実機の確認です。実機の確認は [テストの分け方](test-strategy.md)で区別しています。
 
-### 前提条件
+<!-- ※要確認: Windows 以外の OS でビルドとテストが通るかは確かめていない。確かめるには、対象の OS で手順2と手順3を実行する -->
 
-- 読み手が持って来るもの: Windows の PC(CI が `windows-latest` のため。他の OS は※要確認)、`git`
-- このページが渡すもの: 要るもの(.NET 10 SDK、SteamVR はサンプル実行時のみ)の一覧
-- 読み手がすること: 足りないものを入れる
-- 次へ進む先: 手順1
+## 手順1: SDK を入れる
 
-### 手順1: SDK を入れる
+1. [.NET の公式ダウンロードページ](https://dotnet.microsoft.com/download)から、.NET 10 SDK を入れる
+2. 次のコマンドで版を確かめる
 
-- 読み手が持って来るもの: 前提条件を満たす PC
-- このページが渡すもの: .NET 10 SDK の入れ方(公式の配布元へのリンク)と、確かめるコマンド `dotnet --version`
-- 読み手がすること: SDK を入れ、版を確かめる
-- できた?: `dotnet --version` が 10 系を返す
-- 次へ進む先: 手順2
+```bash
+dotnet --version
+```
 
-### 手順2: クローンしてビルドする
+**できた?** `dotnet --version` が 10 で始まる版を返す。
 
-- 読み手が持って来るもの: SDK
-- このページが渡すもの: クローンのコマンドと `dotnet build`
-- 読み手がすること: クローンしてビルドする
-- できた?: ビルドが警告なしで終わる(※要確認: 警告の有無は実行して確かめる)
-- 次へ進む先: 手順3
+<details><summary>できなかったら</summary>
 
-### 手順3: CI と同じ手順でテストする
+9 以下が返るときは、`dotnet --list-sdks` で .NET 10 SDK の有無を確かめます。入っていなければ入れ直します。入っていれば、`dotnet` が選ぶ版(PATH の順序や `global.json`)を確かめます。
 
-- 読み手が持って来るもの: ビルドが通ったクローン
-- このページが渡すもの: CI と同じ3つのコマンド(Release でビルド、2つのテストプロジェクトを順に実行)と、特定のテストだけを動かす書き方。PR を出す前に同じ手順を通すことが規約であること(規約の正本は ../3-prepare/conventions.md から案内)
-- 読み手がすること: 3つのコマンドを順に実行する
-- できた?: 両方のテストプロジェクトが成功で終わる
-- 次へ進む先: 手順4(移植をする人)、そうでなければ手順5
+</details>
 
-### 手順4: Flutter の元の実装を引ける状態にする
+## 手順2: クローンしてビルドする
 
-- 読み手が持って来るもの: 移植をしたいという目的
-- このページが渡すもの: 参照クローンの置き場所と、読み取り専用で扱うこと(`pull` と `checkout` をしない理由は、行番号とリンクが固定できなくなるため)。対応する実装を探す `flutter-widget-source` skill の使い方
-- 読み手がすること: 参照クローンを置き、ウィジェット名から Flutter の実装を1つ引いてみる
-- できた?: 指定したウィジェットの Widget / Element / RenderObject の位置が分かる
-- 次へ進む先: 移植の手順(../4-write/port-from-flutter.md)
-- 【未決】参照クローンの作り方をこのページに書くか、skill のページに任せるか
+リポジトリをクローンして、リポジトリ直下でビルドします。
 
-### 手順5: Rider などの道具を足す(任意)
+```bash
+git clone https://github.com/sumx21t-3310/FloatSoda.git
+cd FloatSoda
+dotnet build
+```
 
-- 読み手が持って来るもの: C# のリファクタリングをしたいという目的
-- このページが渡すもの: Rider と MCP を使うと何に効くか(シンボル解決、リネーム、namespace の移動)と、使わなくても進められること
-- 読み手がすること: 使うかどうかを決める
-- 止まる箇所: ソフトウェアのインストールは、読み手が自分で決める
-- 次へ進む先: 「規約を読む」(../3-prepare/conventions.md)
+**できた?** `dotnet build` がエラーなしで終わる。
 
-### うまくいかないとき
+<details><summary>できなかったら</summary>
 
-- 読み手が持って来るもの: ビルドやテストで出たエラー
-- このページが渡すもの: 症状ごとの行き先。SDK の版が合わない、テストが落ちる(自分の変更か、環境かの切り分け)
-- 読み手がすること: 症状に合う行き先へ進む
-- 止まる箇所: 切り分けても分からないとき。Issue で報告する(../1-get-involved/report-bugs.md)
+エラーメッセージの全文を読みます。SDK の版が合わないエラーなら、手順1に戻ります。それ以外のエラーで、自分の変更を加える前に出るときは、[不具合を切り分けて報告する](../1-get-involved/report-bugs.md)に進みます。
+
+</details>
+
+## 手順3: CI と同じ手順でテストする
+
+PR を出す前に、CI と同じ手順を手元で通すことが規約です。CI の定義は [ci.yml](../../../.github/workflows/ci.yml) の Build と Test のステップで、次のコマンドと同じです。食い違うときは ci.yml に合わせます。次のコマンドを順に実行します。
+
+```bash
+dotnet build --configuration Release
+dotnet test tests/FloatSoda.Rendering.Test --configuration Release --no-build
+dotnet test tests/FloatSoda.Test --configuration Release --no-build
+```
+
+特定のテストだけを動かすには、`--filter` を使います。
+
+```bash
+dotnet test tests/FloatSoda.Test --filter "FullyQualifiedName~AlignmentTest.ComputeOffset"
+```
+
+`--filter` に一致するテストがないと、テストを1件も実行しないまま終わります。出力の合格件数が1以上であることを確かめます。
+
+規約の全体は [コントリビューターの規約](conventions.md)から案内しています。
+
+**できた?** 2つのテストプロジェクトが、どちらも成功で終わる。
+
+<details><summary>できなかったら</summary>
+
+テストが落ちたときは、落ちたテストの名前とメッセージを確かめます。自分の変更を加える前に落ちるなら、環境の問題か FloatSoda の問題です。[不具合を切り分けて報告する](../1-get-involved/report-bugs.md)に進みます。
+
+</details>
+
+移植をする人は手順4へ、それ以外の人は手順5へ進みます。
+
+## 手順4: Flutter の元の実装を引ける状態にする(移植をする人)
+
+Flutter の参照クローンの作り方は、[flutter/flutter](https://github.com/flutter/flutter) のリポジトリを参照してください。
+
+**できた?** flutter/flutter のクローンが手元にあり、移植するウィジェットのファイルを開ける。
+
+<details><summary>できなかったら</summary>
+
+ウィジェット名が Flutter のクローンに見つからないときは、FloatSoda 独自のウィジェットの可能性があります。移植の手順は [Flutter から移植する](../4-write/port-from-flutter.md)にあります。
+
+</details>
+
+## 手順5: Rider などの道具を足す(任意)
+
+JetBrains Rider が入っていて、その MCP サーバーが使えるなら、C# のシンボル解決、リネーム、namespace の移動に使うと確実です。文字列置換は、ジェネリック制約、XML ドキュメントの `cref`、`nameof` を見落とします。
+
+Rider がなくても作業は進められます。`dotnet` CLI と検索で続けます。道具を入れるかどうかは、自分で決めます。エージェントは、ソフトウェアを入れる前に、入れるものと理由を人間に確認します。
+
+次は [コントリビューターの規約](conventions.md)です。
+
+## うまくいかないとき
+
+ビルドやテストで出たエラーは、症状で行き先が分かれます。
+
+| 症状 | 行き先 |
+| :-- | :-- |
+| SDK の版が合わない | 手順1 |
+| 自分の変更を加える前にテストが落ちる | [不具合を切り分けて報告する](../1-get-involved/report-bugs.md) |
+| 自分の変更を加えたらテストが落ちる | 落ちたテストの名前とメッセージを読み、変更を見直す |
