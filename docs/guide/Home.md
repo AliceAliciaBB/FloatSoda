@@ -61,6 +61,7 @@ Flutter から来た人は、リファレンスの[Flutter の読み替え表](.
 - [見た目を整える](4-build/screen/style-appearance.md)
 - [アニメーションを付ける](4-build/screen/add-animation.md)
 - [ボタンやトグルを組み立てる](4-build/screen/build-buttons-toggles.md)
+- [自分の部品を作る](4-build/screen/make-your-own-widget.md)
 - [表情切り替えパネルを作る](4-build/screen/expression-switcher.md)
 
 **入力を受け取り、確かめる**
