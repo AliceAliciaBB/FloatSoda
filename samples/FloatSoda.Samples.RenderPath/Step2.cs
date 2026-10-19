@@ -2,6 +2,8 @@ using FloatSoda.Rendering;
 using FloatSoda.Rendering.Layers;
 using SkiaSharp;
 
+namespace FloatSoda.Samples.RenderPath;
+
 /// <summary>段2: 自分で組んだ Layer ツリーを png にする。段1のオーバーレイに出す絵はこの出力を使える。</summary>
 static class Step2
 {

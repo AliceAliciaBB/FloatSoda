@@ -2,6 +2,8 @@ using System.Numerics;
 using FloatSoda.OVR;
 using FloatSoda.OVR.Overlay;
 
+namespace FloatSoda.Samples.RenderPath;
+
 /// <summary>段1: FloatSoda.OVR だけで、png の画像をオーバーレイとして HMD の前に出す。</summary>
 static class Step1
 {

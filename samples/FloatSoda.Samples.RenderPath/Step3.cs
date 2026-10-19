@@ -6,6 +6,8 @@ using FloatSoda.OVR.Overlay;
 using FloatSoda.Rendering.Layers;
 using SkiaSharp;
 
+namespace FloatSoda.Samples.RenderPath;
+
 /// <summary>
 /// 段3: 段2と同じ Layer ツリーを、png ではなく GL テクスチャとしてオーバーレイに出す。
 /// この最小のコードは、GL のリソースの後始末を省いている。

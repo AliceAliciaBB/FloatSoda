@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SkiaSharp;
 
+namespace FloatSoda.Samples.RenderPath;
+
 /// <summary>段4: 段3で手書きした処理をフレームワークに任せ、ウィジェットで書いた色の四角をダッシュボードに出す。</summary>
 static class Step4
 {

@@ -1,3 +1,5 @@
+using FloatSoda.Samples.RenderPath;
+
 // 描画が SteamVR のオーバーレイに届くまでを、層を1つずつ足して確かめる。
 // 段は --step 1 から --step 4 で選ぶ。段の中身は Step1.cs から Step4.cs にある。
 //
