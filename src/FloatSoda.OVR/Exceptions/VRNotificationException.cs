@@ -20,7 +20,8 @@ public class VRNotificationException(string message, EVRNotificationError errorC
         EVRNotificationError.NotificationQueueFull => ExceptionMessages.VRNotificationException_NotificationQueueFull,
         EVRNotificationError.InvalidOverlayHandle => ExceptionMessages.VRNotificationException_InvalidOverlayHandle,
         EVRNotificationError.SystemWithUserValueAlreadyExists => ExceptionMessages.VRNotificationException_SystemWithUserValueAlreadyExists,
-        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+        EVRNotificationError.ServiceUnavailable => ExceptionMessages.VRNotificationException_ServiceUnavailable,
+        _ => string.Format(ExceptionMessages.VRNotificationException_UnexpectedError, error)
     };
 
     /// <summary>Throws a <see cref="VRNotificationException"/> if <paramref name="error"/> indicates a failure.</summary>
