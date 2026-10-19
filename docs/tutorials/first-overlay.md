@@ -40,19 +40,6 @@ dotnet add FirstOverlay package FloatSoda
 
 ## 1. オーバーレイを SteamVR に出す
 
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 空のコンソールアプリ
-- このページが渡すもの: 起動のコード(`AddFloatSoda`、`CreateWindow`、`DashboardWindow`)と、色の四角を出すウィジェット
-- 読み手がすること: コードを貼って `dotnet run` し、ダッシュボードを開く
-- できた?: ダッシュボードに色の四角が出た
-- できなかったら: オーバーレイが出ない、起動で例外が出る → 「5. 困ったとき」の該当する節
-- 次へ進む先: 段2。起動のコードの意味は、ガイドの「起動と Generic Host」へリンクする
-- 【未決】起動のコードの各行をこの段で説明するか、解説へ送るだけにするか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
-
 最初の段では、青い四角を1つ出します。`Program.cs` を次の内容に置き換えてください。
 
 ```csharp
@@ -115,22 +102,7 @@ dotnet run --project FirstOverlay
 
 `AddFloatSoda()` や `Host.CreateApplicationBuilder` の意味は、ガイドの[起動と Generic Host](../guide/4-build/mechanics/startup-and-host.md)で説明しています。ここでは、この数行を毎回の書き出しとして、そのまま使ってください。
 
-</details>
-
 ## 2. 数字を表示して、書き換える
-
-> 【未決】この節は判断が要るため、ト書きのまま残しています。オーナーが決めたあとで本文にします(追跡: #219)。
-
-- 読み手が持って来るもの: 段1で動いたコード
-- このページが渡すもの: `StatefulWidget` と `State`、`SetState()` で値を変えると画面が描き直されること
-- 読み手がすること: 色の四角を数字の表示に置き換え、一定時間ごとに数字を増やす
-- できた?: HMD の中で数字が増えていく
-- できなかったら: 数字が変わらない、文字が出ない → 「5. 困ったとき」の該当する節
-- 次へ進む先: 段3。仕組みは、ガイドの「状態と作り直し」へリンクする
-- 【未決】数字を増やすきっかけを、タイマーにするか、段3のボタンだけにするか
-
-<details>
-<summary>仮に書いた本文(判断の材料。採用は未定)</summary>
 
 2段目では、四角を数字の表示に置き換え、1秒ごとに数字を増やします。画面が持つ値を書き換えて画面を描き直すには、`StatefulWidget<T>` と `State<T>` を使います。値を書き換える操作が `SetState()` です。
 
@@ -243,8 +215,6 @@ class CounterPanelState : TickerProviderState<CounterPanel>
 </details>
 
 `SetState()` が画面を描き直す仕組みは、ガイドの[状態と作り直し](../guide/4-build/mechanics/state-and-rebuild.md)で説明しています。
-
-</details>
 
 ## 3. ボタンを押して、数字を増やす
 
@@ -373,4 +343,4 @@ class CounterPanelState : State<CounterPanel>
 動くオーバーレイができました。次に進むページは、目的で選べます。
 
 - 通しで1つのパネルを作りたい: ガイドの[表情切り替えパネルを作る](../guide/4-build/screen/expression-switcher.md)
-- 作りたいものに近い作例から始めたい: リファレンスの[作例のカタログ](../reference/sample-catalog.md)
+- 作りたいものに近い作例から始めたい: リファレンスの[作例のカタログ](../reference/sample-catalog.md)
