@@ -9,6 +9,7 @@
 
 ### Fixed
 
+- `VRSettingsException` / `VRNotificationException` / `VRScreenshotException` / `VRCompositorException` / `TrackedPropertyException` の `ThrowIfError` が、対応表にないエラー値で `ArgumentOutOfRangeException` を投げていた問題を修正。対応表にない値でも、各クラスの型付き例外を「予期しない〜エラー」のメッセージで投げる。`EVRSettingsError.AccessDenied` と `EVRNotificationError.ServiceUnavailable` には専用のメッセージを追加した(#295)
 - 指やポインタを押している最中に `GestureDetector` をツリーから外すと、離したときに外したウィジェットの `OnTap` が呼ばれる問題を修正。入れ子の `GestureDetector` で内側だけを外したとき、外側のタップが失われる問題もあわせて修正。破棄した認識器がジェスチャアリーナに残り、後続のイベントも受け取り続けていた(#297)
 - `Transform` で拡大や回転をかけた子の、レイアウト上の大きさからはみ出した見た目の部分を押しても反応しない問題を修正。子へ届く `PointerEvent.Transform` に拡大や回転が入らない問題もあわせて修正。`RotatedBox` の `PointerEvent.Transform` も回転を含むようにした(#298)
 - `ClipOval` の楕円の外や、`Clipper` で切り落とした `ClipRect` / `ClipRoundRect` / `ClipCustomPath` の領域を押しても、中の子が反応する問題を修正。`Clipper` を指定しない `ClipRoundRect` の角は、Flutter と同じく引き続き反応する(#299)

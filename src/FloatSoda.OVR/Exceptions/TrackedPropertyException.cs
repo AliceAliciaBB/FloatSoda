@@ -26,7 +26,7 @@ public class TrackedPropertyException(string message, ETrackedPropertyError erro
         ETrackedPropertyError.TrackedProp_IPCReadFailure => ExceptionMessages.TrackedPropertyException_TrackedProp_IPCReadFailure,
         ETrackedPropertyError.TrackedProp_OutOfMemory => ExceptionMessages.TrackedPropertyException_TrackedProp_OutOfMemory,
         ETrackedPropertyError.TrackedProp_InvalidContainer => ExceptionMessages.TrackedPropertyException_TrackedProp_InvalidContainer,
-        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+        _ => string.Format(ExceptionMessages.TrackedPropertyException_UnexpectedError, error)
     };
 
     /// <summary>Throws a <see cref="TrackedPropertyException"/> if <paramref name="error"/> indicates a failure.</summary>
