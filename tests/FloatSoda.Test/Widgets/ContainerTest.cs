@@ -93,6 +93,89 @@ public class ContainerTest
     }
 
     [Fact]
+    public void Container_BorderありでPaddingを省略_子がボーダーの内側に収まる()
+    {
+        var widget = new Align
+        {
+            Alignment = Alignment.TopLeft,
+            Child = new Container
+            {
+                Width = 60,
+                Height = 60,
+                Decoration = new BoxDecoration
+                {
+                    Border = Border.All(new BorderSide { Color = new Color(0, 0, 255), Width = 10 })
+                },
+                Child = new ColoredBox { Color = new Color(255, 0, 0) }
+            }
+        };
+
+        using var bitmap = Renderer.Render(widget, Size);
+
+        // ボーダー(各辺10)の上には子の赤が重ならず、子はボーダーの内側だけを占める。
+        Assert.Equal(SKColors.Blue, bitmap.GetPixel(5, 5));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(15, 15));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(45, 45));
+        Assert.Equal(SKColors.Blue, bitmap.GetPixel(55, 55));
+    }
+
+    [Fact]
+    public void Container_PaddingとBorderを指定_余白とボーダーの太さの和だけ子が内側へ寄る()
+    {
+        var widget = new Align
+        {
+            Alignment = Alignment.TopLeft,
+            Child = new Container
+            {
+                Width = 60,
+                Height = 60,
+                Decoration = new BoxDecoration
+                {
+                    Color = new Color(0, 255, 0),
+                    Border = Border.All(new BorderSide { Color = new Color(0, 0, 255), Width = 5 })
+                },
+                Padding = EdgeInsets.All(10),
+                Child = new ColoredBox { Color = new Color(255, 0, 0) }
+            }
+        };
+
+        using var bitmap = Renderer.Render(widget, Size);
+
+        // ボーダー(0〜5)、余白(5〜15)、子(15〜45)の順に並ぶ。
+        Assert.Equal(SKColors.Blue, bitmap.GetPixel(2, 2));
+        Assert.Equal(SKColors.Lime, bitmap.GetPixel(12, 12));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(16, 16));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(44, 44));
+        Assert.Equal(SKColors.Lime, bitmap.GetPixel(47, 47));
+    }
+
+    [Fact]
+    public void Container_上辺だけにBorderを指定_上辺の太さだけ子が下へ寄る()
+    {
+        var widget = new Align
+        {
+            Alignment = Alignment.TopLeft,
+            Child = new Container
+            {
+                Width = 60,
+                Height = 60,
+                Decoration = new BoxDecoration
+                {
+                    Border = new Border { Top = new BorderSide { Color = new Color(0, 0, 255), Width = 10 } }
+                },
+                Child = new ColoredBox { Color = new Color(255, 0, 0) }
+            }
+        };
+
+        using var bitmap = Renderer.Render(widget, Size);
+
+        // ボーダーの無い左・右・下の辺には余白が入らず、子が端まで広がる。
+        Assert.Equal(SKColors.Blue, bitmap.GetPixel(30, 5));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(1, 15));
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(58, 58));
+    }
+
+    [Fact]
     public void Container_Paddingがnull_余白なしで子が全域へ描画される()
     {
         var widget = new Align
