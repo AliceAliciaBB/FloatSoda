@@ -179,19 +179,24 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 - **Label**: not ported — 2026-09-14 にオーナーが確定。修正は #257(`ClipBehavior` を追加し、
   既定を `Clip.HardEdge` に揃える。breaking)。
 
-## 11. `Container` がボーダーぶんの余白を `Padding` に加算しない
+## 11. `Container` がボーダーぶんの余白を `Padding` に加算しない — **解消済み(#267)**
 
-- **FloatSoda**: `src/FloatSoda/Widgets/Layout/Container.cs:159` が指定された `Padding` だけを
-  挿入する。`src/FloatSoda/Painting/BoxDecoration.cs` に `Padding` に相当するプロパティが無い。
-  `Border` 付きで `Padding` を省略すると、子がボーダーの下まで広がる。
+- **Status**: 解消済み。#267 で Flutter に揃えた。番号を他のエントリから参照しているため、
+  エントリは削除せずに残す。
+- **FloatSoda**: `src/FloatSoda/Widgets/Layout/Container.cs` の `PaddingIncludingDecoration` が、
+  `Padding` と `BoxDecoration.Padding`(`Border` の各辺の太さ)を加算して `Padding` として挿入する。
+  修正前は指定された `Padding` だけを挿入し、`Border` 付きで `Padding` を省略すると、子がボーダーの
+  下まで広がっていた。
 - **Flutter**: `Container._paddingIncludingDecoration`(`widgets/container.dart:378-384`、
   `8a9f61cfd67`)が `padding` と `decoration.padding`(ボーダー寸法)を加算し、`build`
   (`:400-403`)で `Padding` として挿入する。
-- **Test**: — (not set)
-- **Docs**: `samples/FloatSoda.Samples.Container/README.md` の `## Flutterとの違い`(回避策として
-  ボーダー幅を `Padding` に明示する案内)。差異が解消したら行を削除する。
+- **Test**: `tests/FloatSoda.Test/Widgets/ContainerTest.cs` の
+  `Container_BorderありでPaddingを省略_子がボーダーの内側に収まる`、
+  `Container_PaddingとBorderを指定_余白とボーダーの太さの和だけ子が内側へ寄る`、
+  `Container_上辺だけにBorderを指定_上辺の太さだけ子が下へ寄る`。
+- **Docs**: `samples/FloatSoda.Samples.Container/README.md` の `## Flutterとの違い` から行を削除した。
 - **Observation**: `HEADLESS`(子の配置位置はビットマップで判定できる)
-- **Label**: port mistake — 余白合成は実装済みで加算だけが抜けている。修正は #267(breaking)。PR #264 の Codex レビューで発見。
+- **Label**: port mistake — 余白合成は実装済みで加算だけが抜けていた。PR #264 の Codex レビューで発見。
 
 ## 12. `Child` の無い `Container` が緩い制約の下で 0 に縮む
 

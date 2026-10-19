@@ -21,7 +21,8 @@ public class VRSettingsException(string message, EVRSettingsError errorCode)
         EVRSettingsError.ReadFailed => ExceptionMessages.VRSettingsException_ReadFailed,
         EVRSettingsError.JsonParseFailed => ExceptionMessages.VRSettingsException_JsonParseFailed,
         EVRSettingsError.UnsetSettingHasNoDefault => ExceptionMessages.VRSettingsException_UnsetSettingHasNoDefault,
-        _ => throw new ArgumentOutOfRangeException(nameof(error), error, null)
+        EVRSettingsError.AccessDenied => ExceptionMessages.VRSettingsException_AccessDenied,
+        _ => string.Format(ExceptionMessages.VRSettingsException_UnexpectedError, error)
     };
 
     /// <summary>Throws a <see cref="VRSettingsException"/> if <paramref name="error"/> indicates a failure.</summary>
