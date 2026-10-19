@@ -88,7 +88,7 @@ uGUI の EventSystem に当たるのは、ウィジェットの入力の受け�
 `Update` に当たる毎フレームの処理は、`AnimationController` と `WidgetTicker` が時間を進めます。書き方は、[アニメーションを付ける](../4-build/screen/add-animation.md)で説明しています。
 
 <!-- ※要確認: アニメーション中に、画面を作り直すのか、描画だけを更新するのか。以前の本文は「描画だけ」と書いていたが、src/ で確かめられず削った。確かめ方: src/FloatSoda/Animation/AnimationController.cs の Changed を購読する側(SetState を呼ぶか、描画の更新だけか)を読む -->
-<!-- ※要確認: Update の代わりに AnimationController と Ticker を勧めてよいか。毎フレームの処理を書く推奨の形を確かめていない。確かめ方: docs/Animation.md と src/FloatSoda/Animation/ を読み、Update 相当の処理を書く例をオーナーに確認する -->
+<!-- ※要確認: Update の代わりに AnimationController と Ticker を勧めてよいか。毎フレームの処理を書く推奨の形を確かめていない。確かめ方: docs/guide/4-build/screen/add-animation.md と src/FloatSoda/Animation/ を読み、Update 相当の処理を書く例をオーナーに確認する -->
 
 ## 落とし穴
 

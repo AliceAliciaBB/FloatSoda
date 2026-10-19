@@ -79,4 +79,13 @@ PR を出した人も、レビューを頼まれた人も、REVIEW.md で何が�
 
 提案の書き方は [提案を書く](../6-propose/write-proposal.md)にあります。
 
-<!-- ※要確認: CONTRIBUTING.md と REVIEW.md と PR テンプレートが参照する docs/APIDesign.md と docs/WritingDocumentation.md は、いまの docs にない。API 設計原則と Flutter parity の判断基準をどこに置くかが決まっておらず、このページから案内できない -->
+## そのほかの規約
+
+CONTRIBUTING.md と REVIEW.md のほかに、次の規約がリポジトリの直下にあります。どれも公開サイトと Wiki には載りません。
+
+| 規約 | 中身 |
+| :-- | :-- |
+| [API_DESIGN.md](../../../API_DESIGN.md) | API 設計の原則と Flutter parity。差異を残すときの判断基準 |
+| [LOCALIZATION.md](../../../LOCALIZATION.md) | 日本語を既定の言語にする方針 |
+| [DOCUMENTATION_COMMENTS.md](../../../DOCUMENTATION_COMMENTS.md) | XML ドキュメントコメントの書き方 |
+| [WRITING_DOCUMENTATION.md](../../../WRITING_DOCUMENTATION.md) | docs の書き方と、変更ごとに直す docs を決める Documentation Impact Matrix |

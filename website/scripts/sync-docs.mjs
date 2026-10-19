@@ -14,7 +14,8 @@
  * 変換内容:
  * - 先頭の H1 を frontmatter の title にし、本文からは除く(Starlight がタイトルを描画する)
  * - 「← [Home](Home.md)」「← [Home](../Home.md)」のナビ行と、その直前の水平線を除く(サイドバーが担う)
- * - 相対 .md リンク(同じ階層も別の階層も)をサイト内パスへ、docs/ の外を指すリンクを GitHub の URL へ書き換える
+ * - 相対 .md リンク(同じ階層も別の階層も)をサイト内パスへ、docs/ の外を指すリンクを GitHub の URL へ書き換える。
+ *   docs/ の外への URL は、ビルドしたタグかコミットに固定する(linkRef)
  * - editUrl(GitHub の編集ページ)と lastUpdated(docs/ 側の最終コミット日時)を付ける
  * - コードフェンスの中は一切変更しない
  */
@@ -43,6 +44,16 @@ const docs = listDocs();
 const rels = new Set(docs.map((doc) => doc.rel));
 const summaries = homeSummaries();
 
+/**
+ * docs/ の外(作例やソース)へのリンクを固定する Git の参照。公開サイトはリリースタグから作るので、
+ * タグのビルドではタグ名、それ以外(main の push、PR、手元)ではビルドしたコミットを使う。
+ * こうすると、公開中の docs と、リンク先の作例・ソースの版がそろう
+ */
+const linkRef =
+  process.env.GITHUB_REF_TYPE === "tag" && process.env.GITHUB_REF_NAME
+    ? process.env.GITHUB_REF_NAME
+    : execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" }).trim();
+
 const FENCE = /^\s*(```|~~~)/;
 const HOME_NAV = /^←\s*\[[^\]]*\]\((?:\.\.\/)*Home\.md\)\s*$/;
 const LINK = /(!?)\[([^\]]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)/g;
@@ -66,7 +77,7 @@ function rewriteLinks(line, selfDir) {
       }
     }
     // docs/ の外(../CONTRIBUTING.md など)や、docs/ 内の .md 以外はリポジトリの GitHub ページへ
-    return `[${text}](${repositoryUrl}/blob/main/${resolved}${anchor}${title})`;
+    return `[${text}](${repositoryUrl}/blob/${linkRef}/${resolved}${anchor}${title})`;
   });
 }
 

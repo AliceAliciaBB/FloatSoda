@@ -99,6 +99,6 @@ dotnet run --project samples/FloatSoda.Samples.DecoratedBox
 
 ## 関連
 
-- [docs/WidgetSystem.md](../../docs/WidgetSystem.md) — 組み込みウィジェット一覧
+- [docs/reference/find-widgets.md](../../docs/reference/find-widgets.md) — 組み込みウィジェット一覧
 - [FloatSoda.Samples.Opacity](../FloatSoda.Samples.Opacity) — サブツリー全体を半透明にする場合
 - [FloatSoda.Samples.Transform](../FloatSoda.Samples.Transform) — 描画へ変換を適用する場合
