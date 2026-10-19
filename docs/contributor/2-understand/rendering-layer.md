@@ -43,10 +43,6 @@ ContainerLayer            ルート。子を順に描く
 
 `LayerRenderer.Render(root, context)` が、この2つを順に呼びます。描画先のクリア、フラッシュ、`SKSurface` の所有権は、呼び出し側の仕事です。`LayerContext` が持つのは、描画先の `SKCanvas` だけです。
 
-`ClipRectLayer` と `ClipRoundRectLayer` の `Layout` には、対になる `Save` のない `Canvas.Restore()` の呼び出しがあります(追跡: [#296](https://github.com/sumx21t-3310/FloatSoda/issues/296))。呼び出し元が `Save` した状態を積んだキャンバスでは、その状態が `Paint` より前に外れます。状態を積んでいないキャンバスで `ClipRectLayer` を含むツリーを描いた実験では、描画結果に影響が出ませんでした。
-
-<!-- ※要確認: 影響が出ないことは、ClipRectLayer を1枚含むツリーを LayerBitmapRenderer で描いた1回の実行だけで確かめた / ClipRoundRectLayer を含むツリーと、GL の描画先でも同じか、実行して確かめる -->
-
 ## Clone は何を共有し、何を共有しないか
 
 `Clone` は、子を再帰的に複製して、独立したツリーを作ります。描画リソースの所有権は移さず、元と共有する場合があります。
