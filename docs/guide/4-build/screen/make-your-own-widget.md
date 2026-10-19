@@ -2,105 +2,296 @@
 
 # 自分の部品を作る
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+画面のコードで同じ組み合わせを何度も書いているなら、その組み合わせに名前を付けて、自分の部品にまとめられます。Unity でよく使う形をプレハブにしておくのと同じ使い方を、C# のコードだけで書けます。このページでは、ラベルの付いた札を例に、状態を持たない部品、外から値を渡す部品、押すと開閉する部品の順に作ります。
 
-## 設計シート
+## どちらで作るかを決める
 
-- 分類: 説明型(Diátaxis: how-to)
-- 読み手: だれが / VRChatter、Booth クリエイター、uGUI を避けたいエンジニア。チュートリアルで `StatefulWidget<T>` の `CounterPanel` を一度書いている / 何を知っている / 部品を入れ子にして画面を組める。`SetState()` で画面が変わることを知っている。同じ組み合わせを何度も書いていることに気づいている / 読んで何をしたい / よく使う組み合わせを、名前の付いた自分の部品にまとめ、ほかの画面でも使い回したい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: 既存の部品を組み合わせて、`StatelessWidget` と `StatefulWidget<T>` で自分の部品を作り、プロパティで外から値を渡す手順
-- 依頼の解釈: `LeafRenderObjectWidget<T>` などで RenderObject から大きさの計算と描画を書く作り方は、このページに含めない。コントリビューター向けの内容として扱う(オーナーの決定、2026-10-19)。自分で絵を描く `CustomPaint` はまだない(追跡: #171)ことだけ触れる
-- テーマファイル: how-to
-- Why(目的): 同じ組み合わせの書き写しを減らし、画面のコードを短く保つ。Unity のプレハブに当たるものを、コードで持てるようにする
-- What(目標・結果): 自分で作った部品を、別の画面で2回以上使っている。値の違う2つの部品が、同じ画面に並んでいる
-- How(手段): 状態を持たない部品(`StatelessWidget`)を先に作り、次にプロパティで外から値を渡し、最後に状態を持つ部品(`StatefulWidget<T>`)を作る。どちらを選ぶかの基準を最初に示す
-- 要素:
-  - 状態を持たない部品は、`StatelessWidget` を継承した `record` で作り、`Build(IBuildContext context)` で子のウィジェットを返す(`src/FloatSoda/Widgets/ComponentWidget.cs`。作例: `samples/FloatSoda.Samples.Align/AlignDemo.cs` など、各作例の `*Demo.cs` は `public sealed record ... : StatelessWidget`)
-  - 状態を持つ部品は、`StatefulWidget<T>` を継承した `record` と、`State<T>` を継承した `class` の2つで作る。`CreateState()` で状態を作り、状態の `Build` で子を返す(`src/FloatSoda/Widgets/ComponentWidget.cs`。作例: `samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - `State<T>` には、`InitState()`、`DidUpdateWidget(T oldWidget)`、`DidChangeDependencies()`、`Dispose()` の上書きできる口がある。`SetState(Action)` は `protected`(`src/FloatSoda/Widgets/ComponentWidget.cs`)
-  - 状態の中から、自分のウィジェットのプロパティは `Widget` で読む(`State<T>.Widget`。`src/FloatSoda/Widgets/ComponentWidget.cs`)
-  - 外から渡す値は、`init` のプロパティで持つ。必須の値には `required` を付ける。コンストラクタ引数は使わない(`AGENTS.md` の「API Design Conventions」、CONTRIBUTING.md の API 設計の規約)
-  - 押されたことなどを外へ知らせる口は、`On` で始まる `Action?` / `Action<T>?` のプロパティにする(`AGENTS.md` の「API Design Conventions」)
-  - ウィジェットは `record` なので、作り直しのときに前と同じ値の部品は、等しいとみなされて作り直されない(`src/FloatSoda/Elements/Element.cs` の `UpdateChild` の `child.Widget == newWidget`)
-  - `List<T>` などの参照型のプロパティは、中身ではなく参照で比べられる。同じ `List<T>` の中身だけを書き換えて渡すと、部品は作り直されない。新しい `List<T>` を作って渡すと作り直される(2026-10-19 に、`State` から同じ `List<string>` に要素を足して `SetState()` するテストで、子の `Build` が呼ばれないこと、新しいリストを渡すと呼ばれることを確かめた)
-  - 同じ種類の部品を並べ替えるときは、`Key` を付けると状態が取り違えられない(`AGENTS.md` の「Widget/Element Tree」の keyed list diffing)
-  - 自分で絵を描く `CustomPaint` はまだない(追跡: #171)。描画から作る部品は、コントリビューター向けの内容になる
-- 見出し:
-  - どちらで作るかを決める
-  - 前提条件
-  - 手順1: 状態を持たない部品を作る
-  - 手順2: 外から値を渡す
-  - 手順3: 状態を持つ部品を作る
-  - 手順4: 押されたことを外へ知らせる
-  - 結果を確かめる
-  - うまくいかないとき
-- ※要確認:
-  - 手順のコード例が、今の公開 API だけでコンパイルできるか(コード例を取り出してビルドして確かめる)
-  - `Key` を付けないと状態が取り違えられる例が、今の実装で再現するか(並べ替えの例を書いて確かめる)
+自分の部品は、`StatelessWidget` か `StatefulWidget<T>` を継承して作ります。どちらにするかは、部品の中で値が変わるかどうかで決めます。
 
-## ト書き
+| 部品の見た目を決めるもの | 継承する型 | 例 |
+| :-- | :-- | :-- |
+| 外から渡された値だけ | `StatelessWidget` | ラベルと色の付いた札 |
+| 部品の中で変わる値(押すと開く、数が増える) | `StatefulWidget<T>` | 押すたびに開閉する札 |
 
-### どちらで作るかを決める
+迷ったら `StatelessWidget` で作り始め、部品の中で値を変えたくなったら `StatefulWidget<T>` に書き換えます。値が変わると画面が変わる仕組みは、[値が変わると、画面が変わる仕組み](../mechanics/state-and-rebuild.md)で説明しています。
 
-- 読み手が持って来るもの: 何度も書いている部品の組み合わせ
-- このページが渡すもの: `StatelessWidget` と `StatefulWidget<T>` の選び方の基準。部品の中で値が変わるなら `StatefulWidget<T>`、外から渡された値だけで見た目が決まるなら `StatelessWidget`。描画から作る部品(自分で絵を描く部品)は扱わず、`CustomPaint` がまだないこと(追跡: #171)を1文で触れて、リファレンスの「できないこと・まだ使えないもの」へリンクする(オーナーの決定、2026-10-19)
-- 読み手がすること: 作りたい部品がどちらかを決める
-- 次へ進む先: 「前提条件」。状態の仕組みは「値が変わると、画面が変わる仕組み」へリンクする
+このページで作るのは、今ある部品を組み合わせた部品です。自分で絵を描く部品は、Flutter の `CustomPaint` に当たる仕組みがまだないため、作れません(追跡: #171)。できないことの一覧は、リファレンスの[できないこと・まだ使えないもの](../../../reference/limitations.md)にあります。
 
-### 前提条件
+## 前提条件
 
-- 読み手が持って来るもの: チュートリアルを終えたプロジェクト
-- このページが渡すもの: 部品を置くファイルの分け方(1つの部品を1つのファイルに置く)と、`using` に要る名前空間
-- 読み手がすること: 部品を置くファイルを1つ作る
-- 次へ進む先: 手順1
+次の2つを済ませてください。
 
-### 手順1: 状態を持たない部品を作る
+- [最初のオーバーレイを作る](../../../tutorials/first-overlay.md)を終え、ダッシュボードにオーバーレイを出せること
+- 部品を置くファイルを、1つの部品につき1つ作ること(例: `NameTag.cs`)
 
-- 読み手が持って来るもの: 画面のコードの中で、何度も出てくる部品の組み合わせ
-- このページが渡すもの: `StatelessWidget` を継承した `record` と、`Build` で組み合わせを返す書き方。例は、ラベルと色の付いた札(`ColoredBox`、`Padding`、`Text` の組み合わせ)
-- 読み手がすること: 組み合わせを部品に移し、元の画面からは部品の名前で呼ぶ
-- できた?: 部品に置き換える前と同じ見た目で、ダッシュボードに出る
-- できなかったら: 何も出ない、見た目が変わった → 「反応しないときに切り分ける」の「文字や画像が出ない」
-- 次へ進む先: 手順2
+このページの例は、プロジェクトの名前空間を `MyOverlay` としています。自分のプロジェクトの名前空間に読み替えてください。部品のファイルの先頭には、次の `using` が要ります。
 
-### 手順2: 外から値を渡す
+```csharp
+using FloatSoda.Elements;
+using FloatSoda.Geometrics;
+using FloatSoda.Painting;
+using FloatSoda.Widgets;
+using FloatSoda.Widgets.Layout;
+using FloatSoda.Widgets.Paint;
+using SkiaSharp;
+```
 
-- 読み手が持って来るもの: 手順1の部品(中身が決め打ち)
-- このページが渡すもの: `init` のプロパティで値を受け取る書き方と、必須の値に `required` を付けること。コンストラクタ引数を使わない理由(オブジェクト初期化子で書く FloatSoda の決まり)。`List<T>` のような参照型のプロパティの注意(同じリストの中身だけを書き換えて渡すと作り直されないので、変えるときは新しいリストを作って渡す)
-- 読み手がすること: ラベルと色をプロパティにし、値の違う札を2つ並べる
-- できた?: 文字と色の違う札が2つ並んで出る
-- 次へ進む先: 手順3
+押す操作を受け取る部品(手順3から)は、`using FloatSoda.Widgets.Gesture;` も足します。
 
-### 手順3: 状態を持つ部品を作る
+## 手順1: 状態を持たない部品を作る
 
-- 読み手が持って来るもの: 押すと開閉する、など部品の中で値が変わる部品を作りたい
-- このページが渡すもの: `StatefulWidget<T>` と `State<T>` の2つを作る書き方。状態の中から自分のプロパティを `Widget` で読むこと。初期化は `InitState()`、後片付けは `Dispose()` に書くこと
-- 読み手がすること: 押すたびに開閉する札を作る
-- できた?: 札を押すたびに、中身が出たり隠れたりする
-- できなかったら: 押しても変わらない → 「反応しないときに切り分ける」の「数字や文字が変わらない」
-- 次へ進む先: 手順4。ボタンの組み立て方は「ボタンやトグルを組み立てる」へリンクする
+何度も書いている組み合わせを、`StatelessWidget` を継承した `record` に移します。組み合わせは、`Build` から返します。
 
-### 手順4: 押されたことを外へ知らせる
+次の例は、背景の色と余白と文字を組み合わせた札です。
 
-- 読み手が持って来るもの: 手順3の部品。押されたことを、部品を使う側の画面で受け取りたい
-- このページが渡すもの: `On` で始まる `Action?` のプロパティを持たせ、部品の中から呼ぶ書き方。値を渡すときは `Action<T>?`
-- 読み手がすること: 札が開いたことを、使う側の画面で受け取って数える
-- できた?: 札を開くたびに、使う側の画面の数字が増える
-- 次へ進む先: 「結果を確かめる」
+```csharp
+namespace MyOverlay;
 
-### 結果を確かめる
+public sealed record NameTag : StatelessWidget
+{
+    public override Widget Build(IBuildContext context)
+    {
+        return new ColoredBox
+        {
+            Color = SKColors.SeaGreen,
+            Child = new Padding
+            {
+                Spacing = EdgeInsets.All(16),
+                Child = new Text("VRChat")
+                {
+                    Style = new TextStyle { Color = SKColors.White, FontSize = 40 }
+                }
+            }
+        };
+    }
+}
+```
 
-- 読み手が持って来るもの: 作った部品
-- このページが渡すもの: 確かめる3点(別の画面でも使えるか、値の違う部品が並ぶか、押したことが使う側に届くか)。HMD を被らずに見た目を確かめる方法として「HMD を被らずに確かめる」へのリンク
-- 読み手がすること: 3点を確かめる
-- 次へ進む先: 「うまくいかないとき」、または「6. 配る」
+元の画面では、組み合わせを書いていた場所を `new NameTag()` に置き換えます。
 
-### うまくいかないとき
+```csharp
+app.CreateWindow(new DashboardWindow
+{
+    Title = "MyOverlay",
+    Child = new NameTag(),
+});
+```
 
-- 読み手が持って来るもの: 部品にしたら動かなくなった
-- このページが渡すもの: 症状ごとの行き先。値を渡しても見た目が変わらない(前と同じ値だと作り直されない。`List<T>` は手順2へ戻る)、並べ替えると状態が入れ替わる(`Key` を付ける)、押しても反応しない(「反応しないときに切り分ける」)
-- 読み手がすること: 症状に合う行き先を開く
-- 止まる箇所: 描画から自分で作りたい(自分で絵を描きたい)場合。`CustomPaint` はまだない(追跡: #171)ことを伝え、リファレンスの「できないこと・まだ使えないもの」へ送る
-- 次へ進む先: ガイドの Home の「docs で見つからないとき」
+**できた?** 部品に置き換える前と同じ見た目で、ダッシュボードに札が出る。
+
+<details>
+<summary>できなかったら</summary>
+
+何も出ないときや、見た目が変わったときは、[反応しないときに切り分ける](../../5-troubleshoot/not-responding.md#文字や画像が出ない)の「文字や画像が出ない」を開きます。
+
+</details>
+
+## 手順2: 外から値を渡す
+
+手順1の札は、文字と色が決め打ちです。部品を使う側から値を渡せるように、値を `init` のプロパティにします。必ず渡してほしい値には `required` を付けます。
+
+```csharp
+public sealed record NameTag : StatelessWidget
+{
+    /// <summary>札に出す文字。</summary>
+    public required string Label { get; init; }
+
+    /// <summary>札の背景の色。</summary>
+    public SKColor Color { get; init; } = SKColors.SeaGreen;
+
+    public override Widget Build(IBuildContext context)
+    {
+        return new ColoredBox
+        {
+            Color = Color,
+            Child = new Padding
+            {
+                Spacing = EdgeInsets.All(16),
+                Child = new Text(Label)
+                {
+                    Style = new TextStyle { Color = SKColors.White, FontSize = 40 }
+                }
+            }
+        };
+    }
+}
+```
+
+使う側は、オブジェクト初期化子で値を渡します。FloatSoda の部品は、どれもコンストラクタの引数ではなく、プロパティで値を受け取ります。自分の部品も同じ形にしておくと、FloatSoda の部品と同じ書き方で並べられます。
+
+```csharp
+new Row
+{
+    Children =
+    {
+        new NameTag { Label = "VRChat" },
+        new NameTag { Label = "Booth", Color = SKColors.Tomato },
+    },
+}
+```
+
+`List<T>` のような参照型の値をプロパティで渡すときは、値を変えるたびに新しいリストを作って渡します。部品は `record` なので、作り直しのときに前と同じ値の部品は、等しいとみなされて作り直されません。リストは中身ではなく参照で比べられるため、同じリストの中身だけを書き換えて渡すと、部品の見た目は変わりません。
+
+```csharp
+// 変わらない: 同じリストの中身だけを書き換えている
+SetState(() => _items.Add("Booth"));
+
+// 変わる: 新しいリストを作って渡している
+SetState(() => _items = [.. _items, "Booth"]);
+```
+
+**できた?** 文字と色の違う札が、2つ並んで出る。
+
+## 手順3: 状態を持つ部品を作る
+
+押すと開閉する札のように、部品の中で値が変わる部品は、`StatefulWidget<T>` で作ります。`StatefulWidget<T>` を継承した `record` には外から渡す値を置き、`State<T>` を継承した `class` には部品の中で変わる値を置きます。状態の中から自分のプロパティを読むときは、`Widget` を使います。
+
+```csharp
+public sealed record FoldableTag : StatefulWidget<FoldableTag>
+{
+    /// <summary>札に出す見出し。</summary>
+    public required string Title { get; init; }
+
+    /// <summary>開いたときに出す説明。</summary>
+    public required string Detail { get; init; }
+
+    public override State<FoldableTag> CreateState() => new FoldableTagState();
+}
+
+public sealed class FoldableTagState : State<FoldableTag>
+{
+    private bool _open;
+
+    public override Widget Build(IBuildContext context)
+    {
+        var children = new List<Widget>
+        {
+            new NameTag { Label = Widget!.Title },
+        };
+        if (_open)
+        {
+            children.Add(new Text(Widget.Detail)
+            {
+                Style = new TextStyle { Color = SKColors.White, FontSize = 30 }
+            });
+        }
+
+        return new GestureDetector
+        {
+            OnTap = () => SetState(() => _open = !_open),
+            Child = new Column { Children = children },
+        };
+    }
+}
+```
+
+値を変えるときは、`SetState()` の中で変えます。`SetState()` の外で変えた値は、画面に出ません。
+
+状態を作ったときに一度だけ行う準備は `InitState()` に、部品が画面から外れるときの後片付けは `Dispose()` に書きます。どちらも `State<T>` を継承した `class` で上書きします。
+
+押せるのは、ダッシュボードに出したオーバーレイだけです(追跡: #182)。押せる範囲の決め方は、[ボタンやトグルを組み立てる](build-buttons-toggles.md)で説明しています。
+
+**できた?** 札を押すたびに、説明が出たり隠れたりする。
+
+<!-- ※要確認: FoldableTag を押したときの開閉を、HMD のダッシュボードで確かめていない。コードは公開 API だけでビルドが通ることを確かめた -->
+
+<details>
+<summary>できなかったら</summary>
+
+押しても変わらないときは、[反応しないときに切り分ける](../../5-troubleshoot/not-responding.md#数字や文字が変わらない)の「数字や文字が変わらない」を開きます。
+
+</details>
+
+## 手順4: 押されたことを外へ知らせる
+
+部品の中で起きたことを、部品を使う側で受け取るには、`On` で始まる名前のプロパティを持たせます。値を渡さないときは `Action?`、値を渡すときは `Action<T>?` にします。
+
+手順3の `FoldableTag` に、開閉を知らせるプロパティを足します。開いたら `true`、閉じたら `false` を渡します。
+
+```csharp
+public sealed record FoldableTag : StatefulWidget<FoldableTag>
+{
+    public required string Title { get; init; }
+    public required string Detail { get; init; }
+
+    /// <summary>開いたり閉じたりしたときに呼ばれる。開いたら true を渡す。</summary>
+    public Action<bool>? OnToggled { get; init; }
+
+    public override State<FoldableTag> CreateState() => new FoldableTagState();
+}
+```
+
+状態の側では、押したときに値を変えたあとで、`Widget!.OnToggled` を呼びます。使う側が何も渡していないときに備えて、`?.Invoke` で呼びます。
+
+```csharp
+private void Toggle()
+{
+    SetState(() => _open = !_open);
+    Widget!.OnToggled?.Invoke(_open);
+}
+```
+
+`Build` の `GestureDetector` は、`OnTap = Toggle` に書き換えます。使う側では、受け取った値で自分の状態を変えます。次の例は、札を開いた回数を数える画面です。
+
+```csharp
+public sealed record TagScreen : StatefulWidget<TagScreen>
+{
+    public override State<TagScreen> CreateState() => new TagScreenState();
+}
+
+public sealed class TagScreenState : State<TagScreen>
+{
+    private int _opened;
+
+    public override Widget Build(IBuildContext context)
+    {
+        return new Column
+        {
+            Children =
+            {
+                new FoldableTag
+                {
+                    Title = "FaceEmo",
+                    Detail = "表情を切り替える",
+                    OnToggled = open =>
+                    {
+                        if (open) SetState(() => _opened++);
+                    },
+                },
+                new Text($"開いた回数: {_opened}")
+                {
+                    Style = new TextStyle { Color = SKColors.White, FontSize = 30 }
+                },
+            },
+        };
+    }
+}
+```
+
+**できた?** 札を開くたびに、「開いた回数」の数字が1つ増える。
+
+<!-- ※要確認: TagScreen の数字が増えることを、HMD のダッシュボードで確かめていない。コードは公開 API だけでビルドが通ることを確かめた -->
+
+## 結果を確かめる
+
+作った部品について、次の3点を確かめます。
+
+1. 別の画面でも、同じ部品を `new NameTag { ... }` のように呼んで使える
+2. 値の違う部品を並べると、それぞれの値で出る
+3. 部品を押したことが、`On` で始まるプロパティを通して、使う側に届く
+
+見た目だけなら、HMD を被らずに確かめられます。方法は、[HMD を被らずに確かめる](../input/test-without-hmd.md)にあります。
+
+## うまくいかないとき
+
+部品にしたら動かなくなったときは、症状に合わせて次を確かめます。
+
+| 症状 | 確かめること |
+| :-- | :-- |
+| 値を渡しても見た目が変わらない | 前と同じ値を渡していないか。`List<T>` なら、新しいリストを作って渡しているか(手順2) |
+| 同じ種類の部品を並べ替えると、開いた状態が別の部品に移る | 部品に `Key` を付けて、どの部品かを区別できるようにする |
+| 押しても反応しない | [反応しないときに切り分ける](../../5-troubleshoot/not-responding.md#ボタンを押しても反応しない)の「ボタンを押しても反応しない」 |
+
+<!-- ※要確認: Key を付けないと並べ替えで状態が取り違えられる例を、今の実装で再現していない -->
+
+自分で絵を描く部品を作りたいときは、`CustomPaint` に当たる仕組みがまだないため、作れません(追跡: #171)。ここまでで解決しないときは、ガイドの[docs で見つからないとき](../../Home.md#docs-で見つからないとき)を開いてください。
