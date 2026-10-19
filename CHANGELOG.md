@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Changed (Breaking)
+
+- `Container` の `Decoration` に `Border` があるとき、ボーダーの太さを `Padding` に加算するようにした。`Padding` を省略しても、子がボーダーの内側に収まる。Flutter の `Container` と同じ挙動で、`Border` 付きの `Container` では子のレイアウト領域がボーダーの太さぶん狭くなる(#267)
+
 ### Fixed
 
 - `VRSettingsException` / `VRNotificationException` / `VRScreenshotException` / `VRCompositorException` / `TrackedPropertyException` の `ThrowIfError` が、対応表にないエラー値で `ArgumentOutOfRangeException` を投げていた問題を修正。対応表にない値でも、各クラスの型付き例外を「予期しない〜エラー」のメッセージで投げる。`EVRSettingsError.AccessDenied` と `EVRNotificationError.ServiceUnavailable` には専用のメッセージを追加した(#295)
