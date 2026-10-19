@@ -11,6 +11,12 @@
 
 - `Container` の `Decoration` に `Border` があるとき、ボーダーの太さを `Padding` に加算するようにした。`Padding` を省略しても、子がボーダーの内側に収まる。Flutter の `Container` と同じ挙動で、`Border` 付きの `Container` では子のレイアウト領域がボーダーの太さぶん狭くなる(#267)
 
+### Fixed
+
+- 指やポインタを押している最中に `GestureDetector` をツリーから外すと、離したときに外したウィジェットの `OnTap` が呼ばれる問題を修正。入れ子の `GestureDetector` で内側だけを外したとき、外側のタップが失われる問題もあわせて修正。破棄した認識器がジェスチャアリーナに残り、後続のイベントも受け取り続けていた(#297)
+- `Transform` で拡大や回転をかけた子の、レイアウト上の大きさからはみ出した見た目の部分を押しても反応しない問題を修正。子へ届く `PointerEvent.Transform` に拡大や回転が入らない問題もあわせて修正。`RotatedBox` の `PointerEvent.Transform` も回転を含むようにした(#298)
+- `ClipOval` の楕円の外や、`Clipper` で切り落とした `ClipRect` / `ClipRoundRect` / `ClipCustomPath` の領域を押しても、中の子が反応する問題を修正。`Clipper` を指定しない `ClipRoundRect` の角は、Flutter と同じく引き続き反応する(#299)
+
 ## [0.4.0] - 2026-09-22
 
 ### Added
