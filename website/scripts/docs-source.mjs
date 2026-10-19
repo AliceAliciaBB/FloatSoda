@@ -179,6 +179,15 @@ const DIR_LABELS = new Map([
 ]);
 const DIR_ORDER = [...DIR_LABELS.keys()];
 
+/**
+ * ディレクトリの中のページの並び順(ファイル名、拡張子なし)。キーは docs/ からの相対パス。
+ * 入口の Home.md にページの一覧を書かないディレクトリで、サイドバーの並びをここで決める。
+ * ここに無いページは、Home.md のリンク順 → アルファベット順で後ろに並ぶ
+ */
+const PAGE_ORDER = new Map([
+  ["reference", ["requirements", "limitations", "sample-catalog", "find-widgets", "flutter-mapping", "glossary"]],
+]);
+
 /** 並べ方の比較関数を作る。order に載っているものを先にその順で、残りをアルファベット順に並べる */
 function byOrder(order) {
   return (a, b) => {
@@ -194,12 +203,13 @@ function byOrder(order) {
 /**
  * ディレクトリ(docs/ からの相対パス)の中身を、サイドバーの木にして返す。
  * 要素は { rel }(ページ)か { label, items }(サブディレクトリ)。並びは、直下のページ → サブディレクトリの順。
- * ページは入口(Home)→ linkOrder に現れる順 → 残りをアルファベット順。サブディレクトリは DIR_ORDER の順
+ * ページは入口(Home)→ PAGE_ORDER の順 → linkOrder に現れる順 → 残りをアルファベット順。サブディレクトリは DIR_ORDER の順
  */
 function dirTree(dir, docs, linkOrder) {
   const pages = docs.filter((doc) => doc.dir === dir).map((doc) => doc.rel);
   const homeRel = `${dir}/${HOME}`;
-  pages.sort(byOrder([homeRel, ...linkOrder]));
+  const pageOrder = (PAGE_ORDER.get(dir) ?? []).map((name) => `${dir}/${name}`);
+  pages.sort(byOrder([homeRel, ...pageOrder, ...linkOrder]));
   const items = pages.map((rel) => ({ rel }));
 
   const prefix = `${dir}/`;
