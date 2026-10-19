@@ -92,7 +92,7 @@ var provider = new FileImageProvider("photo.png");
 Widget imageRoot = new Image { Provider = provider };
 
 using var handle = await provider.ResolveAsync();
-using var bitmap = renderer.Render(root, new SKSizeI(400, 300));
+using var bitmap = renderer.Render(imageRoot, new SKSizeI(400, 300));
 ```
 
 `FloatSoda.Samples.PaintingSample` も、ウィジェットのツリーを PNG に書き出します。コードは[PaintingSample の Program.cs](../../../../samples/FloatSoda.Samples.PaintingSample/Program.cs)にあります。

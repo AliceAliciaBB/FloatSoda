@@ -72,7 +72,7 @@ FlushPaint 後: NodesNeedingPaint = []
 dotnet run --project samples/FloatSoda.Samples.ExperimentFramework -- no-boundary
 ```
 
-<!-- ※要確認: 作例は PR #313 にあり、main にはまだない。引数 no-boundary は #313 の実際の引数に合わせた。出力の4行の形は、移す前のコードに基づくので、#313 がマージされたら実物と照らす -->
+<!-- ※要確認: 作例は #313 で main に入った。引数 no-boundary は #313 の実際の引数に合わせた。出力の4行の形は、移す前のコードに基づくので、#313 がマージされたら実物と照らす -->
 
 **できた?** 「`BuildScope` 後」の行が `[RenderView@depth0]` になった。描き直しの範囲が、境界から根の `RenderView` まで広がっている。
 
