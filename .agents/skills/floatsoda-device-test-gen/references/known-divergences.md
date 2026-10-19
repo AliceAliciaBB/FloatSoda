@@ -297,15 +297,20 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 
 - **FloatSoda**: `src/FloatSoda/Core/RenderPipeline.cs:57` が `NodesNeedingPaint.OrderBy(x => x.Depth)` で浅い順に処理する
   (XML ドキュメントコメントも「祖先から子孫の順に」)。親子がともに汚れたときは、親の `CompositeChild`
-  (`src/FloatSoda/RenderObjects/PaintingContext.cs:246-257`)が子を先に描き直すので、描き直しの回数と結果は Flutter と同じ。
-  違うのは、祖先関係のない境界どうしの `Paint` の呼び出し順だけ。深い境界の `Paint` が書いた共有の値を、別のサブツリーの
-  浅い境界が読むと、浅い境界は1フレーム古い値で描く(一時的なテストで確認)。
+  (`src/FloatSoda/RenderObjects/PaintingContext.cs:246-257`)が子を描き直すので、描き直しの回数は Flutter と同じ。
+  違うのは `Paint` の呼び出し順で、深い境界の `Paint` が書いた共有の値を浅い境界の `Paint` が読むと、浅い境界は1フレーム古い値で描く。
+  起きるのは次の2つの形で、どちらも一時的なテストで確認した。
+  - 祖先関係のない境界どうし: 別のサブツリーの浅い境界が、深い境界の書いた値を読む。
+  - 親子の境界: 親の `Paint` が、`base.Paint`(子の `CompositeChild`)より前に、子の `Paint` が書く値を読む。
+    浅い順では、親が古い値を読んでから子が値を書き換える。Flutter の深い順では、子が先に描き直されて値を書き換え、
+    親は新しい値を読み、親から子を合成するときは子のレイヤーをそのまま使う。
 - **Flutter**: `PipelineOwner.flushPaint` は深い順(`b.depth - a.depth`)に処理する(`rendering/object.dart:1318-1319`)。
   Flutter は flutter/flutter#98219 で浅い順に変えたが、Paint の順序に依存するテストが壊れたため flutter/flutter#98520 で元に戻した。
 - **Test**: — (not set)
 - **Docs**: — (not set)
 - **Observation**: `HEADLESS`
-- **Label**: unlabelled — FloatSoda 自身の描画結果には違いが出ない。Flutter に揃えるか、性能を理由に浅い順を残すかは未判断。
+- **Label**: unlabelled — 描画結果に違いが出るのは、ある境界の `Paint` が書いた値を別の境界の `Paint` が読むときだけ。
+  そうした値を読み書きしない RenderObject では、FloatSoda の描画結果は Flutter と同じ。Flutter に揃えるか、性能を理由に浅い順を残すかは未判断。
 
 ---
 
