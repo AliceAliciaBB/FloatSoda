@@ -811,6 +811,9 @@
   <data name="VRCompositorException_AlreadySet" xml:space="preserve">
     <value>The compositor property is already set.</value>
   </data>
+  <data name="VRCompositorException_UnexpectedError" xml:space="preserve">
+    <value>An unexpected compositor error occurred: {0}</value>
+  </data>
   <data name="VRInputException_NameNotFound" xml:space="preserve">
     <value>The specified input action or path was not found.</value>
   </data>
@@ -886,6 +889,12 @@
   <data name="VRNotificationException_SystemWithUserValueAlreadyExists" xml:space="preserve">
     <value>A notification with the same UserValue already exists.</value>
   </data>
+  <data name="VRNotificationException_ServiceUnavailable" xml:space="preserve">
+    <value>The notification service is unavailable.</value>
+  </data>
+  <data name="VRNotificationException_UnexpectedError" xml:space="preserve">
+    <value>An unexpected notification error occurred: {0}</value>
+  </data>
   <data name="VRRenderModelException_Loading" xml:space="preserve">
     <value>The render model is currently loading.</value>
   </data>
@@ -943,6 +952,9 @@
   <data name="VRScreenshotException_ScreenshotAlreadyInProgress" xml:space="preserve">
     <value>Another screenshot operation is already in progress.</value>
   </data>
+  <data name="VRScreenshotException_UnexpectedError" xml:space="preserve">
+    <value>An unexpected screenshot error occurred: {0}</value>
+  </data>
   <data name="VRSettingsException_None" xml:space="preserve">
     <value>No settings error occurred.</value>
   </data>
@@ -960,6 +972,12 @@
   </data>
   <data name="VRSettingsException_UnsetSettingHasNoDefault" xml:space="preserve">
     <value>The setting is unset and has no default value.</value>
+  </data>
+  <data name="VRSettingsException_AccessDenied" xml:space="preserve">
+    <value>Access to the setting was denied.</value>
+  </data>
+  <data name="VRSettingsException_UnexpectedError" xml:space="preserve">
+    <value>An unexpected settings error occurred: {0}</value>
   </data>
   <data name="TrackedPropertyException_TrackedProp_Success" xml:space="preserve">
     <value>The tracked property operation completed successfully.</value>
@@ -1008,5 +1026,8 @@
   </data>
   <data name="TrackedPropertyException_TrackedProp_InvalidContainer" xml:space="preserve">
     <value>The specified property container is invalid.</value>
+  </data>
+  <data name="TrackedPropertyException_UnexpectedError" xml:space="preserve">
+    <value>An unexpected tracked device property error occurred: {0}</value>
   </data>
 </root>

@@ -263,6 +263,7 @@ internal static class ExceptionMessages
     public static string VRCompositorException_AlreadySubmitted => Get("VRCompositorException_AlreadySubmitted");
     public static string VRCompositorException_InvalidBounds => Get("VRCompositorException_InvalidBounds");
     public static string VRCompositorException_AlreadySet => Get("VRCompositorException_AlreadySet");
+    public static string VRCompositorException_UnexpectedError => Get("VRCompositorException_UnexpectedError");
     public static string VRInputException_NameNotFound => Get("VRInputException_NameNotFound");
     public static string VRInputException_WrongType => Get("VRInputException_WrongType");
     public static string VRInputException_InvalidHandle => Get("VRInputException_InvalidHandle");
@@ -288,6 +289,8 @@ internal static class ExceptionMessages
     public static string VRNotificationException_NotificationQueueFull => Get("VRNotificationException_NotificationQueueFull");
     public static string VRNotificationException_InvalidOverlayHandle => Get("VRNotificationException_InvalidOverlayHandle");
     public static string VRNotificationException_SystemWithUserValueAlreadyExists => Get("VRNotificationException_SystemWithUserValueAlreadyExists");
+    public static string VRNotificationException_ServiceUnavailable => Get("VRNotificationException_ServiceUnavailable");
+    public static string VRNotificationException_UnexpectedError => Get("VRNotificationException_UnexpectedError");
     public static string VRRenderModelException_Loading => Get("VRRenderModelException_Loading");
     public static string VRRenderModelException_NotSupported => Get("VRRenderModelException_NotSupported");
     public static string VRRenderModelException_InvalidArg => Get("VRRenderModelException_InvalidArg");
@@ -307,12 +310,15 @@ internal static class ExceptionMessages
     public static string VRScreenshotException_NotFound => Get("VRScreenshotException_NotFound");
     public static string VRScreenshotException_BufferTooSmall => Get("VRScreenshotException_BufferTooSmall");
     public static string VRScreenshotException_ScreenshotAlreadyInProgress => Get("VRScreenshotException_ScreenshotAlreadyInProgress");
+    public static string VRScreenshotException_UnexpectedError => Get("VRScreenshotException_UnexpectedError");
     public static string VRSettingsException_None => Get("VRSettingsException_None");
     public static string VRSettingsException_IPCFailed => Get("VRSettingsException_IPCFailed");
     public static string VRSettingsException_WriteFailed => Get("VRSettingsException_WriteFailed");
     public static string VRSettingsException_ReadFailed => Get("VRSettingsException_ReadFailed");
     public static string VRSettingsException_JsonParseFailed => Get("VRSettingsException_JsonParseFailed");
     public static string VRSettingsException_UnsetSettingHasNoDefault => Get("VRSettingsException_UnsetSettingHasNoDefault");
+    public static string VRSettingsException_AccessDenied => Get("VRSettingsException_AccessDenied");
+    public static string VRSettingsException_UnexpectedError => Get("VRSettingsException_UnexpectedError");
     public static string TrackedPropertyException_TrackedProp_Success => Get("TrackedPropertyException_TrackedProp_Success");
     public static string TrackedPropertyException_TrackedProp_WrongDataType => Get("TrackedPropertyException_TrackedProp_WrongDataType");
     public static string TrackedPropertyException_TrackedProp_WrongDeviceClass => Get("TrackedPropertyException_TrackedProp_WrongDeviceClass");
@@ -329,6 +335,7 @@ internal static class ExceptionMessages
     public static string TrackedPropertyException_TrackedProp_IPCReadFailure => Get("TrackedPropertyException_TrackedProp_IPCReadFailure");
     public static string TrackedPropertyException_TrackedProp_OutOfMemory => Get("TrackedPropertyException_TrackedProp_OutOfMemory");
     public static string TrackedPropertyException_TrackedProp_InvalidContainer => Get("TrackedPropertyException_TrackedProp_InvalidContainer");
+    public static string TrackedPropertyException_UnexpectedError => Get("TrackedPropertyException_UnexpectedError");
 
     private static string Get(string key) => ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 }
