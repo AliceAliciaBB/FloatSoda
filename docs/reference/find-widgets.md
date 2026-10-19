@@ -2,118 +2,137 @@
 
 # 部品を目的から探す
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+画面を組むときに使う部品の名前を、目的の言葉から引くための一覧です。部品の使い方はここには書いていません。部品の名前が分かったら、作例で動くコードを確かめられます。正確な定義は、API リファレンスのタブが公開されるまでは、`src/` のソースにある XML ドキュメントコメントで引きます(追跡: #219)。
 
-## 設計シート
+## この一覧の使い方
 
-- 分類: 説明型(Diátaxis: reference)
-- 読み手: だれが / 画面を組んでいる人、または AI に画面を書かせる人 / 何を知っている / 作りたい画面のイメージは持っている。部品の名前は知らない / 読んで何をしたい / 目的(並べる、押す、動かす)から使う部品の当たりをつけ、API リファレンスで正確な定義を引きたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: 画面を組む目的から、使える部品の名前を引き、API リファレンスの型へ進めるようにする
-- 依頼の解釈: 部品の使い方の説明は書かない。目的、部品、1文の違い、API リファレンスへのリンク、作例へのリンクの5つだけを並べる
-- テーマファイル: reference
-- Why(目的): 部品の名前を知らない読み手が、目的の言葉で部品を見つける。名前が分かったら API リファレンスへ移る
-- What(目標・結果): 目的ごとに部品が同じ形で並び、各部品から型と作例へたどれる。使えない部品は「まだない」と分かる
-- How(手段): 目的を「並べる」「大きさと余白を決める」「見た目を整える」「文字や画像を出す」「押す・反応する」「動かす」「出し分ける」「値を伝える」「出す場所を決める」の9つに分け、表で並べる。表の列は「部品」「違いの1文」「API リファレンス」「作例」とする
-- 要素:
-  - 並べる: `Row`/`Column`/`Flex`(一列)、`Wrap`(折り返す)、`Stack`/`Positioned`(重ねる)、`IndexedStack`(1つだけ出す)、`Expanded`/`Flexible`/`Spacer`(余りを分ける)(README.md の「実装済みの Widget」、`src/FloatSoda/Widgets/Layout/`)
-  - 大きさと余白を決める: `SizedBox`、`Padding`、`Align`/`Center`、`ConstrainedBox`、`LimitedBox`、`FractionallySizedBox`、`AspectRatio`、`FittedBox`、`OverflowBox`、`IntrinsicWidth`/`IntrinsicHeight`(README.md、`src/FloatSoda/Widgets/Layout/`)
-  - 見た目を整える: `ColoredBox`、`DecoratedBox`、`Container`、`Opacity`、`Transform`、`ClipRect`/`ClipRoundRect`/`ClipOval`/`ClipCustomPath`(README.md、`src/FloatSoda/Widgets/Paint/`)
-  - 文字や画像を出す: `Text`、`RichText`、`Image`、`Icon`(`src/FloatSoda/Widgets/Text.cs`、`Paint/Image.cs`、`Paint/Icon.cs`)
-  - 押す・反応する: `GestureDetector`(タップ、ドラッグ)、`Listener`(生のイベント)、`PointerRegion`(ホバー)、`AbsorbPointer`/`IgnorePointer`(反応を止める)。ポインタが届くのはダッシュボードだけ(`src/FloatSoda/Widgets/Gesture/`、AGENTS.md)
-  - 動かす: `StatefulWidget`/`State`/`SetState`(値の変化)、`AnimationController`(時間で変わる値)、`FadeTransition`(フェード)(`src/FloatSoda/Widgets/Animation/FadeTransition.cs`、AGENTS.md の「Widget/Element Tree」)
-  - 出し分ける: `Visibility`、`Offstage`、`TaskBuilder<T>`(非同期の結果で切り替える)、`Builder`(`src/FloatSoda/Widgets/`、CHANGELOG.md の 0.4.0)
-  - 値を伝える: `InheritedWidget`、`DefaultTextStyle`、`ListenableBuilder`(`src/FloatSoda/Widgets/`)
-  - 出す場所を決める: `DashboardWindow`、`WorldSpaceWindow`、`DeviceTrackedWindow`、`DesktopWindow`(README.md、`src/FloatSoda.Engine/DesktopWindow.cs`)
-  - 自作する: `StatelessWidget`、`StatefulWidget<T>`、`LeafRenderObjectWidget<T>`、`ParentDataWidget<T>`(AGENTS.md、CHANGELOG.md の 0.4.0)
-  - まだ使えない部品(`ListView`、`GridView`、`SingleChildScrollView`、`Button` など)は表に載せず、「できないこと・まだ使えないもの」へのリンクで知らせる(`src/FloatSoda/Widgets/Layout/ListView.cs` が `internal`)
-  - API リファレンスは、NuGet で公開しているパッケージの型を載せ、Starlight に取り込む(docs 再編の決定、2026-10-16〜17)
-- 見出し:
-  - この一覧の使い方
-  - 並べる
-  - 大きさと余白を決める
-  - 見た目を整える
-  - 文字や画像を出す
-  - 押す・反応する
-  - 動かす
-  - 出し分ける・値を伝える
-  - 出す場所を決める
-  - 見つからないとき
-- ※要確認:
-  - API リファレンスの型へのリンクの形式(DocFX の markdown 出力の取り込み後の URL で決まる)
-  - `Icon` が利用者向けの公開 API として使えるか(CHANGELOG.md の 0.4.0 は追加と書くが、AGENTS.md の記述は「internal のスタブ」で食い違う。`src/FloatSoda/Widgets/Paint/Icon.cs` は `public sealed record`)
-  - 目的の分け方(9つ)が、読み手の言葉に合っているか(ジュニアコーダーテストで、読み手が引けるかを確かめる)
+目的を「並べる」「大きさと余白を決める」「見た目を整える」「文字や画像を出す」「押す・反応する」「動かす」「出し分ける・値を伝える」「出す場所を決める」の8つに分けています。自分の目的に近い節へ進んでください。
 
-## ト書き
+各節の表は、部品、違いの1文、作例の3列です。部品の名前は、そのまま `src/` のソースで型名として引けます。<!-- ※要確認: API リファレンスの列を置いていない。リンクの形式が DocFX の markdown 出力の取り込み後の URL で決まるため。決まったら、部品の名前をリンクにするか、列を足す --> 作例の列は、`samples/` にある作例の README へのリンクです。作例がない部品は「なし」と書いています。
 
-### この一覧の使い方
+この一覧は手で書いています。部品が増えたときは、`src/FloatSoda/Widgets/` の公開された型が正になります。<!-- ※要確認: 目的の分け方(8つ)が読み手の言葉に合っているか。ジュニアコーダーテストで引けるかを確かめる -->
 
-- 読み手が持って来るもの: 作りたい画面のイメージ
-- このページが渡すもの: 表の列の意味と、目的の9つの分類。部品の使い方は書いていないこと
-- 読み手がすること: 目的の分類を選ぶ
-- 次へ進む先: 目的の各節
-- 【未決】この一覧を手で書くか、`src/` の公開ウィジェットから生成するか。手で書くと、部品が増えたときに取り残される(docs のドリフト回避方針)
+## 並べる
 
-### 並べる
+横一列、縦一列、重ね、折り返しで並べます。
 
-- 読み手が持って来るもの: 部品を横一列、縦一列、重ね、折り返しで並べたい
-- このページが渡すもの: 並べ方の部品の表(部品、違いの1文、API リファレンス、作例)
-- 読み手がすること: 目的に合う部品を選び、API リファレンスか作例を開く
-- 次へ進む先: 作例の README、API リファレンスの型
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `Row`、`Column`、`Flex` | 子を横または縦の一列に並べる(`Flex` は `Direction` で向きを選ぶ) | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
+| `Wrap` | 一列に収まらなくなったら、次の行へ折り返して並べる | [Wrap](../../samples/FloatSoda.Samples.Wrap/README.md) |
+| `Stack`、`Positioned` | 子を重ね、`Positioned` で辺からの距離を指定する | [Stack](../../samples/FloatSoda.Samples.Stack/README.md) |
+| `IndexedStack` | 子を全部レイアウトし、指定した1つだけを表示する | なし |
+| `Expanded` | 一列の余った領域を比率で分け、子を割り当てた領域いっぱいに広げる | [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) |
+| `Flexible` | 一列の余った領域を比率で分け、割り当てた領域以下の大きさを子に選ばせる(`Fit` で `Expanded` と同じ動きにも切り替えられる) | [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) |
+| `Spacer` | 一列の余った領域のうち、比率で決めた分を空白にする | [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) |
 
-### 大きさと余白を決める
+## 大きさと余白を決める
 
-- 読み手が持って来るもの: 部品の大きさ、余白、位置を決めたい
-- このページが渡すもの: 同上の表。思った大きさにならないときは、ガイドの「レイアウトの考え方」にあること
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: 同上
+部品の大きさ、余白、位置を決めます。思った大きさにならないときは、ガイドの[レイアウトの考え方](../guide/5-troubleshoot/layout-model.md)を開いてください。
 
-### 見た目を整える
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `SizedBox` | 親の制約の範囲で、`Width` と `Height` に指定した大きさを子に求める | [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) |
+| `Padding` | 子の周りに余白を取る | [Padding](../../samples/FloatSoda.Samples.Padding/README.md) |
+| `Align`、`Center` | 子を、親の中の指定した位置に置く | [Align](../../samples/FloatSoda.Samples.Align/README.md) |
+| `ConstrainedBox` | 親から受け取った制約に、追加の寸法の制約を重ねる | なし |
+| `LimitedBox` | 親の制約に上限がないときだけ、上限を与える | [LimitedBox](../../samples/FloatSoda.Samples.LimitedBox/README.md) |
+| `FractionallySizedBox` | 親の制約の最大値に `WidthFactor`・`HeightFactor` を掛けた大きさを、子に求める | [FractionallySizedBox](../../samples/FloatSoda.Samples.FractionallySizedBox/README.md) |
+| `AspectRatio` | 縦横比を保って、子の大きさを決める | [AspectRatio](../../samples/FloatSoda.Samples.AspectRatio/README.md) |
+| `FittedBox` | 子を拡大または縮小して、領域に収める | [FittedBox](../../samples/FloatSoda.Samples.FittedBox/README.md) |
+| `OverflowBox` | 親とは別の最小・最大の制約を子に渡し、自身の領域からのはみ出しを許す | [OverflowBox](../../samples/FloatSoda.Samples.OverflowBox/README.md) |
+| `SizedOverflowBox` | 自身は `Size` で指定した大きさになり、子には親から受け取った元の制約を渡す | なし |
+| `ConstraintsTransformBox` | 親から受け取った制約を加工して、子に渡す | [ConstraintsTransformBox](../../samples/FloatSoda.Samples.ConstraintsTransformBox/README.md) |
+| `UnconstrainedBox` | `ConstrainedAxis` で指定した軸以外の親の制約を外し、子を自然な大きさで置く | [ConstraintsTransformBox](../../samples/FloatSoda.Samples.ConstraintsTransformBox/README.md) |
+| `IntrinsicWidth`、`IntrinsicHeight` | 子の自然な大きさに合わせて、幅または高さを決める(計測の負荷が高いので、多用しない) | なし |
 
-- 読み手が持って来るもの: 色、角丸、透明、回転、切り抜きを付けたい
-- このページが渡すもの: 同上の表
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: 同上。まとめて整える手順は、ガイドの「見た目を整える」
+## 見た目を整える
 
-### 文字や画像を出す
+色、角丸、透明、回転、切り抜きを付けます。まとめて整える手順は、ガイドの[見た目を整える](../guide/4-build/screen/style-appearance.md)にあります。
 
-- 読み手が持って来るもの: 文字、画像、アイコンを出したい
-- このページが渡すもの: 同上の表。折り返しや省略の指定がないという制約への、「できないこと・まだ使えないもの」へのリンク
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: 同上
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `ColoredBox` | 領域を1色で塗りつぶす | [ColoredBox](../../samples/FloatSoda.Samples.ColoredBox/README.md) |
+| `DecoratedBox` | 背景色、角丸、ボーダーを描く | [DecoratedBox](../../samples/FloatSoda.Samples.DecoratedBox/README.md) |
+| `Container` | 配置・余白・装飾・大きさ・変換をまとめて指定する | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
+| `Opacity` | 子をまとめて半透明にする | [Opacity](../../samples/FloatSoda.Samples.Opacity/README.md) |
+| `Transform` | 子を、2次元の行列で変形して描く | [Transform](../../samples/FloatSoda.Samples.Transform/README.md) |
+| `RotatedBox` | 子を、レイアウトの大きさごと、90度単位で回転する | なし |
+| `ClipRect`、`ClipRoundRect`、`ClipOval`、`ClipCustomPath` | 子を、四角、角丸の四角、楕円、任意の形で切り抜く | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
+| `RepaintBoundary` | 子の再描画を、周りとは別の単位に分ける | なし |
 
-### 押す・反応する
+## 文字や画像を出す
 
-- 読み手が持って来るもの: ボタン、ホバー、ドラッグを作りたい
-- このページが渡すもの: 同上の表。ボタンの部品はなく、`GestureDetector` で組み立てること。ポインタが届くのはダッシュボードだけという制約
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: ガイドの「ボタンやトグルを組み立てる」、「コントローラーの入力を受け取る」
+文字、画像、アイコンを出します。
 
-### 動かす
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `Text` | 1つの書式で文字列を出す | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
+| `RichText` | 書式つきの文字列(`TextSpan`)を段落として出す | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
+| `Image` | 画像ファイルを読み込んで出す | [Image](../../samples/FloatSoda.Samples.Image/README.md) |
+| `Icon` | アイコンフォントの字を、正方形の領域に出す | なし |
 
-- 読み手が持って来るもの: 値が変わったら画面を変えたい、時間で動かしたい
-- このページが渡すもの: 同上の表。使えるアニメーションの範囲は、「できないこと・まだ使えないもの」にあること
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: ガイドの「値が変わると、画面が変わる仕組み」、「アニメーションを付ける」
+`Text` には、折り返しと省略を指定する項目がありません。詳しくは、[できないこと・まだ使えないもの](limitations.md#見た目と文字)を開いてください。<!-- ※要確認: Icon が利用者向けの公開 API として使えるか。src/FloatSoda/Widgets/Paint/Icon.cs は public sealed record で、CHANGELOG.md の 0.4.0 も追加と書く。AGENTS.md の記述は internal のスタブで食い違うため、コードと CHANGELOG に従った。IconData と FontProvider の指定でグリフが出ることは実行して確かめていない -->
 
-### 出し分ける・値を伝える
+## 押す・反応する
 
-- 読み手が持って来るもの: 条件で出し分けたい、離れた部品へ値を渡したい
-- このページが渡すもの: 同上の表
-- 読み手がすること: 目的に合う部品を選ぶ
-- 次へ進む先: 同上
+ボタン、ホバー、ドラッグを作ります。ボタンの部品はありません。`GestureDetector` で押された操作を受け取り、見た目は他の部品で組み立てます。
 
-### 出す場所を決める
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `GestureDetector` | タップとドラッグを検出する | [GestureDetector](../../samples/FloatSoda.Samples.GestureDetector/README.md) |
+| `Listener` | 押した、離した、動いた、入った、出たという生のポインターイベントを受け取る | [Listener](../../samples/FloatSoda.Samples.Listener/README.md) |
+| `PointerRegion` | ポインターが領域に入ったこと、出たことを受け取る | [PointerRegion](../../samples/FloatSoda.Samples.PointerRegion/README.md) |
+| `AbsorbPointer` | 子を描いたまま、ポインター入力を自分で止めて子に届けない | なし |
+| `IgnorePointer` | 子を描いたまま、子の部分をポインター入力の対象から外す | なし |
 
-- 読み手が持って来るもの: どこにオーバーレイを出したいか
-- このページが渡すもの: ウィンドウの種類の表。押せるのはダッシュボードだけという制約
-- 読み手がすること: 場所を選ぶ
-- 次へ進む先: ガイドの「オーバーレイの種類と選び方」
+ポインターの座標が届くのは、ダッシュボードのオーバーレイだけです。詳しくは、[できないこと・まだ使えないもの](limitations.md#置く場所と入力)を開いてください。ボタンの組み立て方は[ボタンやトグルを組み立てる](../guide/4-build/screen/build-buttons-toggles.md)、コントローラーのボタンやトリガーは[コントローラーの入力を受け取る](../guide/4-build/input/controller-input.md)にあります。
 
-### 見つからないとき
+## 動かす
 
-- 読み手が持って来るもの: 目的に合う部品が見つからない
-- このページが渡すもの: 見つからない理由の3つ(まだない、組み合わせで作る、名前が違う)と、それぞれの行き先。まだない部品は「できないこと・まだ使えないもの」、Flutter の名前は「Flutter の読み替え表」、組み合わせは AI に書かせる手順
-- 読み手がすること: 行き先を選ぶ
-- 止まる箇所: なし。ここでページは終わる
+値が変わったら画面を変えます。時間で値を動かします。
+
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `StatefulWidget<T>`、`State<T>`、`SetState()` | `State<T>` が持つ値を `SetState()` に渡した処理で書き換え、画面を描き直す | [CounterWidget.cs](../../samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs) |
+| `AnimationController` | 時間に合わせて、0 から 1 の値を動かす | [PulseWidget.cs](../../samples/FloatSoda.Samples.OverlayApp/PulseWidget.cs) |
+| `FadeTransition` | アニメーションの値で、子の透明度を動かす | [PulseWidget.cs](../../samples/FloatSoda.Samples.OverlayApp/PulseWidget.cs) |
+
+使えるアニメーションの範囲は、[できないこと・まだ使えないもの](limitations.md#動きと状態)にあります。仕組みは、ガイドの[状態と作り直し](../guide/4-build/mechanics/state-and-rebuild.md)と[アニメーションを付ける](../guide/4-build/screen/add-animation.md)で説明しています。
+
+## 出し分ける・値を伝える
+
+条件で出し分けます。離れた部品へ値を渡します。
+
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `Visibility` | 表示するかどうかで、子か代わりの部品のどちらか一方を出す | なし |
+| `Offstage` | 子をレイアウトしたまま、描画とポインター入力から外す | なし |
+| `TaskBuilder<T>` | `Task<T>` の進み具合(読み込み中、完了、失敗)で、出す部品を切り替える | なし |
+| `Builder` | 自分の位置の構築コンテキストで、部品を組み立てる | なし |
+| `InheritedWidget` | 子孫の部品が参照できる値を持ち、値が変わると参照している部品を組み立て直す | なし |
+| `DefaultTextStyle` | 木の下にある `Text` へ、文字の書式を伝える | [Text](../../samples/FloatSoda.Samples.Text/README.md) |
+| `ListenableBuilder` | `INotifyPropertyChanged` の通知のたびに、`ChildBuilder` で部品を組み立て直す | なし |
+
+## 出す場所を決める
+
+オーバーレイを SteamVR のどこに出すかを、ウィンドウの種類で決めます。`CreateWindow` に渡します。
+
+| 部品 | 違いの1文 | 作例 |
+| :-- | :-- | :-- |
+| `DashboardWindow` | SteamVR のダッシュボードのタブに出し、ポインターの座標が届く | [GettingStarted](../../samples/FloatSoda.Samples.GettingStarted/Program.cs) |
+| `WorldSpaceWindow` | 空間の決まった位置(メートル単位)に固定して出す | [OverlayApp](../../samples/FloatSoda.Samples.OverlayApp/Program.cs) |
+| `DeviceTrackedWindow` | HMD やコントローラーなどのデバイスに付いて動く | [OverlayApp](../../samples/FloatSoda.Samples.OverlayApp/Program.cs) |
+| `DesktopWindow` | PC のデスクトップのウィンドウに出す | [Flex](../../samples/FloatSoda.Samples.Flex/Program.cs) |
+
+SteamVR 上のオーバーレイでポインターの座標が届くのは、ダッシュボードだけです。<!-- ※要確認: `DesktopWindow` に `GestureDetector` の入力が届くか。src/FloatSoda.Engine/DesktopWindow.cs は GLFW のポインター入力源を持つが、ウィジェットまで届くことは実行して確かめていない -->種類の選び方は、ガイドの[オーバーレイの種類と選び方](../guide/4-build/mechanics/overlay-types.md)にあります。
+
+## 見つからないとき
+
+目的に合う部品が見つからないときは、理由が3つ考えられます。
+
+- まだない: スクロール系の部品や `Button` などは未公開。[できないこと・まだ使えないもの](limitations.md)で確かめる
+- Flutter の名前で探している: 名前が変わった部品がある。[Flutter の読み替え表](flutter-mapping.md)で、Flutter の名前から引く
+- 部品を組み合わせて作る: 表にない形の画面は、表の部品を入れ子にして作る。AI に書かせる手順は、ガイドの[AI に FloatSoda を書かせる](../guide/3-prepare/write-with-llm.md)にある
+
+自分で新しい部品を作る場合は、`StatelessWidget`、`StatefulWidget<T>`、`LeafRenderObjectWidget<T>`、`ParentDataWidget<T>` を継承します。

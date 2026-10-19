@@ -2,87 +2,102 @@
 
 # 作例のカタログ
 
-> このページは執筆前の骨組みです。設計シートとト書きだけを置き、本文はまだ書いていません(追跡: #219)。
+`samples/` には、動かして手本にできる作例が入っています。このページで、作りたいものに近い作例を探し、動かし方を確かめられます。作例は、アプリ全体の形を見るものと、ウィジェット1つ(または1グループ)を扱うカタログ型に分かれます。ウィジェットの作例は、レイアウト・描画・入力の3つで引けます。目的(時計を出したい、アルバムを作りたい)から引ける作例の整備は、追跡: #261 です。
 
-## 設計シート
+## 作例の動かし方
 
-- 分類: 説明型(Diátaxis: reference)
-- 読み手: だれが / FloatSoda で何かを作ろうとしている人、または AI に作らせようとしている人 / 何を知っている / `dotnet run` でプロジェクトを動かせる。どのウィジェットが何をするかは知らない / 読んで何をしたい / 作りたいものに近い作例を見つけ、動かして、コードを手本にしたい
-  - 共通の性質と専門用語の扱い: CONTRIBUTING.md の「ドキュメントのトンマナ」の「読み手」
-- 出力言語と文体の指定: 日本語。敬体。トンマナは CONTRIBUTING.md の「ドキュメントのトンマナ」に従う
-- テーマ: `samples/` にある作例を、同じ形式で並べ、動かし方とともに引けるようにする
-- 依頼の解釈: 「作例」を `samples/` のプロジェクトとして扱う。目的別の作例(時計、カウンターなど)はこのページの範囲に入れない
-- テーマファイル: reference
-- Why(目的): 「近い作例から始めたい」読み手が、自分の目的に近い作例を見つけて、動かすところまで進む
-- What(目標・結果): 作例ごとに、名前・扱うもの・SteamVR が要るか・README へのリンクが同じ形で並ぶ。読み手が1つ選んで `dotnet run` できる
-- How(手段): 動かし方を先に1か所で書き、作例を種類で分けた表で並べる。各作例の説明は、作例の README に任せる
-- 要素:
-  - 作例は `samples/FloatSoda.Samples.<名前>` のプロジェクトで、`dotnet run --project samples/FloatSoda.Samples.<名前>` で動く(README.md の「サンプルアプリの起動」、`samples/FloatSoda.Samples.Flex/Program.cs`)
-  - ウィジェット1つ(または1グループ)を扱うカタログ型の作例には、`README.md`、`Program.cs`、`<名前>Demo.cs`、`checks/items.jsonl` がある(`samples/FloatSoda.Samples.Flex/`)
-  - カタログ型の作例の `Program.cs` は、`--desktop` を付けるとダッシュボードの代わりにデスクトップウィンドウへ表示する。このときも SteamVR の起動は要る(`samples/FloatSoda.Samples.Flex/Program.cs` の冒頭コメント)
-  - カタログ型の作例の README には、「これは何か」「使い方」「Flutterとの違い」の節がある(`samples/FloatSoda.Samples.Align/README.md`、CONTRIBUTING.md の README 規約)
-  - カタログ型以外に、総合デモ(`FloatSoda.Samples.OverlayApp`)、最小アプリ(`FloatSoda.Samples.GettingStarted`)、`FloatSoda.OVR` の低レベル API だけを使う例(`FloatSoda.Samples.PrimitiveOverlay`)、ツリーを PNG に書き出す例(`FloatSoda.Samples.PaintingSample`)がある。この4つには README がない(`samples/` の各ディレクトリ)
-  - `FloatSoda.Samples.PaintingSample` は `AddFloatSoda` も OpenVR も呼ばず、`FloatSoda.Testing` で画像にする。SteamVR は要らない(`samples/FloatSoda.Samples.PaintingSample/Program.cs`、`FloatSoda.Samples.PaintingSample.csproj` の参照)
-  - `FloatSoda.Samples.OverlayApp` の `CounterWidget` は、`StatefulWidget` と `GestureDetector` と `SetState` でカウンターを作る例である(`samples/FloatSoda.Samples.OverlayApp/CounterWidget.cs`)
-  - 作例の分類は、レイアウト・描画・入力の3つで引ける(README.md の「実装済みの Widget」の分け方)
-  - 目的(時計を出したい、アルバムを作りたい)から引ける作例は、今のところない。目的別の統合ミニアプリは #261 で追っている(GitHub の Issue)
-- 見出し:
-  - 作例の動かし方
-  - 総合・最小・低レベルの作例
-  - ウィジェットの作例(レイアウト)
-  - ウィジェットの作例(描画)
-  - ウィジェットの作例(入力)
-  - 目的から作例を探す
-- ※要確認:
-  - 総合・最小・低レベルの4つに、README を足す予定があるか(足さないなら、この表の説明をどこに置くか)
-  - `checks/items.jsonl` を読み手に見せる必要があるか(目視確認の項目で、利用者向けか開発者向けかが README に書かれていない)
-  - 作例ごとの「扱うウィジェット」の列を、README の見出しから機械的に取れるか(取れないと手書きになる)
+作例は [FloatSoda のリポジトリ](https://github.com/sumx21t-3310/FloatSoda)に入っています。リポジトリを clone し、SteamVR を起動してから、リポジトリのルートで次のコマンドを実行します。`<名前>` を、下の表の作例の名前(`FloatSoda.Samples.` に続く部分)に置き換えます。`PaintingSample` のように、画面を PNG に書き出すだけの作例は、SteamVR を起動しなくても動きます。SteamVR が要らない場面は、[動作環境](requirements.md#steamvr-が要らない場面)で確かめられます。
 
-## ト書き
+```powershell
+dotnet run --project samples/FloatSoda.Samples.<名前>
+```
 
-### 作例の動かし方
+ウィジェットの作例には、`--desktop` を付けられます。ダッシュボードの代わりに、PC のデスクトップのウィンドウに表示します。HMD を被らずに見た目を確かめるときに使います。
 
-- 読み手が持って来るもの: 作例を動かしたい気持ちと、SteamVR が使える PC
-- このページが渡すもの: 動かすコマンド1行、`--desktop` の意味、SteamVR を起動してから実行すること
-- 読み手がすること: SteamVR を起動し、コマンドを実行する
-- できた?: ダッシュボードに作例のオーバーレイが出た
-- できなかったら: 出ない、例外が出る → ガイドの「5. 困ったとき」の該当する節。環境が足りないときは、リファレンスの「動作環境」
-- 次へ進む先: 見たい作例の表
+```powershell
+dotnet run --project samples/FloatSoda.Samples.Flex -- --desktop
+```
 
-### 総合・最小・低レベルの作例
+`--desktop` を付けても、SteamVR の起動と HMD の接続は要ります。起動時に OpenVR を初期化するためです。
 
-- 読み手が持って来るもの: ウィジェット単体ではなく、まとまったアプリの形を見たい
-- このページが渡すもの: 4つの作例の表(名前、何を示すか、SteamVR が要るか)。チュートリアルとの関係(`GettingStarted` はチュートリアルの完成形に近い)は1行で
-- 読み手がすること: 表から1つ選んで動かす
-- 次へ進む先: 選んだ作例のコード。チュートリアルを先に通したい人は「最初のオーバーレイを作る」
-- 【未決】`GettingStarted` とチュートリアルの完成形が同じものかどうか(チュートリアルを書いてから決める)
+**できた?** ダッシュボード(`--desktop` なら PC のウィンドウ)に、作例の画面が出た。
 
-### ウィジェットの作例(レイアウト)
+<details>
+<summary>できなかったら</summary>
 
-- 読み手が持って来るもの: 並べる、重ねる、余白を取る、大きさを決めるといった、レイアウトの目的
-- このページが渡すもの: レイアウト系の作例の表(作例名、扱うウィジェット、README へのリンク)。表の列はほかの2分類と同じにする
-- 読み手がすること: 目的に近いウィジェットの作例を選んで README を開く
-- 次へ進む先: 作例の README。部品を目的から探したいときは「部品を目的から探す」
-- 【未決】表を手で書くか、`samples/` の README から生成するか。手で書くと作例が増えたときに取り残される(docs のドリフト回避方針)
+起動で例外が出るときは、ガイドの[起動で例外が出る: SteamVR または HMD につながらない](../guide/5-troubleshoot/read-errors.md#起動で例外が出る-steamvr-または-hmd-につながらない)を開きます。PC に必要なものが足りないときは、[動作環境](requirements.md)で確かめてください。
 
-### ウィジェットの作例(描画)
+</details>
 
-- 読み手が持って来るもの: 色を塗る、文字や画像を出す、透明にする、切り抜くといった、見た目の目的
-- このページが渡すもの: 描画系の作例の表(列は前の節と同じ)
-- 読み手がすること: 目的に近い作例を選んで README を開く
-- 次へ進む先: 作例の README。見た目をまとめて整える手順は、ガイドの「見た目を整える」
+## 総合・最小・低レベルの作例
 
-### ウィジェットの作例(入力)
+ウィジェット単体ではなく、まとまったアプリの形を見たいときは、次の4つから選びます。この4つに README はありません。コードを直接読んでください。
 
-- 読み手が持って来るもの: 押す、触れる、ドラッグするといった、操作の目的
-- このページが渡すもの: 入力系の作例の表(列は前の節と同じ)。ポインタの座標が届くのはダッシュボードのオーバーレイだけという制約を1行で書き、リファレンスの「できないこと・まだ使えないもの」へリンクする
-- 読み手がすること: 目的に近い作例を選んで README を開く
-- 次へ進む先: 作例の README。ボタンの組み立ては、ガイドの「ボタンやトグルを組み立てる」
+| 作例 | 示すもの | SteamVR |
+| :-- | :-- | :-- |
+| [FloatSoda.Samples.OverlayApp](../../samples/FloatSoda.Samples.OverlayApp/Program.cs) | レイアウト、時計、アニメーション、カウンター、ドラッグの総合デモ。3種類のオーバーレイを同時に作る | 要る |
+| [FloatSoda.Samples.GettingStarted](../../samples/FloatSoda.Samples.GettingStarted/Program.cs) | 色の四角を1つ出す最小のアプリ。チュートリアルの段1に近い | 要る |
+| [FloatSoda.Samples.PrimitiveOverlay](../../samples/FloatSoda.Samples.PrimitiveOverlay/Program.cs) | ウィジェットを使わず、`FloatSoda.OVR` の低レベル API だけでオーバーレイを出す。デスクトップにある `layer_tree_output.png` を貼るので、先に PaintingSample を実行しておく | 要る |
+| [FloatSoda.Samples.PaintingSample](../../samples/FloatSoda.Samples.PaintingSample/Program.cs) | ウィジェット、RenderObject、レイヤーの3つのツリーを、PNG の画像に書き出す。デスクトップに保存する | 要らない |
 
-### 目的から作例を探す
+チュートリアルを先に通したいときは、[最初のオーバーレイを作る](../tutorials/first-overlay.md)を開いてください。
 
-- 読み手が持って来るもの: 「時計を出したい」「画像を並べたい」のような、作りたいものの言葉
-- このページが渡すもの: 今は目的別の作例がないという事実と、通しで作る「表情切り替えパネルを作る」(ガイド)への案内。目的別の作例が入ったときの追跡先として #261
-- 読み手がすること: 近い作例がなければ、「表情切り替えパネルを作る」か、AI に書かせる手順(ガイドの「AI に FloatSoda を書かせる」)へ進む
-- 止まる箇所: なし
-- 【未決】この節を、目的別の作例が入るまで置くか。置かないと、「作例から始めたい」読み手が目的で引けないことが書かれない
+## ウィジェットの作例(レイアウト)
+
+並べる、重ねる、余白を取る、大きさを決めるといった、レイアウトの目的で選びます。名前から各作例の README を開けます。
+
+| 作例 | 扱うウィジェット |
+| :-- | :-- |
+| [Flex](../../samples/FloatSoda.Samples.Flex/README.md) | `Flex`、`Row`、`Column` |
+| [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) | `Expanded`、`Flexible`、`Spacer` |
+| [Wrap](../../samples/FloatSoda.Samples.Wrap/README.md) | `Wrap` |
+| [Align](../../samples/FloatSoda.Samples.Align/README.md) | `Align`、`Center` |
+| [Padding](../../samples/FloatSoda.Samples.Padding/README.md) | `Padding` |
+| [Container](../../samples/FloatSoda.Samples.Container/README.md) | `Container` |
+| [SizedBox](../../samples/FloatSoda.Samples.SizedBox/README.md) | `SizedBox` |
+| [LimitedBox](../../samples/FloatSoda.Samples.LimitedBox/README.md) | `LimitedBox` |
+| [ConstraintsTransformBox](../../samples/FloatSoda.Samples.ConstraintsTransformBox/README.md) | `ConstraintsTransformBox`、`UnconstrainedBox` |
+| [Stack](../../samples/FloatSoda.Samples.Stack/README.md) | `Stack`、`Positioned` |
+| [AspectRatio](../../samples/FloatSoda.Samples.AspectRatio/README.md) | `AspectRatio` |
+| [FittedBox](../../samples/FloatSoda.Samples.FittedBox/README.md) | `FittedBox`、`BoxFit` |
+| [FractionallySizedBox](../../samples/FloatSoda.Samples.FractionallySizedBox/README.md) | `FractionallySizedBox` |
+| [OverflowBox](../../samples/FloatSoda.Samples.OverflowBox/README.md) | `OverflowBox`、`SizedOverflowBox` |
+
+表は、`samples/` のディレクトリから手で写したものです。作例が増えたときは、`samples/` の一覧が正になります。部品を目的から探したいときは、[部品を目的から探す](find-widgets.md)を開いてください。
+
+## ウィジェットの作例(描画)
+
+色を塗る、文字や画像を出す、透明にする、切り抜くといった、見た目の目的で選びます。
+
+| 作例 | 扱うウィジェット |
+| :-- | :-- |
+| [ColoredBox](../../samples/FloatSoda.Samples.ColoredBox/README.md) | `ColoredBox` |
+| [DecoratedBox](../../samples/FloatSoda.Samples.DecoratedBox/README.md) | `DecoratedBox`、`BoxDecoration` |
+| [Opacity](../../samples/FloatSoda.Samples.Opacity/README.md) | `Opacity` |
+| [Transform](../../samples/FloatSoda.Samples.Transform/README.md) | `Transform` |
+| [Clip](../../samples/FloatSoda.Samples.Clip/README.md) | `ClipRect`、`ClipRoundRect`、`ClipOval`、`ClipCustomPath` |
+| [Text](../../samples/FloatSoda.Samples.Text/README.md) | `Text`、`RichText`、`TextSpan`、`TextStyle` |
+| [Image](../../samples/FloatSoda.Samples.Image/README.md) | `Image`、`FileImageProvider`、`BoxFit` |
+
+見た目をまとめて整える手順は、ガイドの[見た目を整える](../guide/4-build/screen/style-appearance.md)にあります。
+
+## ウィジェットの作例(入力)
+
+押す、触れる、ドラッグするといった、操作の目的で選びます。
+
+| 作例 | 扱うウィジェット |
+| :-- | :-- |
+| [GestureDetector](../../samples/FloatSoda.Samples.GestureDetector/README.md) | `GestureDetector`(タップとドラッグ) |
+| [Listener](../../samples/FloatSoda.Samples.Listener/README.md) | `Listener`(生のポインターイベント) |
+| [PointerRegion](../../samples/FloatSoda.Samples.PointerRegion/README.md) | `PointerRegion`(ホバーの出入りと、`Listener`・`GestureDetector` を重ねたときのイベントの順序) |
+
+ポインタの座標が届くのは、ダッシュボードのオーバーレイだけです。詳しくは、[できないこと・まだ使えないもの](limitations.md#置く場所と入力)を開いてください。ボタンの組み立て方は、ガイドの[ボタンやトグルを組み立てる](../guide/4-build/screen/build-buttons-toggles.md)にあります。
+
+## 目的から作例を探す
+
+「時計を出したい」「画像を並べたい」のような、作りたいものの言葉から引ける作例は、今のところありません。目的別のミニアプリは、#261 で追っています。
+
+近い作例がないときは、次の2つから選べます。
+
+- 通しで1つのパネルを作る: ガイドの[表情切り替えパネルを作る](../guide/4-build/screen/expression-switcher.md)
+- コードを AI に書かせる: ガイドの[AI に FloatSoda を書かせる](../guide/3-prepare/write-with-llm.md)
