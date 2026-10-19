@@ -129,7 +129,6 @@ Flutter のウィジェットが取る引数のうち、FloatSoda にないも�
 | `Flex` | 既定の揃え方が `Center`。`Row` と `Column` は `Start`。Flutter は `start` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
 | `Row`、`Column` | 交差軸の既定の揃え方が `Start`。Flutter は `center` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
 | `Stack` | 範囲を超えた子も、切り取られずに見える | `Stack` を `ClipRect` で包む | #257 | [Stack](../../samples/FloatSoda.Samples.Stack/README.md) |
-| `Container` | `Border` の寸法が余白に加算されず、子がボーダーの下まで広がる | ボーダー幅を `Padding` に書く | #267 | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
 | `Container` | 子がないと、緩い制約の下で 0 に縮む | `Width` と `Height` を指定する | #268 | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
 | `Image` | `Fit` の既定が `Contain`。領域より小さい画像も拡大される | `Fit` を指定する | なし | [Image](../../samples/FloatSoda.Samples.Image/README.md) |
 | `ClipRect` | 既定のクリップが `Clip.Antialias`。Flutter は `hardEdge` | `ClipBehavior` を指定する | なし | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
