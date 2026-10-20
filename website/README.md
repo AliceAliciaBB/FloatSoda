@@ -12,6 +12,8 @@
 | `content/index.mdx` | ランディング(`/`)の本文と hero。FloatSoda の短い紹介(困りごと → 解決 → 提案 → 対象 → 行動の順)と導線を書く。コードが変わると誤りになる事実(今の制約、バージョン、件数)は書かず、`docs/` へリンクする | あり |
 | `src/pages/index.astro` | ランディングを Starlight の `StarlightPage` で描画する。docs コレクションの外なので、サイドバーと `llms-*.txt` には入らない | あり |
 | `scripts/sync-docs.mjs` | `docs/` → Starlight 形式への変換と、ランディングの導線データの生成(`npm run build` / `npm run dev` の前に自動実行) | あり |
+| `scripts/api-reference.mjs` | `src/` の XML ドキュメントコメント → API リファレンスのページの生成(`npm run build` の前に自動実行。`npm run dev` では実行しない) | あり |
+| `generated/api/` | 生成結果。`docs/` と同じ形の Markdown で、`sync-docs.mjs` が `api` のタブとして変換する | **なし(生成物)** |
 | `src/content/docs/` | 変換結果。Starlight が読む | **なし(生成物)** |
 | `public/<slug>.md` | 変換結果。LLM 向けの素の Markdown(`https://floatsoda.sumx21t.com/<slug>.md`) | **なし(生成物)** |
 | `src/generated/landing.json` | ランディングの導線(3 系統の入口と主要ページへのリンク先)。`docs/` の実在から計算する | **なし(生成物)** |
@@ -44,13 +46,24 @@
 
 ドキュメントの公開先は、このサイトだけです。以前は同じ `docs/` を GitHub Wiki にも同期していましたが、#319 で止めました。
 
+## API リファレンスは `src/` から生成する
+
+API リファレンスのタブ(`/api/`)は、`src/` の XML ドキュメントコメントから `scripts/api-reference.mjs` が生成します(#318)。`docs/` には書きません。
+
+1. リポジトリ直下の `dotnet-tools.json` で版を固定した docfx が、`PROJECTS` に並べたプロジェクトの public API を Markdown にする。OpenVR の生バインディング(`src/FloatSoda.OVR/openvr_api.cs`)の型は、フィルターで外す
+2. 出力を `generated/api/<名前空間>/` に書き直す。見出しを日本語にし、型どうしのリンクを生成したページへの相対リンクにする
+3. `sync-docs.mjs` が `docs/` のページと同じ変換をかけ、サイドバー・`llms-*.txt`・ページごとの素の Markdown に入れる。生成物なので、編集リンクと最終更新日は付けない
+
+生成には .NET 10 SDK と `dotnet tool restore` が要ります。`npm run dev` は生成しないので、手元で API のタブを見るときは先に `npm run api` を実行します。
+
 ## コマンド
 
 ```bash
 cd website
 npm ci            # 依存の導入(Node 22 以上)
+npm run api       # API リファレンスを src/ から生成する(初回だけ、リポジトリ直下で dotnet tool restore)
 npm run dev       # http://localhost:4321 で確認(docs/ を編集したら dev を再起動して再変換)
-npm run build     # dist/ を生成
+npm run build     # API リファレンスを生成してから dist/ を生成
 npm run verify    # dist/ の検査。ページ・llms-*.txt の網羅と索引、サイト内リンクとアンカーの実在、UTF-8 を確認する
 ```
 
@@ -63,7 +76,7 @@ npm run verify    # dist/ の検査。ページ・llms-*.txt の網羅と索引�
 | ファイル | 中身 | 使いどころ |
 |---|---|---|
 | `/llms.txt` | 索引。全ページの素の Markdown へのリンクと一行説明、分割ファイルの一覧 | エージェントに最初に渡す |
-| `/llms-full.txt` | 全ページの全文(約 13 万文字) | 一度に読み切れる読ませ先(ChatGPT など) |
+| `/llms-full.txt` | 全ページの全文(約 13 万文字)。API リファレンスは含めない(`scripts/trim-llms-full.mjs`、#364) | 一度に読み切れる読ませ先(ChatGPT など) |
 | `/_llms-txt/<系統>.txt` | サイドバーのグループ(再編前は `user` / `contributor`、再編後は `docs/` の系統ディレクトリ名)ごとの全文。各 7 万文字以下 | 取得上限が 10 万文字前後の読ませ先(Claude.ai など) |
 | `/<slug>.md` | ページ単位の素の Markdown | 上限が小さい読ませ先、または必要なページだけ読むとき |
 

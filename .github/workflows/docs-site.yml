@@ -15,6 +15,10 @@ on:
     paths:
       - "docs/**"
       - "website/**"
+      # API リファレンスは src/ の XML ドキュメントコメントから生成する(#318)
+      - "src/**"
+      - "Directory.Build.props"
+      - "dotnet-tools.json"
       - ".github/workflows/docs-site.yml"
   workflow_dispatch:
 
@@ -46,10 +50,19 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
 
+      # API リファレンスの生成(scripts/api-reference.mjs)が docfx で src/ のプロジェクトをビルドする
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.x"
+
+      - name: Restore docfx (dotnet-tools.json)
+        working-directory: .
+        run: dotnet tool restore
+
       - name: Install
         run: npm ci
 
-      - name: Build (docs/ → Starlight → dist/)
+      - name: Build (src/ → API reference, docs/ → Starlight → dist/)
         run: npm run build
 
       - name: Verify dist (pages, llms.txt, internal links and anchors)

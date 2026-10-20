@@ -7,6 +7,8 @@
  * - src/content/docs/<path>.md … Starlight が読むページ(docs/user/Home.md は user/index.md になる)
  * - public/<slug>.md           … LLM 向けの素の Markdown(https://<site>/<slug>.md で配信)
  *
+ * API リファレンスのページ(generated/api/。scripts/api-reference.mjs が生成)も、同じ変換で api/ のタブにする。
+ *
  * ランディング(website/content/index.mdx)の本文はこのスクリプトの対象外で、src/pages/index.astro が描画する。
  * ただし、ランディングの導線(3 系統の入口と主要ページへのリンク先)は docs/ の実在から計算して
  * src/generated/landing.json に書き出す(Git 管理外)。ページの移動・改名はここで例外になる。
@@ -26,7 +28,6 @@ import {
   HOME,
   LEGACY_PAGES,
   contentPathOf,
-  docsDir,
   homeSummaries,
   hrefOf,
   listDocs,
@@ -34,6 +35,7 @@ import {
   repositoryUrl,
   siteUrl,
   slugOf,
+  sourceFileOf,
   trackEntry,
   websiteDir,
 } from "./docs-source.mjs";
@@ -184,9 +186,14 @@ function stripComments(lines) {
 function frontmatter(doc, page) {
   const fields = [`title: ${JSON.stringify(page.title)}`];
   if (page.description) fields.push(`description: ${JSON.stringify(page.description)}`);
-  fields.push(`editUrl: ${JSON.stringify(`${repositoryUrl}/edit/main/docs/${doc.rel}.md`)}`);
-  const date = lastCommitDate(doc.rel);
-  if (date) fields.push(`lastUpdated: ${date}`);
+  if (doc.generated) {
+    // API リファレンスは生成物なので、編集リンクと最終更新日を出さない(#318)
+    fields.push("editUrl: false", "lastUpdated: false");
+  } else {
+    fields.push(`editUrl: ${JSON.stringify(`${repositoryUrl}/edit/main/docs/${doc.rel}.md`)}`);
+    const date = lastCommitDate(doc.rel);
+    if (date) fields.push(`lastUpdated: ${date}`);
+  }
   return `---\n${fields.join("\n")}\n---\n\n`;
 }
 
@@ -218,7 +225,7 @@ function hrefOfRel(rel) {
 /**
  * ランディング(src/pages/index.astro)が使う導線。
  * タブ(docs/<tab>/Home.md)の入口と、トップのカードが指すページを返す。
- * API リファレンスのタブは docs/ の外で生成するので、docs/api/Home.md が現れるまで exists は false になる。
+ * API リファレンスのタブは docs/ の外(generated/api/)に生成するので、生成するまで exists は false になる。
  * リンク先は docs/ の相対パスで指定し、消えたり移ったりしたらここで例外になる
  */
 function landingData() {
@@ -258,7 +265,7 @@ function main() {
         `docs/${doc.rel}.md はサイトのトップ(/)と衝突します。トップはランディング(website/content/index.mdx)が担います`,
       );
     }
-    const source = fs.readFileSync(path.join(docsDir, `${doc.rel}.md`), "utf8");
+    const source = fs.readFileSync(sourceFileOf(doc.rel), "utf8");
     const page = transform(doc, source);
 
     writeFile(path.join(contentDir, `${contentPathOf(doc.rel)}.md`), frontmatter(doc, page) + page.body);
@@ -274,7 +281,7 @@ function main() {
     writeFile(path.join(publicDir, `${slug}.md`), `# このページは移動しました\n\n内容は [${target}](${target}) にあります。\n`);
   }
   writeFile(landingFile, `${JSON.stringify(landingData(), null, 2)}\n`);
-  console.log(`sync-docs: ${docs.length} pages generated from docs/`);
+  console.log(`sync-docs: ${docs.length} pages generated from docs/ and generated/api/`);
 }
 
 main();

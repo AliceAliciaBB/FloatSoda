@@ -4,8 +4,8 @@
  *
  * 検査内容:
  * 0. ランディング(サイト専用ページ)が生成されている
- * 1. docs/ の全ページ(サブディレクトリ込み)が HTML と素の Markdown の両方で生成されている
- * 2. llms.txt / llms-full.txt が存在し、llms-full.txt に全ページのタイトルが含まれる
+ * 1. docs/ の全ページ(サブディレクトリ込み)と API リファレンスの全ページが、HTML と素の Markdown の両方で生成されている
+ * 2. llms.txt / llms-full.txt が存在し、llms-full.txt に docs/ の全ページのタイトルが含まれ、API リファレンスのページは含まれない
  * 3. HTML 内のサイト内リンク(href="/…")の遷移先ページとアンカー(#…)が実在する
  * 4. LLM 向けのテキスト(llms-*.txt と素の Markdown)が BOM なしの正しい UTF-8 である
  *    (astro preview は charset を付けずに配信するのでブラウザでは化けて見える。本番の GitHub Pages は
@@ -14,12 +14,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  docsDir,
   firstHeading,
   listDocs,
   llmsCustomSets,
   llmsPageLinks,
   slugOf,
+  sourceFileOf,
   websiteDir,
 } from "./docs-source.mjs";
 
@@ -64,7 +64,7 @@ if (!fs.existsSync(path.join(distDir, "index.html"))) failures.push("landing pag
 const docs = listDocs();
 for (const doc of docs) {
   const slug = slugOf(doc.rel);
-  if (!fs.existsSync(pageFile(slug))) failures.push(`page missing: /${slug}/ (docs/${doc.rel}.md)`);
+  if (!fs.existsSync(pageFile(slug))) failures.push(`page missing: /${slug}/ (${doc.generated ? "website/generated" : "docs"}/${doc.rel}.md)`);
   if (!fs.existsSync(path.join(distDir, `${slug}.md`))) failures.push(`raw markdown missing: /${slug}.md`);
 }
 
@@ -77,8 +77,14 @@ const llmsFullPath = path.join(distDir, "llms-full.txt");
 if (fs.existsSync(llmsFullPath)) {
   const llmsFull = fs.readFileSync(llmsFullPath, "utf8");
   for (const doc of docs) {
-    const title = firstHeading(fs.readFileSync(path.join(docsDir, `${doc.rel}.md`), "utf8"));
-    if (title && !llmsFull.includes(title)) failures.push(`llms-full.txt lacks page: ${doc.rel} ("${title}")`);
+    const title = firstHeading(fs.readFileSync(sourceFileOf(doc.rel), "utf8"));
+    if (!title) continue;
+    if (doc.generated) {
+      // API リファレンスは llms-full.txt に入れない(scripts/trim-llms-full.mjs、#364)。ページの見出しの行が無いことを確かめる
+      if (llmsFull.includes(`\n# ${title}\n`)) failures.push(`llms-full.txt has API page: ${doc.rel} ("${title}")`);
+    } else if (!llmsFull.includes(title)) {
+      failures.push(`llms-full.txt lacks page: ${doc.rel} ("${title}")`);
+    }
   }
 }
 
@@ -93,7 +99,7 @@ for (const set of llmsCustomSets()) {
   const body = fs.readFileSync(file, "utf8");
   for (const slug of set.paths) {
     const doc = docs.find((d) => slugOf(d.rel) === slug);
-    const title = doc && firstHeading(fs.readFileSync(path.join(docsDir, `${doc.rel}.md`), "utf8"));
+    const title = doc && firstHeading(fs.readFileSync(sourceFileOf(doc.rel), "utf8"));
     if (title && !body.includes(title)) failures.push(`${relPath} lacks page: ${slug} ("${title}")`);
   }
 }
