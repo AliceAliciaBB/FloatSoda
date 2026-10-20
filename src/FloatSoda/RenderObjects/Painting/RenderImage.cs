@@ -32,6 +32,7 @@ public class RenderImage : RenderBox
     }
 
     /// <summary>画像を自身の領域へ収める方法を取得または設定します。</summary>
+    /// <value>既定値は<see cref="BoxFit.ScaleDown"/>です。</value>
     /// <remarks>レイアウト結果は変えません。変更すると再描画のみを要求します。</remarks>
     /// <exception cref="ArgumentOutOfRangeException">定義されていない値です。</exception>
     public BoxFit Fit
@@ -44,7 +45,7 @@ public class RenderImage : RenderBox
             field = value;
             MarkNeedsPaint();
         }
-    } = BoxFit.Contain;
+    } = BoxFit.ScaleDown;
 
     /// <summary>収めた画像を自身の領域内へ配置する位置を取得または設定します。</summary>
     /// <remarks>レイアウト結果は変えません。変更すると再描画のみを要求します。</remarks>
@@ -79,6 +80,10 @@ public class RenderImage : RenderBox
 
     /// <inheritdoc/>
     protected override double ComputeMaxIntrinsicHeight(double width) => Image.Height;
+
+    /// <inheritdoc/>
+    /// <remarks>自身の領域内なら常にヒットします。Flutter の <c>RenderImage</c> に合わせています。</remarks>
+    public override bool HitTestSelf(Offset position) => true;
 
     /// <inheritdoc/>
     public override void Paint(PaintingContext context, Offset offset)

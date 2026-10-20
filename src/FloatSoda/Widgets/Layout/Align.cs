@@ -18,12 +18,30 @@ public record Align : SingleChildRenderObjectWidget<RenderPositionedBox>
     /// 子要素の幅に乗算して自身の幅を決める係数を取得します。
     /// <see langword="null"/>の場合は、制約で許可された最大幅を使用します。
     /// </summary>
-    public double? WidthFactor { get; init; } = null;
+    /// <exception cref="ArgumentOutOfRangeException">値が負数またはNaNです。</exception>
+    public double? WidthFactor
+    {
+        get;
+        init
+        {
+            RenderPositionedBox.ValidateFactor(value, nameof(WidthFactor));
+            field = value;
+        }
+    }
     /// <summary>
     /// 子要素の高さに乗算して自身の高さを決める係数を取得します。
     /// <see langword="null"/>の場合は、制約で許可された最大高さを使用します。
     /// </summary>
-    public double? HeightFactor { get; init; } = null;
+    /// <exception cref="ArgumentOutOfRangeException">値が負数またはNaNです。</exception>
+    public double? HeightFactor
+    {
+        get;
+        init
+        {
+            RenderPositionedBox.ValidateFactor(value, nameof(HeightFactor));
+            field = value;
+        }
+    }
 
 
     /// <summary>

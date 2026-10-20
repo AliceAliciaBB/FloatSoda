@@ -67,7 +67,7 @@ new ClipOval { Child = Overflowing() }
 
 ### 切り抜きの品質を変える
 
-`ClipBehavior` は切り抜きの縁の処理を決めます。既定は `Antialias` で、曲線の縁が滑らかになります。`HardEdge` はアンチエイリアスを行いません。
+`ClipBehavior` は切り抜きの縁の処理を決めます。`ClipRoundRect` / `ClipOval` / `ClipCustomPath` の既定は `Antialias` で、曲線の縁が滑らかになります。`ClipRect` の既定は `HardEdge` で、アンチエイリアスを行いません。`None` を指定すると切り抜かずに描きます。
 
 ```csharp
 new ClipOval
@@ -86,7 +86,6 @@ new ClipOval
 | 角丸クリップの名前 | **`ClipRoundRect`** | `ClipRRect` |
 | パスクリップの名前 | **`ClipCustomPath`** | `ClipPath` |
 | `BorderRadius` の宣言 | `ClipRoundRect` では **public フィールド**(他のウィジェットは `init` プロパティ) | `borderRadius` は `final` フィールド |
-| 既定の `ClipBehavior` | すべて `Clip.Antialias` | `ClipRect` は `Clip.hardEdge`、`ClipRRect` / `ClipOval` / `ClipPath` は `Clip.antiAlias` |
 | 超楕円クリップ | 無し | `ClipRSuperellipse` がある |
 
 切り抜きの形と `ClipBehavior` の意味そのものは同等です。

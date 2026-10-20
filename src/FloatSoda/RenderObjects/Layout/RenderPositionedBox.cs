@@ -44,11 +44,13 @@ public class RenderPositionedBox : RenderBox, IHasSingleChildRenderObject
     /// 次のパイプライン更新時に自身のサイズと子の位置を再計算します。
     /// 値が変更されなかった場合、Dirty状態は変更されません。
     /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">値が負数またはNaNです。</exception>
     public double? WidthFactor
     {
         get;
         set
         {
+            ValidateFactor(value, nameof(WidthFactor));
             if (field == value) return;
             field = value;
             MarkNeedsLayout();
@@ -64,11 +66,13 @@ public class RenderPositionedBox : RenderBox, IHasSingleChildRenderObject
     /// 次のパイプライン更新時に自身のサイズと子の位置を再計算します。
     /// 値が変更されなかった場合、Dirty状態は変更されません。
     /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException">値が負数またはNaNです。</exception>
     public double? HeightFactor
     {
         get;
         set
         {
+            ValidateFactor(value, nameof(HeightFactor));
             if (field == value) return;
             field = value;
             MarkNeedsLayout();
@@ -161,6 +165,19 @@ public class RenderPositionedBox : RenderBox, IHasSingleChildRenderObject
 
     private RenderBox GetRenderBoxChild() => Child as RenderBox ?? throw new NotSupportedException(
         $"{GetType().Name}のintrinsic測定にはRenderBoxの子が必要です。");
+
+    /// <summary>寸法係数が0以上であることを検証します。</summary>
+    /// <param name="value">検証する係数。</param>
+    /// <param name="parameterName">例外に記録するプロパティ名。</param>
+    /// <exception cref="ArgumentOutOfRangeException">値が負数またはNaNです。</exception>
+    /// <remarks>Flutter の <c>Align</c> と同じく、正の無限大は受け入れます。</remarks>
+    internal static void ValidateFactor(double? value, string parameterName)
+    {
+        if (value is { } factor && !(factor >= 0))
+        {
+            throw new ArgumentOutOfRangeException(parameterName, value, "factorには0以上の値を指定してください。");
+        }
+    }
 
     private void AlignChild()
     {
