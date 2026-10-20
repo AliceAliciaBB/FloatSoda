@@ -115,7 +115,7 @@ sequenceDiagram
     end
 ```
 
-> 詳細は [docs/Architecture.md](docs/Architecture.md) を参照。
+> 詳細は [docs/contributor/2-understand/frame-to-steamvr.md](docs/contributor/2-understand/frame-to-steamvr.md) を参照。
 
 ## 実装済みの Widget
 
@@ -178,28 +178,17 @@ sequenceDiagram
 > **`Button` などの UI コンポーネントはまだ提供していません。** 用意する予定の3層構成
 > （`FloatSoda.UI` / `FloatSoda.UI.Cream` / `FloatSoda.UI.FizzyPop`）は Phase 5 で、
 > 現時点では NuGet 未配布・押下も未反応です。ボタンは `GestureDetector` で組み立ててください。
-> `Container` は使えますが、`Padding` の合成にはまだ対応していません。余白は `Padding` を入れ子にしてください。
 
 ## ドキュメント
 
 公開サイトは **[floatsoda.sumx21t.com](https://floatsoda.sumx21t.com/)** です。ソースは **[docs/Home.md](docs/Home.md)** 以下の Markdown で、サイトはリリースごとに、GitHub Wiki は `main` への push ごとに更新されます。コーディングエージェントに読ませるときは [llms.txt](https://floatsoda.sumx21t.com/llms.txt)(索引)か [llms-full.txt](https://floatsoda.sumx21t.com/llms-full.txt)(全文)を渡してください。
 
-| ドキュメント | 内容 |
+| タブ | 内容 |
 |---|---|
-| [docs/Home.md](docs/Home.md) | ドキュメントトップ・全体像・実装状況サマリ |
-| [docs/TargetUsers.md](docs/TargetUsers.md) | 想定する3タイプの作り手と読み進め方 |
-| [docs/GettingStarted.md](docs/GettingStarted.md) | クイックスタートガイド |
-| [docs/Architecture.md](docs/Architecture.md) | アーキテクチャ概要・フレームパイプライン・スレッドモデル |
-| [docs/WidgetSystem.md](docs/WidgetSystem.md) | ウィジェット/エレメントシステム・組み込みウィジェット一覧 |
-| [docs/UILayering.md](docs/UILayering.md) | UI層の3層パッケージ構成(ヘッドレス / デザインシステム)。設計方針であり未提供 |
-| [docs/Animation.md](docs/Animation.md) | AnimationController・Ticker・Curves によるアニメーション |
-| [docs/BuildPipeline.md](docs/BuildPipeline.md) | BuildOwner による Widget 差分更新の仕組み |
-| [docs/RenderObjects.md](docs/RenderObjects.md) | RenderObject ツリーのリファレンス |
-| [docs/OVRIntegration.md](docs/OVRIntegration.md) | OpenVR インテグレーションリファレンス |
-| [docs/Input.md](docs/Input.md) | アクション入力(コントローラーのボタン・トリガー・スティック) |
-| [docs/APIDesign.md](docs/APIDesign.md) | API 設計規約 |
-| [docs/DocumentationComments.md](docs/DocumentationComments.md) | ドキュメントコメント規約 |
-| [docs/Localization.md](docs/Localization.md) | ローカライゼーション方針(日本語デフォルト) |
+| [チュートリアル](docs/tutorials/Home.md) | 手を動かして、最初のオーバーレイを作る |
+| [ガイド](docs/guide/Home.md) | 探す・採用する・準備する・作る・困ったとき・配る・メンテナンスするの順に、目的の手順と仕組みを引く |
+| [リファレンス](docs/reference/Home.md) | 作例、制約、動作環境、用語、部品を引く |
+| [コントリビューター](docs/contributor/Home.md) | FloatSoda を一緒に育てるための理解・準備・貢献の手順 |
 
 コントリビュータ向けの規約はリポジトリルートにあります(公開サイトと Wiki には載りません)。
 
@@ -208,19 +197,24 @@ sequenceDiagram
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発・コントリビューション規約(ブランチ命名・namespace・テスト観点・PR運用) |
 | [REVIEW.md](REVIEW.md) | コードレビューの判断基準 |
 | [RELEASING.md](RELEASING.md) | リリース手順 |
+| [API_DESIGN.md](API_DESIGN.md) | API 設計の原則と Flutter parity |
+| [LOCALIZATION.md](LOCALIZATION.md) | ローカライゼーション方針(日本語を既定の言語にする) |
+| [DOCUMENTATION_COMMENTS.md](DOCUMENTATION_COMMENTS.md) | XML ドキュメントコメントの規約 |
+| [WRITING_DOCUMENTATION.md](WRITING_DOCUMENTATION.md) | docs の書き方と、変更ごとに直す docs を決める Documentation Impact Matrix |
 | [AGENTS.md](AGENTS.md) | コーディングエージェント向けの入口 |
 
 ## 開発ステータス
 
-本プロジェクトは現在 **Alpha 段階・Phase 1(入力基盤)と Phase 2(表示系ウィジェット)が並行して進行中** です。簡単なアプリケーションは動作しますが、API は予告なく変更されます。
+本プロジェクトは現在 **Alpha 段階・Phase 2(表示系ウィジェット)の仕上げ中** です。Phase 1(入力基盤)は完了しています。簡単なアプリケーションは動作しますが、API は予告なく変更されます。
 
 開発は Phase 単位で進めています。Phase は「フレームワークとして何ができる段階か」を表す機能上の到達点で、NuGet のバージョン番号とは対応しません。バージョンはリリースの通し番号として独立に上がり、同じ Phase 中に複数のバージョンが公開されることがあります(バージョン番号から Phase を推定することはできません。`1.0.0` のみ Phase 7 に対応)。各 Phase の詳細スコープは [GitHub マイルストーン](https://github.com/sumx21t-3310/FloatSoda/milestones) を参照してください。
 
 | Phase | 内容 | 作れるようになるアプリ | 状況 |
 |---|---|---|---|
-| Phase 1 | 入力基盤(HitTest / Pointer / Gesture) | 操作できるパネル(GestureDetector で完全自作したボタン・トグル) | 🚧 進行中(残件は非ダッシュボードオーバーレイへのポインタ接続) |
-| Phase 2 | basic.dart 相当の表示系ウィジェット網羅 | リッチな HUD / 字幕オーバーレイ | 🚧 進行中(レイアウト・描画・入力・画像・アイコンは一巡。残るのは`CustomPaint`・`DefaultTextStyle`・`ViewMetrics`) |
+| Phase 1 | 入力基盤(HitTest / Pointer / Gesture) | 操作できるパネル(GestureDetector で完全自作したボタン・トグル) | ✅ 完了(非ダッシュボードオーバーレイへのポインタ接続は Phase 3.5 へ移動) |
+| Phase 2 | basic.dart 相当の表示系ウィジェット網羅 | リッチな HUD / 字幕オーバーレイ | 🚧 進行中(レイアウト・描画・入力・テキスト・画像・アイコンのウィジェットは一巡。残るのはドキュメントとサンプルの整備。`CustomPaint` は Phase 3、`ViewMetrics` は Phase 3.5 へ移動) |
 | Phase 3 | スクロールとアニメーションの充実(Tween / 暗黙的アニメーション / 物理シミュレーション) | チャットビューア等のリスト系アプリ | 未着手 |
+| Phase 3.5 | SteamVR API 確定(`FloatSoda.OVR` の公開面の収束) | 通知トースト・VR キーボード・触覚フィードバックまで使うオーバーレイ | 未着手 |
 | Phase 4 | Hooks・テキスト入力・API安定化 | VR 内メモ帳などの入力を伴うアプリ | 未着手 |
 | Phase 5 | Cream / FizzyPop デザインシステム完成 | テーマを選べる実用 UI アプリ | 未着手 |
 | Phase 6 | DX 向上(Storybook・manifest 自動生成・ライフサイクル) | デスクトップ常駐+VR のハイブリッドツール | 未着手 |

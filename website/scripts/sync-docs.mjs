@@ -14,7 +14,8 @@
  * 変換内容:
  * - 先頭の H1 を frontmatter の title にし、本文からは除く(Starlight がタイトルを描画する)
  * - 「← [Home](Home.md)」「← [Home](../Home.md)」のナビ行と、その直前の水平線を除く(サイドバーが担う)
- * - 相対 .md リンク(同じ階層も別の階層も)をサイト内パスへ、docs/ の外を指すリンクを GitHub の URL へ書き換える
+ * - 相対 .md リンク(同じ階層も別の階層も)をサイト内パスへ、docs/ の外を指すリンクを GitHub の URL へ書き換える。
+ *   docs/ の外への URL は、ビルドしたタグかコミットに固定する(linkRef)
  * - editUrl(GitHub の編集ページ)と lastUpdated(docs/ 側の最終コミット日時)を付ける
  * - コードフェンスの中は一切変更しない
  */
@@ -23,11 +24,11 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   HOME,
+  LEGACY_PAGES,
   contentPathOf,
   docsDir,
   homeSummaries,
   hrefOf,
-  hrefOfName,
   listDocs,
   repoRoot,
   repositoryUrl,
@@ -43,6 +44,16 @@ const landingFile = path.join(websiteDir, "src", "generated", "landing.json");
 const docs = listDocs();
 const rels = new Set(docs.map((doc) => doc.rel));
 const summaries = homeSummaries();
+
+/**
+ * docs/ の外(作例やソース)へのリンクを固定する Git の参照。公開サイトはリリースタグから作るので、
+ * タグのビルドではタグ名、それ以外(main の push、PR、手元)ではビルドしたコミットを使う。
+ * こうすると、公開中の docs と、リンク先の作例・ソースの版がそろう
+ */
+const linkRef =
+  process.env.GITHUB_REF_TYPE === "tag" && process.env.GITHUB_REF_NAME
+    ? process.env.GITHUB_REF_NAME
+    : execFileSync("git", ["rev-parse", "HEAD"], { cwd: repoRoot, encoding: "utf8" }).trim();
 
 const FENCE = /^\s*(```|~~~)/;
 const HOME_NAV = /^←\s*\[[^\]]*\]\((?:\.\.\/)*Home\.md\)\s*$/;
@@ -67,7 +78,10 @@ function rewriteLinks(line, selfDir) {
       }
     }
     // docs/ の外(../CONTRIBUTING.md など)や、docs/ 内の .md 以外はリポジトリの GitHub ページへ
-    return `[${text}](${repositoryUrl}/blob/main/${resolved}${anchor}${title})`;
+    // ディレクトリは GitHub では /tree/ で開く(/blob/ だと 404 になる)
+    const full = path.join(repoRoot, resolved);
+    const kind = fs.existsSync(full) && fs.statSync(full).isDirectory() ? "tree" : "blob";
+    return `[${text}](${repositoryUrl}/${kind}/${linkRef}/${resolved.replace(/\/$/, "")}${anchor}${title})`;
   });
 }
 
@@ -131,12 +145,40 @@ function transform(doc, source) {
     }
     body.push(rewriteLinks(line, doc.dir));
   }
+  stripComments(body);
 
   if (title === undefined) {
     throw new Error(`docs/${doc.rel}.md: 先頭の H1(ページタイトル)が見つかりません`);
   }
   const text = `${body.join("\n").replace(/^\n+/, "").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;
   return { title, description: summaries.get(doc.rel) ?? describe(text), body: text };
+}
+
+/**
+ * コードフェンスの外の HTML コメント(<!-- ... -->)を除く。docs の ※要確認 のような執筆用の印を、
+ * サイトの本文と LLM 向けの Markdown(llms-*.txt を含む)に出さないため。複数行にまたがるコメントも除く
+ */
+function stripComments(lines) {
+  const result = [];
+  let inFence = false;
+  let buffer = [];
+  const flush = () => {
+    if (buffer.length === 0) return;
+    result.push(...buffer.join("\n").replace(/<!--[\s\S]*?-->/g, "").split("\n"));
+    buffer = [];
+  };
+  for (const line of lines) {
+    if (FENCE.test(line)) {
+      if (!inFence) flush();
+      inFence = !inFence;
+      result.push(line);
+      continue;
+    }
+    if (inFence) result.push(line);
+    else buffer.push(line);
+  }
+  flush();
+  lines.splice(0, lines.length, ...result);
 }
 
 function frontmatter(doc, page) {
@@ -167,29 +209,40 @@ function writeFile(file, content) {
   fs.writeFileSync(file, content);
 }
 
+/** docs/ からの相対パス(拡張子なし)でページを探し、サイト内パスを返す。無ければ例外(リンク先の消失をビルドで検出する) */
+function hrefOfRel(rel) {
+  if (!rels.has(rel)) throw new Error(`docs/${rel}.md が見つかりません(ランディングのリンク先)`);
+  return hrefOf(rel);
+}
+
 /**
  * ランディング(src/pages/index.astro)が使う導線。
- * 3 系統の入口は docs/<dir>/Home.md が現れると自動で切り替わり、それまでは docs/Home.md へ送る(#188 の再編待ち)。
- * 主要ページへのリンクはファイル名で探すので、ページが移動しても追従し、消えたらここで例外になる
+ * タブ(docs/<tab>/Home.md)の入口と、トップのカードが指すページを返す。
+ * API リファレンスのタブは docs/ の外で生成するので、docs/api/Home.md が現れるまで exists は false になる。
+ * リンク先は docs/ の相対パスで指定し、消えたり移ったりしたらここで例外になる
  */
 function landingData() {
-  const home = hrefOfName(HOME);
   const tracks = {
-    user: trackEntry("user", home),
-    contributor: trackEntry("contributor", home),
+    tutorials: trackEntry("tutorials", null),
+    guide: trackEntry("guide", null),
+    reference: trackEntry("reference", null),
+    contributor: trackEntry("contributor", null),
     api: trackEntry("api", null),
   };
+  for (const [key, track] of Object.entries(tracks)) {
+    if (key !== "api" && !track.exists) throw new Error(`docs/${key}/${HOME}.md が見つかりません(ランディングのタブの入口)`);
+  }
   const links = {
-    home,
-    gettingStarted: hrefOfName("GettingStarted"),
-    targetUsers: hrefOfName("TargetUsers"),
-    widgetSystem: hrefOfName("WidgetSystem"),
-    architecture: hrefOfName("Architecture"),
-    apiDesign: hrefOfName("APIDesign"),
-    roadmap: `${home}#ロードマップphase`,
+    firstOverlay: hrefOfRel("tutorials/first-overlay"),
+    whatIsFloatSoda: hrefOfRel("guide/1-discover/what-is-floatsoda"),
+    troubleshoot: hrefOfRel("guide/5-troubleshoot/read-errors"),
+    findWidgets: hrefOfRel("reference/find-widgets"),
+    howItWorks: hrefOfRel("guide/4-build/mechanics/how-floatsoda-works"),
+    requirements: hrefOfRel("reference/requirements"),
+    limitations: hrefOfRel("reference/limitations"),
   };
   // 素の Markdown 版の例(末尾の "/" を ".md" に置き換えた URL)
-  links.widgetSystemMd = links.widgetSystem.replace(/\/$/, ".md");
+  links.exampleMd = links.firstOverlay.replace(/\/$/, ".md");
   return { tracks, links };
 }
 
@@ -213,6 +266,12 @@ function main() {
     // LLM 向けの素の Markdown。サイト内リンクは絶対 URL にして、単体で読んでも辿れるようにする
     const raw = `# ${page.title}\n\n${page.body}`.replace(/\]\(\//g, `](${siteUrl}/`);
     writeFile(path.join(publicDir, `${slug}.md`), raw);
+  }
+  // 消した旧ページの素の Markdown(/<旧スラッグ>.md)には、移動先を知らせる短い Markdown を置く。
+  // エージェントやブックマークが古い .md の URL を取りに来ても、新しいページへ辿れるようにする
+  for (const [slug, to] of Object.entries(LEGACY_PAGES)) {
+    const target = `${siteUrl}${to.replace(/\/$/, "")}.md`;
+    writeFile(path.join(publicDir, `${slug}.md`), `# このページは移動しました\n\n内容は [${target}](${target}) にあります。\n`);
   }
   writeFile(landingFile, `${JSON.stringify(landingData(), null, 2)}\n`);
   console.log(`sync-docs: ${docs.length} pages generated from docs/`);

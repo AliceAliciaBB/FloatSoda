@@ -1,7 +1,7 @@
 # 確認済みの Flutter 移植差異
 
 **この台帳が、確認済みの FloatSoda ↔ Flutter 差異の一次情報。** そもそも差異がいつ許されるかを
-定める設計原則は [`docs/APIDesign.md`](../../../../docs/APIDesign.md)(「判断原則: Flutter 由来の
+定める設計原則は [`API_DESIGN.md`](../../../../API_DESIGN.md)(「判断原則: Flutter 由来の
 observable behavior に差異を作らない」)にあり、このファイルは個別のエントリを保持する。
 差異をここ以外の場所に記録すると記録が分裂する — 必ずここに追記すること。
 
@@ -20,7 +20,7 @@ observable behavior に差異を作らない」)にあり、このファイル�
 
 ## エントリのテンプレート
 
-最初の5フィールドは、`docs/APIDesign.md` がすべての意図的差異に要求するもの(Flutter の挙動 /
+最初の5フィールドは、`API_DESIGN.md` がすべての意図的差異に要求するもの(Flutter の挙動 /
 FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け docs)。
 **`Test` の無い差異は、次の移植で静かに巻き戻される** — `deliberate` エントリの未設定の `Test` は、
 完了した記録ではなく未処理のタスクとして扱うこと。
@@ -159,7 +159,7 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
   (device test)で再調整すること。
 - **Test**: `tests/FloatSoda.Test/Widgets/TextTest.cs` —
   `ToRichTextKitStyle_全プロパティ未指定_既定値で描画書式を生成する`
-- **Docs**: `docs/WidgetSystem.md`(`Text` の既定書式の記載)
+- **Docs**: `docs/reference/find-widgets.md`(`Text` の既定書式の記載)
 - **Observation**: 値の差異そのものは `HEADLESS`。30 が適切な値かどうかの判定は `VR`
   (レンズ越しの可読性)。
 - **Label**: deliberate
@@ -179,19 +179,24 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 - **Label**: not ported — 2026-09-14 にオーナーが確定。修正は #257(`ClipBehavior` を追加し、
   既定を `Clip.HardEdge` に揃える。breaking)。
 
-## 11. `Container` がボーダーぶんの余白を `Padding` に加算しない
+## 11. `Container` がボーダーぶんの余白を `Padding` に加算しない — **解消済み(#267)**
 
-- **FloatSoda**: `src/FloatSoda/Widgets/Layout/Container.cs:159` が指定された `Padding` だけを
-  挿入する。`src/FloatSoda/Painting/BoxDecoration.cs` に `Padding` に相当するプロパティが無い。
-  `Border` 付きで `Padding` を省略すると、子がボーダーの下まで広がる。
+- **Status**: 解消済み。#267 で Flutter に揃えた。番号を他のエントリから参照しているため、
+  エントリは削除せずに残す。
+- **FloatSoda**: `src/FloatSoda/Widgets/Layout/Container.cs` の `PaddingIncludingDecoration` が、
+  `Padding` と `BoxDecoration.Padding`(`Border` の各辺の太さ)を加算して `Padding` として挿入する。
+  修正前は指定された `Padding` だけを挿入し、`Border` 付きで `Padding` を省略すると、子がボーダーの
+  下まで広がっていた。
 - **Flutter**: `Container._paddingIncludingDecoration`(`widgets/container.dart:378-384`、
   `8a9f61cfd67`)が `padding` と `decoration.padding`(ボーダー寸法)を加算し、`build`
   (`:400-403`)で `Padding` として挿入する。
-- **Test**: — (not set)
-- **Docs**: `samples/FloatSoda.Samples.Container/README.md` の `## Flutterとの違い`(回避策として
-  ボーダー幅を `Padding` に明示する案内)。差異が解消したら行を削除する。
+- **Test**: `tests/FloatSoda.Test/Widgets/ContainerTest.cs` の
+  `Container_BorderありでPaddingを省略_子がボーダーの内側に収まる`、
+  `Container_PaddingとBorderを指定_余白とボーダーの太さの和だけ子が内側へ寄る`、
+  `Container_上辺だけにBorderを指定_上辺の太さだけ子が下へ寄る`。
+- **Docs**: `samples/FloatSoda.Samples.Container/README.md` の `## Flutterとの違い` から行を削除した。
 - **Observation**: `HEADLESS`(子の配置位置はビットマップで判定できる)
-- **Label**: port mistake — 余白合成は実装済みで加算だけが抜けている。修正は #267(breaking)。PR #264 の Codex レビューで発見。
+- **Label**: port mistake — 余白合成は実装済みで加算だけが抜けていた。PR #264 の Codex レビューで発見。
 
 ## 12. `Child` の無い `Container` が緩い制約の下で 0 に縮む
 
@@ -219,8 +224,8 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
   フォールバックや絵文字など、優先する項目が先にある。UI の RTL ミラーリングと、ユーザー生成文字列の
   Unicode 双方向テキスト処理は別の関心事として扱う。
 - **Test**: — (not set)。型が存在しないことを固定するテストは作りにくい。移植時に `Directional`
-  系の型を足す PR は、このエントリと `docs/Localization.md` の方針を先に見直す。
-- **Docs**: `docs/Localization.md` の「6. RTL(右から左へのレイアウト)は現時点でスコープ外」(PR #265)
+  系の型を足す PR は、このエントリと `LOCALIZATION.md` の方針を先に見直す。
+- **Docs**: `LOCALIZATION.md` の「6. RTL(右から左へのレイアウト)は現時点でスコープ外」(PR #265)
 - **Observation**: `HEADLESS`(API の有無と、レイアウト結果が LTR 固定であること)
 - **Label**: deliberate — 2026-09-16 にオーナーが確定。PR #265 の Codex レビューで記録漏れを指摘された。
 
@@ -253,12 +258,71 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 - **Observation**: `HEADLESS`
 - **Label**: not ported(#275)— `ImageHandle` の貸し借りの形は LRU を足しても変わらないので、public API を壊さずに追加できる。
 
+## 16. 破棄した `GestureRecognizer` が、ポインタの route とジェスチャアリーナに残る
+
+- **FloatSoda**: `src/FloatSoda/Gesture/GestureRecognizer.cs:69` の `Dispose()` が空で、`TapGestureRecognizer` と
+  `PanGestureRecognizer` も上書きしない。`RawGestureDetectorState` は `src/FloatSoda/Widgets/Gesture/GestureDetector.cs:132`、
+  `:149-153` で `Dispose()` を呼ぶが、`PointerRouter` の route とアリーナへの参加が残る。押下中に `GestureDetector` を外すと、
+  指を離したときに外したウィジェットの `OnTap` が呼ばれる。入れ子で内側だけを外すと、外した内側が外側に勝つ。
+- **Flutter**: `OneSequenceGestureRecognizer.dispose` が `resolve(GestureDisposition.rejected)` を呼び、追跡中のポインタの
+  route をすべて外す(`gestures/recognizer.dart:485-493`)。
+- **Test**: — (not set)
+- **Docs**: — (not set)
+- **Observation**: `HEADLESS`
+- **Label**: port mistake(#297)
+
+## 17. `RenderTransform` のヒットテストが、変換前の大きさで範囲を切り、変換をヒットパスへ積まない
+
+- **FloatSoda**: `RenderTransform`(`src/FloatSoda/RenderObjects/Painting/RenderTransform.cs`)は `HitTest` を上書きせず、
+  継承した `src/FloatSoda/RenderObjects/RenderBox.cs:136-140` の `Size.Contains` が変換前の大きさで範囲を切る。
+  `HitTestChildren`(`RenderTransform.cs:84-98`)は子へ逆変換した座標を渡すだけで、`HitTestResult` に変換を積まない。
+  拡大や回転ではみ出した見た目の部分を押しても反応せず、`PointerEvent.Transform` は平行移動だけになる。
+  `src/FloatSoda/RenderObjects/Layout/RenderRotatedBox.cs:61-65` も、変換を積まない同じ形(再現は未実施)。
+- **Flutter**: `RenderTransform.hitTest` は範囲を確かめずに `hitTestChildren` を呼び、`hitTestChildren` は
+  `result.addWithPaintTransform` で変換を積む(`rendering/proxy_box.dart:2714-2733`)。
+- **Test**: — (not set)
+- **Docs**: — (not set)
+- **Observation**: `HEADLESS`
+- **Label**: port mistake(#298)
+
+## 18. クリップ系の RenderObject が、ヒットテストでクリップの形を見ない
+
+- **FloatSoda**: `src/FloatSoda/RenderObjects/Painting/RenderCustomClip.cs:33-102` の基底クラスと4つの派生クラス(`:107`、
+  `:133`、`:171`、`:208`)は、どれも `HitTest` を上書きせず、箱の範囲だけで判定する。`ClipOval` の楕円の外の角や、
+  `Clipper` で切り落とした領域を押しても、子が反応する。
+- **Flutter**: `RenderClipOval.hitTest` は `clipper` の有無によらず楕円の外を除く(`rendering/proxy_box.dart:1921-1935`)。
+  `RenderClipRect` / `RenderClipRRect` / `RenderClipPath` は、`clipper` があるときに `_clip.contains` の外を除く
+  (`:1628-1638`、`:1733-1743`、`:2009-2019`)。`clipper` の無い `ClipRRect` の角は、Flutter でも反応する。
+- **Test**: — (not set)
+- **Docs**: — (not set)
+- **Observation**: `HEADLESS`
+- **Label**: port mistake(#299)— RenderObject は移植済みで、`hitTest` の上書きだけが持ち込まれていない。
+
+## 19. `FlushPaint` が、汚れた再描画境界を浅い順(親が先)に処理する
+
+- **FloatSoda**: `src/FloatSoda/Core/RenderPipeline.cs:57` が `NodesNeedingPaint.OrderBy(x => x.Depth)` で浅い順に処理する
+  (XML ドキュメントコメントも「祖先から子孫の順に」)。親子がともに汚れたときは、親の `CompositeChild`
+  (`src/FloatSoda/RenderObjects/PaintingContext.cs:246-257`)が子を描き直すので、描き直しの回数は Flutter と同じ。
+  違うのは `Paint` の呼び出し順で、深い境界の `Paint` が書いた共有の値を浅い境界の `Paint` が読むと、浅い境界は1フレーム古い値で描く。
+  起きるのは次の2つの形で、どちらも一時的なテストで確認した。
+  - 祖先関係のない境界どうし: 別のサブツリーの浅い境界が、深い境界の書いた値を読む。
+  - 親子の境界: 親の `Paint` が、`base.Paint`(子の `CompositeChild`)より前に、子の `Paint` が書く値を読む。
+    浅い順では、親が古い値を読んでから子が値を書き換える。Flutter の深い順では、子が先に描き直されて値を書き換え、
+    親は新しい値を読み、親から子を合成するときは子のレイヤーをそのまま使う。
+- **Flutter**: `PipelineOwner.flushPaint` は深い順(`b.depth - a.depth`)に処理する(`rendering/object.dart:1318-1319`)。
+  Flutter は flutter/flutter#98219 で浅い順に変えたが、Paint の順序に依存するテストが壊れたため flutter/flutter#98520 で元に戻した。
+- **Test**: — (not set)
+- **Docs**: — (not set)
+- **Observation**: `HEADLESS`
+- **Label**: unlabelled — 描画結果に違いが出るのは、ある境界の `Paint` が書いた値を別の境界の `Paint` が読むときだけ。
+  そうした値を読み書きしない RenderObject では、FloatSoda の描画結果は Flutter と同じ。Flutter に揃えるか、性能を理由に浅い順を残すかは未判断。
+
 ---
 
 ## Triage 2026-09-09 — 範囲の振り分けと着手順(Phase 2 リリース後に実施)
 
 上の9件を「どの範囲のテストで固定できるか」で振り分けた記録です。エントリ本体は変更していません。方法の全体は
-[`docs/TestStrategy.md`](../../../../docs/TestStrategy.md) にあります。
+[`docs/contributor/3-prepare/test-strategy.md`](../../../../docs/contributor/3-prepare/test-strategy.md) にあります。
 
 **テストを書く前にラベルを決めます。** deliberate は差異を固定するテスト、port mistake は修正前に落ちる
 regression test、not ported は Issue で、unlabelled のままテストを書くとバグを仕様として固定します。
@@ -268,7 +332,7 @@ regression test、not ported は Issue で、unlabelled のままテストを書
 | 1 | HEADLESS 単体 | deliberate 候補(`AGENTS.md` が fast path として説明済み) | ラベル確定後に `UpdateChild_構造的に等しい新Widget_DidUpdateWidgetを呼ばない` を `tests/FloatSoda.Test/Elements/` に追加。参照型プロパティを in-place で変更した場合に `DidUpdateWidget` が呼ばれない点を `docs/` に書く |
 | 2 | HEADLESS 単体 | not ported | #3 と統合する。再活性プールが効くのは `GlobalKey` 付きの要素だけで、通常の `Key` では Flutter でも別親への移動で `State` は作り直される。単独では利用者に見えない |
 | 3 | HEADLESS 単体 | not ported | Issue。`GlobalKey` を移植するか、コントローラ(`ChangeNotifier` 系)を代替として文書化するかを決める。優先度は junior-coder test で LLM が `GlobalKey` を書くかどうかで決める |
-| 4 | HEADLESS 単体 | deliberate(確定済み) | **今すぐ書ける。** `ScopeType_具象Windowを差し替え_依存Elementが再構築される` を `tests/FloatSoda.Test/Widgets/WindowWidgetTest.cs` に追加。既存の `Of_FindsConcreteWindow_ViaBaseTypeLookup` は検索側だけを検証している。`Docs` も未設定なので `docs/WidgetSystem.md` に1行書く |
+| 4 | HEADLESS 単体 | deliberate(確定済み) | **今すぐ書ける。** `ScopeType_具象Windowを差し替え_依存Elementが再構築される` を `tests/FloatSoda.Test/Widgets/WindowWidgetTest.cs` に追加。既存の `Of_FindsConcreteWindow_ViaBaseTypeLookup` は検索側だけを検証している。`Docs` も未設定なので `docs/reference/find-widgets.md` に1行書く |
 | 5 | HEADLESS 単体 | port mistake(確定) | **今すぐ書ける。** `Layout_制約が同じで再レイアウト境界だけ変わる_PerformLayoutを再実行しない` を `tests/FloatSoda.Test/RenderObjects/` に追加。`PerformLayout` の回数を数えるプローブは `Widgets/IndexedStackTest.cs` の方式を流用する。現状では落ちる(red)ので、修正は別コミット |
 | 6 | HEADLESS 結合 | 4件に分割 | post-frame callback は not ported として Issue(LLM は `addPostFrameCallback` を当然のように書く)。`finalizeTree` は #2 へ吸収。compositing bits は FloatSoda の Layer 構造で必要かを判断してから。semantics は非移植方針が `REVIEW.md` にあるので文書のみ |
 | 7 | HEADLESS 結合 | deliberate 候補 | Why 案: OpenVR のオーバーレイ入力は `PollNextOverlayEvent` で取り出す方式で、プッシュで受け取る仕組みが無い。量子化はプラットフォームの性質。`BeginFrame_フレーム間の複数ポインタイベント_次のBeginFrameでまとめて配信する` を `tests/FloatSoda.Test/Core/WidgetBindingTest.cs` に追加。`IEngineWindow` の test double がテストに無いので、`PointerSource` を持つ fake を同じファイルに足す |

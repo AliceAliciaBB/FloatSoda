@@ -47,7 +47,7 @@ new ContainerWidget
 
 ### 余白を装飾の内側へ入れる
 
-`Padding` は装飾の内側に入ります。子は余白のぶん装飾より小さくなるため、角丸やボーダーと重なりません。
+`Padding` は装飾の内側に入ります。子は余白のぶん装飾より小さくなるため、角丸やボーダーと重なりません。`Decoration` に `Border` を付けると、ボーダーの太さが余白に加算されます。`Padding` を省略しても、子はボーダーの内側に収まります。
 
 ```csharp
 new ContainerWidget
@@ -104,10 +104,9 @@ new ContainerWidget
 | `constraints`(追加の制約) | 無し。`ConstrainedBox` で `Container` を包む | `constraints` プロパティ |
 | `foregroundDecoration`(前面の装飾) | 無し | `foregroundDecoration` プロパティ |
 | `clipBehavior`(子の切り抜き) | 無し | `clipBehavior` プロパティ |
-| ボーダーぶんの内側余白 | 加算しない。`Border` を付けて `Padding` を省略すると、子がボーダーの下まで広がる。重ねたくないときはボーダー幅を `Padding` に明示する | `decoration.padding`(ボーダー寸法)を `padding` に加算する |
 | `Child` が無いときの大きさ | 空の `SizedBox` になり、緩い制約の下では 0 に縮む。広げたいときは `Width` / `Height` を指定する | 有限の制約の下では最大まで広がる(`LimitedBox` + `BoxConstraints.expand()`) |
 
-指定したプロパティに対応するウィジェットを内側から重ねる合成順(配置 → 余白 → 装飾 → 寸法 → 変換)は Flutter と同じです(上表のボーダーぶんの余白を除く)。`Color` と `Decoration` の同時指定が例外になる点も同じです。
+指定したプロパティに対応するウィジェットを内側から重ねる合成順(配置 → 余白 → 装飾 → 寸法 → 変換)は Flutter と同じです。`Color` と `Decoration` の同時指定が例外になる点も同じです。
 
 ## 実行
 
@@ -128,6 +127,6 @@ dotnet run --project samples/FloatSoda.Samples.Container
 
 ## 関連
 
-- [docs/WidgetSystem.md](../../docs/WidgetSystem.md) — 組み込みウィジェット一覧
+- [docs/reference/find-widgets.md](../../docs/reference/find-widgets.md) — 組み込みウィジェット一覧
 - [FloatSoda.Samples.Padding](../FloatSoda.Samples.Padding) — 余白単体の付き方と収縮
 - [FloatSoda.Samples.DecoratedBox](../FloatSoda.Samples.DecoratedBox) — 装飾単体の描画

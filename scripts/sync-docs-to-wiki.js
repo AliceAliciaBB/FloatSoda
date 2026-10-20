@@ -7,6 +7,7 @@
  * - docs/**\/*.md を Wiki ページに変換する。ページ名はパスの ".md" を除去し "/" を "-" に置換
  *   (docs/Home.md → Home、docs/guide/Setup.md → guide-Setup)
  * - 相対 Markdown リンク [text](Foo.md) / [text](dir/Foo.md#anchor) を Wiki ページリンクに書き換える
+ * - docs/ の外(リポジトリ直下の規約、作例など)を指す相対リンクは、GitHub の main の URL に書き換える
  * - _Sidebar.md を同期対象ファイル一覧から自動生成する
  * - "[private]" で始まる Wiki ページは同期・削除の対象外(Wiki 専用メモとして保護)
  * - docs/ に存在しない Wiki ページは削除する(_Sidebar / _Footer / [private]* を除く)
@@ -31,17 +32,21 @@ function pageNameFromPath(relPath) {
  * Markdown 中の相対 .md リンクを Wiki ページリンクに書き換える。
  * 外部 URL・画像・アンカーのみのリンクは変更しない。
  */
-function rewriteLinks(markdown, selfDir = "") {
+function rewriteLinks(markdown, selfDir = "", repo = process.env.GITHUB_REPO ?? "sumx21t-3310/FloatSoda") {
   return markdown.replace(
-    /(!?)\[([^\]]*)\]\(([^)\s]+?\.md)(#[^)\s]*)?\)/gi,
+    /(!?)\[([^\]]*)\]\(([^)\s#]+)(#[^)\s]*)?\)/gi,
     (match, bang, text, target, anchor) => {
       if (bang === "!") return match; // 画像はそのまま
       if (/^[a-z][a-z0-9+.-]*:/i.test(target)) return match; // http: などの絶対 URL
-      const resolved = path.posix
-        .normalize(path.posix.join(selfDir, target))
-        .replace(/^(\.\.\/)+/, "");
-      const page = pageNameFromPath(resolved);
-      return `[${text}](${page}${anchor ?? ""})`;
+      // リポジトリのルートからのパスに直す(docs/ の中なら "docs/..." で始まる)
+      const fromRoot = path.posix.normalize(path.posix.join("docs", selfDir, target));
+      if (fromRoot.startsWith("docs/") && /\.md$/i.test(fromRoot)) {
+        const page = pageNameFromPath(fromRoot.slice("docs/".length));
+        return `[${text}](${page}${anchor ?? ""})`;
+      }
+      // docs/ の外か .md 以外は Wiki にないので、GitHub の main のファイル(ディレクトリは tree)へ
+      const kind = /\/$/.test(target) ? "tree" : "blob";
+      return `[${text}](https://github.com/${repo}/${kind}/main/${fromRoot.replace(/\/$/, "")}${anchor ?? ""})`;
     },
   );
 }

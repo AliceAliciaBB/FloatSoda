@@ -9,7 +9,7 @@
 | 場所 | 役割 | Git 管理 |
 |---|---|---|
 | `../docs/**/*.md` | ドキュメントの唯一のソース。ページを直すときはここを編集する | あり |
-| `content/index.mdx` | ランディング(`/`)の本文と hero。案内と導線だけを書き、事実情報は `docs/` へリンクする | あり |
+| `content/index.mdx` | ランディング(`/`)の本文と hero。FloatSoda の短い紹介(困りごと → 解決 → 提案 → 対象 → 行動の順)と導線を書く。コードが変わると誤りになる事実(今の制約、バージョン、件数)は書かず、`docs/` へリンクする | あり |
 | `src/pages/index.astro` | ランディングを Starlight の `StarlightPage` で描画する。docs コレクションの外なので、サイドバーと `llms-*.txt` には入らない | あり |
 | `scripts/sync-docs.mjs` | `docs/` → Starlight 形式への変換と、ランディングの導線データの生成(`npm run build` / `npm run dev` の前に自動実行) | あり |
 | `src/content/docs/` | 変換結果。Starlight が読む | **なし(生成物)** |
@@ -40,7 +40,7 @@
 - `editUrl`(GitHub の編集ページ)と `lastUpdated`(`docs/` 側の最終コミット日時)を付ける
 - ランディングが参照するページ(`GettingStarted` など)をファイル名で探し、見つからなければ失敗する(改名・削除の検出)
 
-ランディングの「最小構成のコード」は、`samples/FloatSoda.Samples.GettingStarted/Program.cs` をビルド時に読み込んで表示します。サンプルを直せばランディングも追従します。
+ランディングのコード例(「欲しいのは画面のレイアウト」の節)は、`samples/FloatSoda.Samples.GettingStarted/Program.cs` をビルド時に読み込んで表示します。サンプルを直せばランディングも追従します。
 
 同じ「`docs/` を読み取り専用ソースにする」型は、GitHub Wiki 同期(`scripts/sync-docs-to-wiki.js`)と共通です。Wiki 同期は移行期間中そのまま残します。
 

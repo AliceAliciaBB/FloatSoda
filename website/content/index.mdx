@@ -3,87 +3,75 @@ title: FloatSoda
 description: SteamVR Overlay を Flutter のような宣言的 UI で作る .NET 10 / C# 14 向けフレームワーク。UI はすべて C# コード
 template: splash
 hero:
-  tagline: SteamVR Overlay を、Flutter のような宣言的 UI で。UI はすべて C# コードで書き、シーンもプレハブも持ちません。
+  tagline: SteamVR のオーバーレイを、C# のコードだけで。
 ---
 
 {/*
   サイト専用の入口(ランディング)。src/pages/index.astro が StarlightPage で描画し、
   hero のボタンと本文中のリンク先(props.links / props.tracks)は docs/ の実在から計算して渡してくる。
+  節は PASONA の順(困りごと → 解決 → 提案 → 対象 → 行動)に並べる。
+  載せてよいのは、コードが変わっても誤りにならない紹介だけにする。今の制約、バージョン、件数は書かず、docs/ のページへリンクする。
+  カードの並びは、読み手のやりたいこと(まず動かしたい、詰まった、など)の順にする。
   docs コレクションの外にあるので、サイドバーにも llms-*.txt にも入らない。
-  事実情報は docs/ が一次情報なので、ここには案内と導線だけを書く。
 */}
 
 import { Card, CardGrid, Code, LinkCard } from "@astrojs/starlight/components";
 import program from "../../samples/FloatSoda.Samples.GettingStarted/Program.cs?raw";
 
-## 3 つの入口
+## オーバーレイを1枚作るだけで、こんなにコードを書くの?
 
-読者によって知りたいことが違うので、ドキュメントは 3 系統に分かれています。
+SteamVR のオーバーレイは、VR の中に浮かぶ 2D のパネルです。自分用のオーバーレイを作るときの主な作り方は、これまで次の3つでした。
 
-<CardGrid>
-  <LinkCard
-    title="User Guide — Learn / Build"
-    href={props.tracks.user.href}
-    description="FloatSoda でアプリを作る人向け。概念の概要、使い方、チュートリアル。公開 API だけでアプリを完成させることが目標です"
-  />
-  <LinkCard
-    title="Contributor Guide — Understand / Change"
-    href={props.tracks.contributor.href}
-    description="FloatSoda 本体を変える・レビューする人向け。動作原理、設計判断、変更後も守るべき条件"
-  />
-  {props.tracks.api.exists ? (
-    <LinkCard
-      title="API Reference — Look up"
-      href={props.tracks.api.href}
-      description="公開 API の正確な契約。XML ドキュメントコメントから生成します"
-    />
-  ) : (
-    <Card title="API Reference — Look up" icon="document">
-      公開 API の正確な契約。XML ドキュメントコメントから生成します。**準備中**で、それまではソースコードの XML ドキュメントコメントを参照してください。
-    </Card>
-  )}
-</CardGrid>
+- Unity で作る。オーバーレイ1枚のために、ゲームエンジンを丸ごと動かす
+- C++ で OpenVR を直接呼ぶ。並べ方の計算も描画も、自分で書く
+- Qt などのデスクトップ向けの UI を、自分で OpenVR につなぐ
 
-## 最小構成のコード
+時計を1つ浮かべたいだけでも、この3つのどれかから始めることになります。
 
-SteamVR のダッシュボードに 100×100 の青い箱を出すオーバーレイです。`samples/FloatSoda.Samples.GettingStarted` の `Program.cs` そのもので、ビルドのたびにここへ読み込まれます。
+## 欲しいのは画面のレイアウト
+
+FloatSoda では、「状態がこうなら、画面はこう見える」を C# のコードで書きます。並べ方の計算、描画、SteamVR への受け渡し、状態が変わったときの描き直しは、FloatSoda が受け持ちます。書き方は Flutter と同じ形で、Unity のシーンやプレハブの代わりに、画面をコードで組み立てます。
+
+次のコードは、SteamVR のダッシュボードに出す、最小のオーバーレイです。`samples/FloatSoda.Samples.GettingStarted` の `Program.cs` そのもので、ビルドのたびにここへ読み込まれます。
 
 {/* Program.cs は BOM 付き UTF-8 なので、先頭の BOM(U+FEFF)を落としてから表示する */}
 <Code code={program.charCodeAt(0) === 0xfeff ? program.slice(1) : program} lang="csharp" title="Program.cs" />
 
-## 誰のためのフレームワークか
+FloatSoda が裏で何をしているかは、「<a href={props.links.howItWorks}>FloatSoda の仕組み</a>」にあります。
 
-3 タイプの作り手を想定しています。自分に近いものから読み始めてください。詳しくは <a href={props.links.targetUsers}>Target Users</a> にあります。
+## コードだから、全部読めるし探しやすい
 
-<CardGrid>
-  <Card title="AI と一緒に自分用のツールを作りたい VRChatter" icon="rocket">
-    コードが書けなくても構いません。AI にコードを書いてもらう「バイブコーディング」で完結できることが設計目標です。
-
-    読む順: <a href={props.links.gettingStarted}>GettingStarted</a> のサンプルを動かし、あとは AI に「これを改造して◯◯を作って」と頼む。AI には下の `llms-full.txt` を渡してください。
-  </Card>
-  <Card title="Booth でオーバーレイ作品を売りたいクリエイター" icon="pencil">
-    Unity でワールドやギミックを作れるなら十分です。新しく覚えるのは「宣言的 UI」という考え方だけ。シーンもプレハブも `.meta` もありません。
-
-    読む順: <a href={props.links.gettingStarted}>GettingStarted</a> → <a href={props.links.widgetSystem}>WidgetSystem</a>
-  </Card>
-  <Card title="uGUI を使いたくないエンジニア" icon="laptop">
-    UI が 100% C# コードです。diff が読め、PR レビューができ、grep が効きます。Flutter の三ツリーモデルを .NET 上に実装しています。
-
-    読む順: <a href={props.links.architecture}>Architecture</a> → <a href={props.links.apiDesign}>APIDesign</a>
-  </Card>
-</CardGrid>
-
-## AI に読ませる
-
-このサイトは、コーディングエージェントがそのまま読めるように作ってあります。
+FloatSoda の UI はすべて C# のコードで、シーンもプレハブも持ちません。画面がどこで組まれているかは、コードを検索すれば見つかります。変更は diff で追え、コードを AI に書かせることもできます。このサイトは、コーディングエージェントがそのまま読めるように作ってあります。
 
 <CardGrid>
   <LinkCard title="llms.txt" href="/llms.txt" description="サイトの索引。エージェントにはまずこれを渡す" />
   <LinkCard title="llms-full.txt" href="/llms-full.txt" description="全ページを 1 ファイルにまとめた全文" />
 </CardGrid>
 
-各ページは URL 末尾の `/` を `.md` に置き換えると素の Markdown で取得できます(例: <code>{props.links.widgetSystem}</code> のページは <code>{props.links.widgetSystemMd}</code>)。
+各ページは URL 末尾の `/` を `.md` に置き換えると素の Markdown で取得できます(例: <code>{props.links.firstOverlay}</code> のページは <code>{props.links.exampleMd}</code>)。
 
-## いまの状況
+## どうやって使うの?
 
-Alpha 段階です。ユーザー操作(タップ・パン)が動くのはダッシュボードオーバーレイだけで、ワールド座標固定とデバイス追従のオーバーレイは表示専用です。Phase ごとの到達点と残件は <a href={props.links.roadmap}>ロードマップ</a> にあります。
+FloatSoda は、SteamVR で動くオーバーレイを作るためのフレームワークです。作ったアプリを動かすときは、SteamVR を起動しておきます。開発に要る環境と、今の FloatSoda でできないことは、次のページにまとめています。
+
+<CardGrid>
+  <LinkCard title="動作環境" href={props.links.requirements} description="開発する PC と、実行する PC に要るもの" />
+  <LinkCard title="できないこと・まだ使えないもの" href={props.links.limitations} description="使う前に確かめたい制約と、その回避" />
+</CardGrid>
+
+## やりたいことから選ぶ
+
+<CardGrid>
+  <LinkCard title="何ができるか知りたい" href={props.links.whatIsFloatSoda} description="ガイド › 1. 探す" />
+  <LinkCard title="まず動かしたい" href={props.tracks.tutorials.href} description="チュートリアル" />
+  <LinkCard title="作っていて詰まった" href={props.links.troubleshoot} description="ガイド › 5. 困ったとき" />
+  <LinkCard title="使う部品を探したい" href={props.links.findWidgets} description="リファレンス" />
+  {props.tracks.api.exists ? (
+    <LinkCard title="型やプロパティを引きたい" href={props.tracks.api.href} description="API リファレンス" />
+  ) : (
+    <Card title="型やプロパティを引きたい" icon="document">
+      API リファレンス。<strong>準備中</strong>で、それまではソースコードの XML ドキュメントコメントを参照してください。
+    </Card>
+  )}
+  <LinkCard title="FloatSoda に関わりたい" href={props.tracks.contributor.href} description="コントリビューター" />
+</CardGrid>
