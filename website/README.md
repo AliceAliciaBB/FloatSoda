@@ -80,7 +80,8 @@ npm run verify    # dist/ の検査。ページ・llms-*.txt の網羅と索引�
 1. GitHub の Settings → Pages → Source を **GitHub Actions** にする
 2. Cloudflare DNS に `floatsoda` の CNAME レコード(値 `sumx21t-3310.github.io`)を追加する
 3. Settings → Pages → Custom domain に `floatsoda.sumx21t.com` を入れ、Enforce HTTPS を有効にする
-4. Actions → Docs Site → Run workflow を `main` で実行する(過去のタグにはこの workflow が無いので、最初の1回だけ `main` から公開する。次のリリースからはタグで自動)
+4. Settings → Environments → `github-pages` → Deployment branches and tags に、Tag のルール `v*` を追加する(`main` のルールは残す)。許可が `main` だけだと、タグの push のデプロイが `Tag "vX.Y.Z" is not allowed to deploy to github-pages due to environment protection rules.` で拒否される(#288)
+5. Actions → Docs Site → Run workflow を `main` で実行する(過去のタグにはこの workflow が無いので、最初の1回だけ `main` から公開する。次のリリースからはタグで自動)
 
 カスタムドメイン名は `public/CNAME` にもあり、ビルド出力に含めてデプロイのたびに GitHub Pages へ渡します。
 
