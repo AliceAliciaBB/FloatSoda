@@ -181,7 +181,7 @@ sequenceDiagram
 
 ## ドキュメント
 
-公開サイトは **[floatsoda.sumx21t.com](https://floatsoda.sumx21t.com/)** です。ソースは **[docs/Home.md](docs/Home.md)** 以下の Markdown で、サイトはリリースごとに、GitHub Wiki は `main` への push ごとに更新されます。コーディングエージェントに読ませるときは [llms.txt](https://floatsoda.sumx21t.com/llms.txt)(索引)か [llms-full.txt](https://floatsoda.sumx21t.com/llms-full.txt)(全文)を渡してください。
+公開サイトは **[floatsoda.sumx21t.com](https://floatsoda.sumx21t.com/)** です。ソースは **[docs/Home.md](docs/Home.md)** 以下の Markdown で、サイトはリリースごとに更新されます。コーディングエージェントに読ませるときは [llms.txt](https://floatsoda.sumx21t.com/llms.txt)(索引)か [llms-full.txt](https://floatsoda.sumx21t.com/llms-full.txt)(全文)を渡してください。
 
 | タブ | 内容 |
 |---|---|
@@ -190,7 +190,7 @@ sequenceDiagram
 | [リファレンス](docs/reference/Home.md) | 作例、制約、動作環境、用語、部品を引く |
 | [コントリビューター](docs/contributor/Home.md) | FloatSoda を一緒に育てるための理解・準備・貢献の手順 |
 
-コントリビュータ向けの規約はリポジトリルートにあります(公開サイトと Wiki には載りません)。
+コントリビュータ向けの規約はリポジトリルートにあります(公開サイトには載りません)。
 
 | ドキュメント | 内容 |
 |---|---|

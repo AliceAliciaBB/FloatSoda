@@ -6,7 +6,7 @@
 
 すべてのプロンプトに同じ3つのガードレールを載せる(docs の URL とスクラッチパスは埋める):
 
-- **docs を先に読む**: `https://github.com/sumx21t-3310/FloatSoda/wiki` — 何か書く前に
+- **docs を先に読む**: `https://floatsoda.sumx21t.com/` — 何か書く前に
   `Home / GettingStarted / WidgetSystem / OVRIntegration` を読む。
 - **ブラックボックス**: docs だけを使う。`src/` 配下は開かない・読まない・grep しない。
   docs がカバーしていなければ、推測せずそう言う。

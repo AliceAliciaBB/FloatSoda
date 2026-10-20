@@ -93,8 +93,8 @@ docs/API の品質を測っておらず、それが目的のすべてだった�
 モデルであって、フラッグシップではない)。プロンプトには、趣旨として逐語的に次を含めること:
 
 - タスク。VRChatter の声で。
-- **docs へのポインタのみ**: GitHub Wiki(`https://github.com/sumx21t-3310/FloatSoda/wiki`、
-  入口は `Home`)またはリポジトリの `docs/` フォルダ。まず `Home / GettingStarted / WidgetSystem /
+- **docs へのポインタのみ**: 公開サイト(`https://floatsoda.sumx21t.com/`、
+  入口はトップページ)またはリポジトリの `docs/` フォルダ。まず `Home / GettingStarted / WidgetSystem /
   OVRIntegration` を読むよう指示する。
 - **ブラックボックス指示**: 「FloatSoda をブラックボックスとして扱うこと。上記 docs だけを使う。
   `src/` 配下は開かない・読まない・grep しない・推測の材料にしない。docs がカバーしていなければ、
