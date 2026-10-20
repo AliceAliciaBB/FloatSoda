@@ -7,8 +7,8 @@ namespace FloatSoda.Widgets.Gesture;
 public record IgnorePointer : SingleChildRenderObjectWidget<RenderIgnorePointer>
 {
     /// <summary>自身を含む部分木へのポインター入力を無視するかどうかを取得します。</summary>
-    /// <value>既定値は<see langword="false"/>です。</value>
-    public bool Ignoring { get; init; }
+    /// <value>既定値は<see langword="true"/>です。</value>
+    public bool Ignoring { get; init; } = true;
 
     /// <inheritdoc />
     public override RenderIgnorePointer CreateRenderObject() => new() { Ignoring = Ignoring };

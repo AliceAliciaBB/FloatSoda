@@ -68,6 +68,8 @@ public abstract class RenderCustomClip<T> : RenderProxyBox
     /// 値が変更された場合、このRenderObjectをPaint Dirtyとしてマークし、
     /// 次のパイプライン更新時に指定した品質で子を再描画します。
     /// 値が変更されなかった場合、Dirty状態は変更されません。
+    /// <see cref="FloatSoda.Rendering.Layers.Clip.None"/>の場合は、子を切り抜かずにそのまま描画します。
+    /// ヒットテストの結果はこの値に左右されません。判定に使う領域は、各派生型の<c>HitTest</c>の説明を参照してください。
     /// </remarks>
     public Clip ClipBehavior
     {
@@ -153,7 +155,7 @@ public class RenderClipRect : RenderCustomClip<SKRect>
     /// <inheritdoc/>
     public override void Paint(PaintingContext context, Offset offset)
     {
-        if (Child != null)
+        if (Child != null && ClipBehavior != FloatSoda.Rendering.Layers.Clip.None)
         {
             Layer = context.PushClipRect(
                 offset,
@@ -163,6 +165,8 @@ public class RenderClipRect : RenderCustomClip<SKRect>
         }
         else
         {
+            // Clip.None では Flutter と同じくクリップのレイヤーを作らず、子を直接描画する。子が無ければ何も描画しない。
+            if (Child != null) base.Paint(context, offset);
             Layer = null;
         }
     }
@@ -177,10 +181,20 @@ public class RenderClipRoundRect : RenderCustomClip<SKRoundRect>
     /// 既定のクリップ領域に適用する角の半径を取得または設定します。
     /// </summary>
     /// <remarks>
-    /// このプロパティの設定だけではDirty状態は変更されません。
-    /// 変更後に再描画が要求されたとき、新しい角の半径がクリップ領域へ反映されます。
+    /// 値が変更された場合、このRenderObjectをPaint Dirtyとしてマークし、
+    /// 次のパイプライン更新時に新しい角の半径でクリップ領域と子を再描画します。
+    /// 値が変更されなかった場合、Dirty状態は変更されません。
     /// </remarks>
-    public BorderRadius BorderRadius { get; set; }
+    public BorderRadius BorderRadius
+    {
+        get;
+        set
+        {
+            if (field == value) return;
+            field = value;
+            MarkNeedsClip();
+        }
+    }
 
     /// <inheritdoc/>
     protected override SKRoundRect DefaultClip => BorderRadius.ToRoundRect(SKRect.Create(Offset.Zero, Size));
@@ -235,7 +249,7 @@ public class RenderClipRoundRect : RenderCustomClip<SKRoundRect>
     /// <inheritdoc/>
     public override void Paint(PaintingContext context, Offset offset)
     {
-        if (Child != null)
+        if (Child != null && ClipBehavior != FloatSoda.Rendering.Layers.Clip.None)
         {
             Layer = context.PushClipRoundRect(
                 offset,
@@ -248,6 +262,8 @@ public class RenderClipRoundRect : RenderCustomClip<SKRoundRect>
         }
         else
         {
+            // Clip.None では Flutter と同じくクリップのレイヤーを作らず、子を直接描画する。子が無ければ何も描画しない。
+            if (Child != null) base.Paint(context, offset);
             Layer = null;
         }
     }
@@ -284,7 +300,7 @@ public class RenderClipPath : RenderCustomClip<SKPath>
     /// <inheritdoc/>
     public override void Paint(PaintingContext context, Offset offset)
     {
-        if (Child != null)
+        if (Child != null && ClipBehavior != FloatSoda.Rendering.Layers.Clip.None)
         {
             Layer = context.PushClipPath(
                 offset,
@@ -297,6 +313,8 @@ public class RenderClipPath : RenderCustomClip<SKPath>
         }
         else
         {
+            // Clip.None では Flutter と同じくクリップのレイヤーを作らず、子を直接描画する。子が無ければ何も描画しない。
+            if (Child != null) base.Paint(context, offset);
             Layer = null;
         }
     }
@@ -329,6 +347,13 @@ public class RenderClipOval : RenderCustomClip<SKRect>
     public override void Paint(PaintingContext context, Offset offset)
     {
         if (Child == null) return;
+
+        if (ClipBehavior == FloatSoda.Rendering.Layers.Clip.None)
+        {
+            base.Paint(context, offset);
+            Layer = null;
+            return;
+        }
 
         var path = new SKPath();
         path.AddOval(Clip);

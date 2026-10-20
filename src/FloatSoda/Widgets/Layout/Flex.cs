@@ -17,7 +17,7 @@ public sealed record Flex : MultiChildRenderObjectWidget<RenderFlex>
     /// <summary>
     /// 主軸方向における子要素の配置方法を取得します。
     /// </summary>
-    public MainAxisAlignment MainAxisAlignment { get; init; } = MainAxisAlignment.Center;
+    public MainAxisAlignment MainAxisAlignment { get; init; } = MainAxisAlignment.Start;
 
     /// <summary>
     /// 主軸方向に確保する領域の大きさを取得します。
@@ -86,7 +86,7 @@ public abstract record FlexWrapper(Axis Direction) : StatelessWidget
     /// <summary>
     /// 交差軸方向における子要素の配置方法を取得します。
     /// </summary>
-    public CrossAxisAlignment CrossAxisAlignment { get; init; } = CrossAxisAlignment.Start;
+    public CrossAxisAlignment CrossAxisAlignment { get; init; } = CrossAxisAlignment.Center;
     /// <summary>
     /// 主軸方向に確保する領域の大きさを取得します。
     /// </summary>
