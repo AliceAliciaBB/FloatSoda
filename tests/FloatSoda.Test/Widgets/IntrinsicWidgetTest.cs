@@ -39,14 +39,19 @@ public class IntrinsicWidgetTest
     }
 
     [Theory]
-    [InlineData(0)]
     [InlineData(-1)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void Step_0以下または非有限値_ArgumentOutOfRangeExceptionを投げる(double value)
+    public void Step_負数または非有限値_ArgumentOutOfRangeExceptionを投げる(double value)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new IntrinsicWidth { StepWidth = value });
         Assert.Throws<ArgumentOutOfRangeException>(() => new IntrinsicHeight { StepHeight = value });
+    }
+
+    [Fact]
+    public void StepHeight_0を指定_ArgumentOutOfRangeExceptionを投げる()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new IntrinsicHeight { StepHeight = 0 });
     }
 
     [Fact]

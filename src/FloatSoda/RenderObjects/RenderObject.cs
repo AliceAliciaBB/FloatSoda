@@ -76,7 +76,8 @@ public abstract class RenderObject : IHitTestTarget
     /// <param name="constraints">サイズの有効範囲を定める制約。</param>
     /// <param name="parentUseSize">親がこのRenderObjectの<see cref="Size"/>を使用する場合は<see langword="true"/>です。</param>
     /// <remarks>
-    /// 制約、レイアウトDirty状態、再レイアウト境界のいずれも変化していない場合は何もしません。
+    /// 制約もレイアウトDirty状態も変化していない場合はレイアウトしません。
+    /// このとき再レイアウト境界だけが変化した場合は、新しい境界を子孫へ伝えます。Flutter の <c>RenderObject.layout</c> に合わせています。
     /// レイアウト後はこのRenderObjectのレイアウトDirtyを解除し、描画Dirtyを再描画境界まで伝播します。
     /// 再レイアウト境界が変化した場合は、境界に属していた子孫をレイアウトDirtyにします。
     /// </remarks>
@@ -88,7 +89,16 @@ public abstract class RenderObject : IHitTestTarget
             ? this
             : Parent.RelayoutBoundary;
 
-        if (!NeedsLayout && Constraints == constraints && RelayoutBoundary == relayoutBoundary) return;
+        if (!NeedsLayout && Constraints == constraints)
+        {
+            if (RelayoutBoundary != relayoutBoundary)
+            {
+                RelayoutBoundary = relayoutBoundary;
+                VisitChildren(PropagateRelayoutBoundaryToChild);
+            }
+
+            return;
+        }
 
         Constraints = constraints;
 
@@ -118,6 +128,20 @@ public abstract class RenderObject : IHitTestTarget
         NeedsLayout = false;
 
         MarkNeedsPaint();
+    }
+
+    /// <summary>親の再レイアウト境界を、自身が境界でない子孫へ伝えます。</summary>
+    /// <param name="child">境界を伝える子。</param>
+    /// <remarks>レイアウトDirtyにはしません。子孫のレイアウト結果は境界の付け替えでは変わらないためです。</remarks>
+    private static void PropagateRelayoutBoundaryToChild(RenderObject child)
+    {
+        if (child.RelayoutBoundary == child) return;
+
+        var parentRelayoutBoundary = child.Parent?.RelayoutBoundary;
+        if (child.RelayoutBoundary == parentRelayoutBoundary) return;
+
+        child.RelayoutBoundary = parentRelayoutBoundary;
+        child.VisitChildren(PropagateRelayoutBoundaryToChild);
     }
 
     /// <summary>子孫が保持する無効な再レイアウト境界を消去します。</summary>

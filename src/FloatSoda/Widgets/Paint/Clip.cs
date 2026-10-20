@@ -64,7 +64,8 @@ public record ClipRect : SingleChildRenderObjectWidget<RenderClipRect>
     /// <summary>
     /// クリップ境界の描画方式を取得します。
     /// </summary>
-    public Clip ClipBehavior { get; init; } = Clip.Antialias;
+    /// <value>既定値は<see cref="Clip.HardEdge"/>です。Flutter の <c>ClipRect</c> に合わせています。</value>
+    public Clip ClipBehavior { get; init; } = Clip.HardEdge;
 
 
     /// <summary>

@@ -63,7 +63,7 @@ new ColoredBoxWidget
 
 | 項目 | FloatSoda | Flutter |
 |---|---|---|
-| 色の指定 | `Color` は `init` プロパティ | `color` は必須の位置指定引数 |
+| 色の指定 | `Color` は `required` の `init` プロパティ | `color` は必須の位置指定引数 |
 | 色の型 | `Color(r, g, b)`（0〜255 の整数） | `Color(0xAARRGGBB)` または `Colors.*` |
 
 振る舞い(子のサイズに従い、その背後を塗る)は同等です。

@@ -30,7 +30,7 @@ new ImageWidget { Provider = provider }
 
 ### 領域への収め方を指定する
 
-`Fit` は、画像を自身の領域へどう収めるかを決めます。既定は `BoxFit.Contain` で、縦横比を維持したまま領域内へ収めます。
+`Fit` は、画像を自身の領域へどう収めるかを決めます。既定は `BoxFit.ScaleDown` で、縦横比を維持したまま領域内へ収めます。領域より小さい画像は拡大せず、原寸のまま描きます。
 
 `BoxFit.Fill` を指定すると縦横比を無視して領域いっぱいへ引き伸ばします。
 
@@ -38,7 +38,7 @@ new ImageWidget { Provider = provider }
 new ImageWidget
 {
     Provider = provider,
-    // 既定のBoxFit.Containでは縦横比が維持され、CONTAINカードと見分けがつかない。
+    // 既定のBoxFit.ScaleDownでは縦横比が維持され、引き伸ばしの比較にならない。
     // このカードは「領域いっぱいへ引き伸ばす」比較対象なのでFillを明示する。
     Fit = BoxFit.Fill,
 }
@@ -97,7 +97,6 @@ new Stack
 
 | 項目 | FloatSoda | Flutter |
 |---|---|---|
-| `Fit` の既定値 | `BoxFit.Contain`。領域より小さい画像も拡大される | `fit` は null 許容で、`paintImage` が `BoxFit.scaleDown` として解決する。領域より小さい画像は拡大されない |
 | 読み込み元の指定 | `Provider` プロパティ1本 | `Image.asset` / `Image.network` / `Image.file` などの名前付きコンストラクタ |
 | 読み込み中の表示 | `LoadingBuilder` は読み込み中だけ呼ばれ、画像の代わりに表示するウィジェットを返す | `loadingBuilder` は読み込み完了後も呼ばれ、完成した画像を `child` として受け取って包む |
 | 画像の共有 | 借りている `Image` がある間だけ共有し、最後の1つがツリーから外れると解放する | `ImageCache` が LRU で保持し、表示が終わった画像も上限まで残す |

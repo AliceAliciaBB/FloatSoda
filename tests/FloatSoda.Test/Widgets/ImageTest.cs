@@ -455,6 +455,7 @@ public class ImageTest
                     Child = new ImageWidget
                     {
                         Provider = new FileImageProvider(path),
+                        Fit = BoxFit.Contain,
                         Alignment = Alignment.TopLeft
                     }
                 },

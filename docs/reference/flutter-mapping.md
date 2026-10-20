@@ -100,15 +100,11 @@ Flutter のウィジェットが取る引数のうち、FloatSoda にないも�
 
 | ウィジェット | 症状 | 直し方 | 追跡 | 詳細 |
 | :-- | :-- | :-- | :-- | :-- |
-| `Flex` | 既定の揃え方が `Center`。`Row` と `Column` は `Start`。Flutter は `start` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
-| `Row`、`Column` | 交差軸の既定の揃え方が `Start`。Flutter は `center` | 揃え方を指定する | #224 | [Flex](../../samples/FloatSoda.Samples.Flex/README.md) |
 | `Stack` | 範囲を超えた子も、切り取られずに見える | `Stack` を `ClipRect` で包む | #257 | [Stack](../../samples/FloatSoda.Samples.Stack/README.md) |
 | `Container` | 子がないと、緩い制約の下で 0 に縮む | `Width` と `Height` を指定する | #268 | [Container](../../samples/FloatSoda.Samples.Container/README.md) |
-| `Image` | `Fit` の既定が `Contain`。領域より小さい画像も拡大される | `Fit` を指定する | なし | [Image](../../samples/FloatSoda.Samples.Image/README.md) |
-| `ClipRect` | 既定のクリップが `Clip.Antialias`。Flutter は `hardEdge` | `ClipBehavior` を指定する | なし | [Clip](../../samples/FloatSoda.Samples.Clip/README.md) |
 | `Expanded` | `Flex` に 0 以下を指定すると例外になる。主軸の長さが決まらない場所の `Expanded` も、常に例外になる | `Flex` に 1 以上を指定する | なし | [Expanded](../../samples/FloatSoda.Samples.Expanded/README.md) |
 
-<!-- ※要確認: 各行の「直し方」が今も有効か。実際に試していない。Row と Column の交差軸の既定は Flutter が center、FloatSoda が Start と README に書かれており、src/FloatSoda/Widgets/Layout/Flex.cs の既定値(Row、Column は Start)と一致することだけ確かめた -->
+<!-- ※要確認: 各行の「直し方」が今も有効か。実際に試していない -->
 
 表のとおりに直しても思った見た目にならないときは、ガイドの[レイアウトの考え方](../guide/5-troubleshoot/layout-model.md)を開きます。押しても反応しないときは、[反応しないときに切り分ける](../guide/5-troubleshoot/not-responding.md)です。
 

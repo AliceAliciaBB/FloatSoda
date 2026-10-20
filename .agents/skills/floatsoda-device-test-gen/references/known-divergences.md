@@ -93,17 +93,22 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 - **Observation**: `HEADLESS`
 - **Label**: deliberate(issue #90 が依存)— よって文書化が必要。
 
-## 5. レイアウトの early-return が boundary のみの変更をカバーしない
+## 5. レイアウトの early-return が boundary のみの変更をカバーしない — **解消済み**
 
-- **FloatSoda**: `src/FloatSoda/RenderObjects/RenderObject.cs:91-107`。early return は
-  `RelayoutBoundary == relayoutBoundary` を要求するため、relayout boundary だけが変わった場合は
-  素通りして **`PerformLayout()` が走る**。
-- **Flutter**: 制約が不変なら boundary を付け替え、子を掃除して return — `performLayout` は
-  走らない。
-- **Test**: — (not set)
-- **Docs**: — (not set)
-- **Observation**: `HEADLESS`(実機では余分なレイアウトコストとしても現れうる)
-- **Label**: unlabelled — port mistake の可能性が高いが、先に確認する価値がある。
+- **Status**: 解消済み。PR #291 の監査で再現し、Flutter に揃えた。番号を他のエントリから
+  参照しているため、エントリは削除せずに残す。
+- **FloatSoda**: `src/FloatSoda/RenderObjects/RenderObject.cs` の `Layout` が、制約が不変で
+  レイアウト Dirty でもなければ、境界だけを付け替えて子孫へ伝え、`PerformLayout()` を呼ばずに
+  戻る。修正前は early return が `RelayoutBoundary == relayoutBoundary` も要求していたため、
+  境界だけが変わると `PerformLayout()` と描画 Dirty 化が走っていた。
+- **Flutter**: `RenderObject.layout`(`rendering/object.dart`、`8a9f61cfd67`)が、制約が不変で
+  clean なら `_relayoutBoundary` を更新して `_propagateRelayoutBoundaryToChild` で子孫へ伝え、
+  `performLayout` を呼ばずに return する。
+- **Test**: `tests/FloatSoda.Test/RenderObjects/RenderObjectLayoutFlutterParityTest.cs` の
+  `Layout_制約不変でRelayoutBoundaryだけ変更_PerformLayoutを繰り返さない`。
+- **Docs**: — (not set)。利用者から見えるのはレイアウト回数だけのため。
+- **Observation**: `HEADLESS`
+- **Label**: port mistake
 
 ## 6. フレームフェーズに Flutter の複数ステージが欠けている
 

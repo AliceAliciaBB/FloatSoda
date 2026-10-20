@@ -25,11 +25,12 @@ public record Image : StatefulWidget<Image>
 
     /// <summary>画像を自身の領域へ収める方法を取得します。</summary>
     /// <remarks>
-    /// 既定は<see cref="BoxFit.Contain"/>で、縦横比を維持したまま領域内へ収めます。
+    /// 既定は<see cref="BoxFit.ScaleDown"/>で、縦横比を維持したまま領域内へ収めます。
+    /// 領域より小さい画像は拡大せず、原寸のまま描画します。Flutter の <c>Image</c> に合わせています。
     /// <see cref="BoxFit.Cover"/>のように画像の一部だけを使う場合は描画元の矩形を切り取るため、
     /// どの値でも領域外へはみ出しません。
     /// </remarks>
-    public BoxFit Fit { get; init; } = BoxFit.Contain;
+    public BoxFit Fit { get; init; } = BoxFit.ScaleDown;
 
     /// <summary>収めた画像を自身の領域内へ配置する位置を取得します。</summary>
     public Alignment Alignment { get; init; } = Alignment.Center;
