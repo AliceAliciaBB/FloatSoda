@@ -5,6 +5,7 @@ name: Docs Site
 # main の push と PR はビルドと検査だけを行う。
 # 初回だけは、main から workflow_dispatch で手動デプロイする(過去のタグにはこの workflow が無いため)。
 # 初回のみ Settings → Pages → Source を "GitHub Actions" にする必要がある(website/README.md)。
+# タグからデプロイするには、github-pages 環境のデプロイ許可に Tag の v* が要る(website/README.md、#288)。
 
 on:
   push:
