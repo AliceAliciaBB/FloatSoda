@@ -43,20 +43,26 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
 
 ---
 
-## 1. Widget の等価性が同一性ではなく構造的
+## 1. Widget の等価性が同一性ではなく構造的 — **解消済み**
 
-- **FloatSoda**: `src/FloatSoda/Elements/Element.cs:173` の `child.Widget == newWidget`。`Widget` は
-  `abstract record` なので `==` は**値の等価性**。構造的に同一の新しいウィジェットは更新全体を
-  短絡させる — `Update()` が走らないため、`didUpdateWidget` 相当は発火せず、サブツリーは
-  再構築されない。
-- **Flutter**: 同じ位置のチェックは同一性比較(`Widget` は `==` をオーバーライドしない)。
-  そのため新しいインスタンスは必ず `canUpdate` → `child.update(newWidget)` → `didUpdateWidget`
-  に到達する。
-- **Test**: — (not set)
-- **Docs**: — (not set)
+- **Status**: 解消済み。PR #291 の監査で再現し、オーナーの判断で Flutter に揃えた。番号を他の
+  エントリから参照しているため、エントリは削除せずに残す。
+- **FloatSoda**: `src/FloatSoda/Elements/Element.cs` の `UpdateChild` が、`ReferenceEquals` で
+  同じインスタンスのときだけ更新を省く。値が等しい新しいインスタンスは `CanUpdate` →
+  `Update()` に進み、`DidUpdateWidget` が呼ばれて再構築される。修正前は `Widget` が
+  `abstract record` のため `==` が値の等価性になり、値が等しい新しいインスタンスへの更新全体を
+  短絡させていた。あわせて `BuildOwner.BuildScope` が、祖先の再構築で `Dirty` が解除された
+  Element を構築し直さないようにした(Flutter の `Element.rebuild` と同じ判定)。
+- **Flutter**: `Element.updateChild`(`widgets/framework.dart`、`8a9f61cfd67`)は
+  `identical(child.widget, newWidget)` で比べる。新しいインスタンスは `canUpdate` →
+  `child.update(newWidget)` → `didUpdateWidget` に到達する。
+- **Test**: `tests/FloatSoda.Test/Widgets/BuilderFlutterParityTest.cs` の
+  `Build_値が等しい新しいBuilderへ更新_もう一度呼び出す`、
+  `tests/FloatSoda.Test/Elements/BuildOwnerTest.cs` の
+  `BuildScope_祖先の再構築で更新済みの子_もう一度構築しない`。
+- **Docs**: — (not set)。利用者から見えるのは `Build` と `DidUpdateWidget` が呼ばれる回数だけのため。
 - **Observation**: `HEADLESS`
-- **Label**: unlabelled — `AGENTS.md` は意図的な fast path として説明しているが、
-  `didUpdateWidget` への帰結はどこにも文書化されていない。
+- **Label**: port mistake(2026-10-20 にオーナーが Flutter に揃えると判断)
 
 ## 2. inactive-element プールが無い
 
