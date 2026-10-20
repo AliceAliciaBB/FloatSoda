@@ -60,7 +60,9 @@ export default defineConfig({
           promote: ["home"],
           // API リファレンスは末尾に寄せ、ビルド後に scripts/trim-llms-full.mjs が llms-full.txt から切り落とす(#364)。
           // llms-small.txt からは exclude で外す。どちらも、全文が 180 万文字を超えて一度に読めなくなるのを防ぐため
-          demote: ["api/**"],
+          // 入口(api/index のページ。ID は "api")を先に書き、API のページの中で先頭に来るようにする。
+          // 切り落とす位置は入口の見出しなので、並びを ID の文字順に任せない
+          demote: ["api", "api/**"],
           exclude: ["api/**"],
           // HTML を経由せず、docs/ から変換した Markdown 本文をそのまま llms-*.txt に入れる
           rawContent: true,
