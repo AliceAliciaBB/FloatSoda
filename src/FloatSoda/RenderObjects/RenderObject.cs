@@ -76,8 +76,8 @@ public abstract class RenderObject : IHitTestTarget
     /// <param name="constraints">サイズの有効範囲を定める制約。</param>
     /// <param name="parentUseSize">親がこのRenderObjectの<see cref="Size"/>を使用する場合は<see langword="true"/>です。</param>
     /// <remarks>
-    /// 制約もレイアウトDirty状態も変化していない場合はレイアウトしません。
-    /// このとき再レイアウト境界だけが変化した場合は、新しい境界を子孫へ伝えます。Flutter の <c>RenderObject.layout</c> に合わせています。
+    /// 制約もレイアウトDirty状態も変化していない場合はレイアウトしません。Flutter の <c>RenderObject.layout</c> に合わせています。
+    /// このとき再レイアウト境界だけが変化した場合は、新しい境界を子孫へ伝えます。
     /// レイアウト後はこのRenderObjectのレイアウトDirtyを解除し、描画Dirtyを再描画境界まで伝播します。
     /// 再レイアウト境界が変化した場合は、境界に属していた子孫をレイアウトDirtyにします。
     /// </remarks>

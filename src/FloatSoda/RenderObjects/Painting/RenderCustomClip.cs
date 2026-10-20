@@ -69,7 +69,7 @@ public abstract class RenderCustomClip<T> : RenderProxyBox
     /// 次のパイプライン更新時に指定した品質で子を再描画します。
     /// 値が変更されなかった場合、Dirty状態は変更されません。
     /// <see cref="FloatSoda.Rendering.Layers.Clip.None"/>の場合は、子を切り抜かずにそのまま描画します。
-    /// ヒットテストは、この値にかかわらずクリップ領域で判定します。
+    /// ヒットテストの結果はこの値に左右されません。判定に使う領域は、各派生型の<c>HitTest</c>の説明を参照してください。
     /// </remarks>
     public Clip ClipBehavior
     {

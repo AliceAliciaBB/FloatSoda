@@ -101,9 +101,12 @@ FloatSoda の挙動 / 理由 / 差異を固定するテスト / 利用者向け 
   レイアウト Dirty でもなければ、境界だけを付け替えて子孫へ伝え、`PerformLayout()` を呼ばずに
   戻る。修正前は early return が `RelayoutBoundary == relayoutBoundary` も要求していたため、
   境界だけが変わると `PerformLayout()` と描画 Dirty 化が走っていた。
-- **Flutter**: `RenderObject.layout`(`rendering/object.dart`、`8a9f61cfd67`)が、制約が不変で
-  clean なら `_relayoutBoundary` を更新して `_propagateRelayoutBoundaryToChild` で子孫へ伝え、
-  `performLayout` を呼ばずに return する。
+- **Flutter**: `RenderObject.layout`(`rendering/object.dart`、`8a9f61cfd67`)が、
+  `_isRelayoutBoundary` を更新したあと、制約が不変で clean なら `performLayout` を呼ばずに
+  return する。
+- **境界の持ち方の違い**: Flutter は境界かどうかを `bool?` で持ち、`markNeedsLayout` が親を
+  たどって境界を探す。FloatSoda は境界の RenderObject を参照で持つため、境界が変わったときは
+  自身が境界でない子孫へ新しい参照を伝える。この違いは利用者から見えない。
 - **Test**: `tests/FloatSoda.Test/RenderObjects/RenderObjectLayoutFlutterParityTest.cs` の
   `Layout_制約不変でRelayoutBoundaryだけ変更_PerformLayoutを繰り返さない`。
 - **Docs**: — (not set)。利用者から見えるのはレイアウト回数だけのため。
