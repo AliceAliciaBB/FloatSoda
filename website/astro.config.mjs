@@ -44,7 +44,7 @@ export default defineConfig({
           description:
             "SteamVR Overlay を Flutter のような宣言的 UI で作る .NET 10 / C# 14 向けフレームワーク。UI はすべて C# コードで書き、シーンや外部アセットを持たない",
           details:
-            "ドキュメントは日本語で書かれている。全文は llms-full.txt、系統ごとの分割は Documentation Sets に列挙した _llms-txt/<系統>.txt、各ページの素の Markdown は Optional の一覧(https://floatsoda.sumx21t.com/<page>.md)から取得できる。取得できる文字数に上限がある場合は、系統ごとのファイルかページ単位を使う。ソースは GitHub リポジトリの docs/ で、XML ドキュメントコメントと合わせて事実情報の正典になる",
+            "ドキュメントは日本語で書かれている。全文は llms-full.txt、系統ごとの分割は Documentation Sets に列挙した _llms-txt/<系統>.txt、各ページの素の Markdown は Optional の一覧(https://floatsoda.sumx21t.com/<page>.md)から取得できる。取得できる文字数に上限がある場合は、系統ごとのファイルかページ単位を使う。API リファレンス(XML ドキュメントコメントから生成)は llms-full.txt に含めず、Documentation Sets の api-* と各ページの素の Markdown から取得する。ソースは GitHub リポジトリの docs/ で、XML ドキュメントコメントと合わせて事実情報の正典になる",
           // 系統ごとの分割ファイル(/_llms-txt/user.txt など。パスはプラグインの仕様)。取得上限のある LLM でも 1 回で読める大きさにする
           customSets: llmsCustomSets(),
           // 全ページの索引。ページ単位で /<slug>.md を取りに行けるようにする
@@ -58,6 +58,12 @@ export default defineConfig({
           ],
           // docs/Home.md を llms-full.txt の先頭に置く(ランディングは docs コレクションの外なので含まれない)
           promote: ["home"],
+          // API リファレンスは末尾に寄せ、ビルド後に scripts/trim-llms-full.mjs が llms-full.txt から切り落とす(#364)。
+          // llms-small.txt からは exclude で外す。どちらも、全文が 180 万文字を超えて一度に読めなくなるのを防ぐため
+          // 入口(api/index のページ。ID は "api")を先に書き、API のページの中で先頭に来るようにする。
+          // 切り落とす位置は入口の見出しなので、並びを ID の文字順に任せない
+          demote: ["api", "api/**"],
+          exclude: ["api/**"],
           // HTML を経由せず、docs/ から変換した Markdown 本文をそのまま llms-*.txt に入れる
           rawContent: true,
         }),

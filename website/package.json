@@ -4,11 +4,13 @@
   "type": "module",
   "description": "FloatSoda のドキュメントサイト(Astro Starlight)。docs/ を単一ソースとして生成する",
   "scripts": {
+    "api": "node scripts/api-reference.mjs",
     "sync": "node scripts/sync-docs.mjs",
     "predev": "npm run sync",
     "dev": "astro dev",
-    "prebuild": "npm run sync",
+    "prebuild": "npm run api && npm run sync",
     "build": "astro build",
+    "postbuild": "node scripts/trim-llms-full.mjs",
     "preview": "astro preview",
     "verify": "node scripts/verify-dist.mjs"
   },

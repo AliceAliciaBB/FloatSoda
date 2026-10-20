@@ -18,6 +18,25 @@ export const websiteDir = path.dirname(path.dirname(fileURLToPath(import.meta.ur
 export const repoRoot = path.dirname(websiteDir);
 export const docsDir = path.join(repoRoot, "docs");
 
+/**
+ * API リファレンスのタブ。ページは docs/ の外の generated/api/ に scripts/api-reference.mjs が生成する(#318)。
+ * ページの rel は "api/<名前空間>/<型>" で、docs/ のページと同じ形で扱う(ソースの場所だけが違う)
+ */
+export const API_TAB = "api";
+export const apiDir = path.join(websiteDir, "generated", API_TAB);
+
+/** API リファレンスの生成ページか */
+export function isGenerated(rel) {
+  return rel === API_TAB || rel.startsWith(`${API_TAB}/`);
+}
+
+/** ページ(rel)のソースファイルの絶対パス。docs/ のページは docs/ の、API のページは generated/api/ のファイル */
+export function sourceFileOf(rel) {
+  return isGenerated(rel)
+    ? path.join(apiDir, `${rel.slice(API_TAB.length + 1)}.md`)
+    : path.join(docsDir, `${rel}.md`);
+}
+
 export const siteUrl = "https://floatsoda.sumx21t.com";
 
 /**
@@ -58,19 +77,27 @@ const AUDIENCE_KEYS = { 利用者: "user", コントリビュータ: "contributo
  *   rel  … docs/ からの相対パス(拡張子なし、区切りは "/")。例: "user/GettingStarted"
  *   dir  … 直上のディレクトリ("" は docs/ 直下)。例: "user"
  *   name … ファイル名(拡張子なし)。例: "GettingStarted"
+ *   generated … API リファレンスの生成ページなら true
+ * generated/api/ があれば、その中のページも "api/..." の rel で含める
  */
 export function listDocs() {
+  if (fs.existsSync(path.join(docsDir, API_TAB))) {
+    throw new Error(`docs/${API_TAB}/ は API リファレンスの生成先(generated/${API_TAB}/)と衝突します`);
+  }
   const results = [];
-  const walk = (dir) => {
-    for (const entry of fs.readdirSync(path.join(docsDir, dir), { withFileTypes: true })) {
-      const rel = dir ? `${dir}/${entry.name}` : entry.name;
-      if (entry.isDirectory()) walk(rel);
+  const walk = (root, dir, prefix) => {
+    for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const sub = dir ? `${dir}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) walk(root, sub, prefix);
       else if (entry.isFile() && /\.md$/i.test(entry.name)) {
-        results.push({ rel: rel.replace(/\.md$/i, ""), dir, name: entry.name.replace(/\.md$/i, "") });
+        const rel = `${prefix}${sub}`.replace(/\.md$/i, "");
+        const relDir = rel.includes("/") ? rel.slice(0, rel.lastIndexOf("/")) : "";
+        results.push({ rel, dir: relDir, name: entry.name.replace(/\.md$/i, ""), generated: prefix !== "" });
       }
     }
   };
-  walk("");
+  walk(docsDir, "", "");
+  if (fs.existsSync(apiDir)) walk(apiDir, "", `${API_TAB}/`);
   return results.sort((a, b) => a.rel.localeCompare(b.rel));
 }
 
@@ -111,7 +138,7 @@ export function hrefOfName(name) {
  * まだ無ければ { exists: false, href: fallbackHref }。#188 の再編でディレクトリが現れると自動で切り替わる
  */
 export function trackEntry(dir, fallbackHref) {
-  const exists = fs.existsSync(path.join(docsDir, dir, `${HOME}.md`));
+  const exists = fs.existsSync(sourceFileOf(`${dir}/${HOME}`));
   return { exists, href: exists ? `/${dir.toLowerCase()}/` : fallbackHref };
 }
 
@@ -131,7 +158,7 @@ export function firstHeading(markdown) {
 }
 
 function readDoc(rel) {
-  return fs.readFileSync(path.join(docsDir, `${rel}.md`), "utf8");
+  return fs.readFileSync(sourceFileOf(rel), "utf8");
 }
 
 /** ページのタイトル(先頭の H1)。無ければファイル名 */
@@ -141,7 +168,7 @@ export function titleOf(rel) {
 
 /** Home.md 本文からリンク先(docs/ からの相対パス、拡張子なし)を出現順に返す。重複なし */
 function linkedRels(homeRel, homeDir) {
-  if (!fs.existsSync(path.join(docsDir, `${homeRel}.md`))) return [];
+  if (!fs.existsSync(sourceFileOf(homeRel))) return [];
   const rels = [];
   const link = /\[[^\]]*\]\(((?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+)\.md(?:#[^)]*)?\)/g;
   for (const match of readDoc(homeRel).matchAll(link)) {
@@ -245,6 +272,12 @@ function dirTree(dir, docs, linkOrder) {
   ];
   subdirs.sort(byOrder(DIR_ORDER));
   for (const sub of subdirs) {
+    if (isGenerated(sub)) {
+      // API リファレンスの名前空間: 見出しは名前空間の名前(<dir>/Home.md の H1)。型が多いので畳んでおく
+      const label = firstHeading(readDoc(`${sub}/${HOME}`)) ?? sub.split("/").pop();
+      items.push({ label, collapsed: true, items: dirTree(sub, docs, linkOrder) });
+      continue;
+    }
     items.push({ label: DIR_LABELS.get(sub) ?? sub.split("/").pop(), items: dirTree(sub, docs, linkOrder) });
   }
   return items;
@@ -299,7 +332,7 @@ export function sidebarGroups() {
 
   for (const dir of dirs) {
     const homeRel = `${dir}/${HOME}`;
-    const label = (fs.existsSync(path.join(docsDir, `${homeRel}.md`)) && firstHeading(readDoc(homeRel))) || dir;
+    const label = (fs.existsSync(sourceFileOf(homeRel)) && firstHeading(readDoc(homeRel))) || dir;
     const items = dirTree(dir, docs, linkedRels(homeRel, dir));
     groups.push({ key: dir.toLowerCase(), label, rels: flattenTree(items), items });
   }
@@ -310,7 +343,9 @@ export function sidebarGroups() {
 /** Starlight の sidebar に渡す形に、グループの木を変換する */
 export function sidebarItems(items) {
   return items.map((item) =>
-    item.rel ? { slug: slugOf(item.rel) } : { label: item.label, items: sidebarItems(item.items) },
+    item.rel
+      ? { slug: slugOf(item.rel) }
+      : { label: item.label, ...(item.collapsed ? { collapsed: true } : {}), items: sidebarItems(item.items) },
   );
 }
 

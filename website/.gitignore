@@ -6,3 +6,6 @@ dist/
 src/content/docs/
 public/**/*.md
 src/generated/
+
+# scripts/api-reference.mjs が src/ の XML ドキュメントコメントから生成する
+generated/
