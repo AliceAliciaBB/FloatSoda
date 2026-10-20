@@ -117,7 +117,9 @@ public class BuildOwner
         while (index < dirtyCount)
         {
             var element = _dirtyElements[index];
-            element.Rebuild();
+            // 先に再構築された祖先から更新を受けて Dirty が解除されていれば、もう一度は構築しない。
+            // Flutter の Element.rebuild と同じ判定。
+            if (element.Dirty) element.Rebuild();
             index++;
 
             if (dirtyCount < _dirtyElements.Count || (_dirtyElementsNeedsRestoring ?? false))

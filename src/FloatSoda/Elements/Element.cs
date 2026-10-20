@@ -197,7 +197,9 @@ public abstract class Element : IBuildContext, IComparable<Element>
         if (child == null) return InflateWidget(newWidget, newSlot);
 
 
-        if (child.Widget == newWidget)
+        // Flutter と同じく、同じインスタンスのときだけ更新を省く。
+        // record の == は値の等価性なので、値が等しい別インスタンスも Update へ流すために参照で比べる。
+        if (ReferenceEquals(child.Widget, newWidget))
         {
             UpdateSlotForChild(child, newSlot);
             return child;
@@ -333,7 +335,7 @@ public abstract class Element : IBuildContext, IComparable<Element>
 
     /// <summary>
     /// ホットリロード時に呼ばれ、このElement以下のサブツリー全体を再ビルド対象にする。
-    /// Widgetのrecord等価による差分スキップに関わらず、全ComponentElementのBuild()が再実行される。
+    /// 同じWidgetインスタンスによる差分スキップに関わらず、全ComponentElementのBuild()が再実行される。
     /// </summary>
     public void Reassemble()
     {
