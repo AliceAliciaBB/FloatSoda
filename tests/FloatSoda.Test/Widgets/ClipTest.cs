@@ -3,8 +3,10 @@ using FloatSoda.Abstractions.Input;
 using FloatSoda.Core;
 using FloatSoda.Geometrics;
 using FloatSoda.Gesture;
+using FloatSoda.Rendering.Layers;
 using FloatSoda.RenderObjects;
 using FloatSoda.RenderObjects.Painting;
+using FloatSoda.Testing;
 using FloatSoda.Widgets;
 using FloatSoda.Widgets.Gesture;
 using FloatSoda.Widgets.Layout;
@@ -124,6 +126,56 @@ public class ClipTest
 
         Assert.Equal(1, clipper.GetClipCount);
     }
+
+    [Fact]
+    public void ClipBehavior_ClipOvalでNoneを指定_楕円の外の角も描画する()
+    {
+        using var bitmap = RenderRed(new ClipOval { ClipBehavior = Clip.None, Child = Red() });
+
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(2, 2));
+    }
+
+    [Fact]
+    public void ClipBehavior_ClipRoundRectでNoneを指定_角の外も描画する()
+    {
+        using var bitmap = RenderRed(new ClipRoundRect
+        {
+            BorderRadius = BorderRadius.Circular(40),
+            ClipBehavior = Clip.None,
+            Child = Red()
+        });
+
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(2, 2));
+    }
+
+    [Fact]
+    public void ClipBehavior_ClipCustomPathでNoneを指定_パスの外も描画する()
+    {
+        using var bitmap = RenderRed(new ClipCustomPath
+        {
+            Clipper = new LeftHalfPath(),
+            ClipBehavior = Clip.None,
+            Child = Red()
+        });
+
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(75, 50));
+    }
+
+    [Fact]
+    public void HitTest_ClipOvalでNoneを指定し楕円の外の角を押す_子が反応しない()
+    {
+        var log = new List<string>();
+
+        Tap(new ClipOval { ClipBehavior = Clip.None, Child = Tappable(log) }, 5, 5);
+
+        Assert.Empty(log);
+    }
+
+    private static Widget Red() => new ColoredBox { Color = new Color(255, 0, 0) };
+
+    private static SKBitmap RenderRed(Widget clip) => new WidgetBitmapRenderer().Render(
+        new SizedBox { Width = 100, Height = 100, Child = clip },
+        new SKSizeI(100, 100));
 
     private sealed class CountingLeftHalf : CustomClipper<SKRect>
     {

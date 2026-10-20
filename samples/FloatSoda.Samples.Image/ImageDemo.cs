@@ -81,7 +81,7 @@ public sealed record ImageDemo : StatelessWidget
                 new ImageWidget
                 {
                     Provider = provider,
-                    // 既定のBoxFit.Containでは縦横比が維持され、CONTAINカードと見分けがつかない。
+                    // 既定のBoxFit.ScaleDownでは縦横比が維持され、引き伸ばしの比較にならない。
                     // このカードは「領域いっぱいへ引き伸ばす」比較対象なのでFillを明示する。
                     Fit = BoxFit.Fill,
                     LoadingBuilder = (_, _) => new Center

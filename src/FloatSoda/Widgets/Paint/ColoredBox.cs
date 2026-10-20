@@ -12,7 +12,7 @@ public record ColoredBox : SingleChildRenderObjectWidget<RenderColoredBox>
     /// <summary>
     /// 背景の塗りつぶしに使用する色を取得します。
     /// </summary>
-    public Color Color { get; init; }
+    public required Color Color { get; init; }
     
     /// <summary>
     /// このウィジェットの背景色を描画するRenderObjectを生成します。

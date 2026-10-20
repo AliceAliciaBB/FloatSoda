@@ -10,8 +10,9 @@ namespace FloatSoda.RenderObjects.Gesture;
 public class RenderIgnorePointer : RenderProxyBox
 {
     /// <summary>自身を含む部分木へのポインター入力を無視するかどうかを取得または設定します。</summary>
+    /// <value>既定値は<see langword="true"/>です。</value>
     /// <remarks>変更は次回のヒットテストから反映され、Layout DirtyまたはPaint Dirtyにはしません。</remarks>
-    public bool Ignoring { get; set; }
+    public bool Ignoring { get; set; } = true;
 
     /// <summary>無視中は部分木を探索せず、常にヒットしなかったものとして扱います。</summary>
     /// <param name="result">ヒットした対象を格納する結果。</param>
