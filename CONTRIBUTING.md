@@ -293,7 +293,7 @@ FloatSoda の第一の利用者は「コードを自分では書かず LLM に�
 
 新しい public API(ウィジェット、ビルダーメソッド、オーバーレイ種別、`*Style`、使い方が変わる public プロパティ等)を追加・変更する PR は、マージ前に **ジュニアコーダーテスト**を通してください。手順はスキル [`floatsoda-junior-coder-test`](.agents/skills/floatsoda-junior-coder-test/SKILL.md) にあります。要点:
 
-1. PR ブランチで **docs を先に更新**する(このAPIを説明するページ。`docs/*.md` は Wiki に同期される一次情報)。
+1. PR ブランチで **docs を先に更新**する(このAPIを説明するページ。`docs/*.md` は公開サイトの一次情報)。
 2. **その新APIを使わないと解けないお題**を書き、低〜中エフォートのモデルに、更新後の **docs だけ**を渡して実装させる(ソース `src/` は見せない=ブラックボックス)。
 3. モデルの結果を読み、次のように扱う:
    - **正しく使えた** → 合格。
@@ -407,7 +407,7 @@ Widget/Element 層は `StatelessWidget` / `StatefulWidget` / `InheritedWidget` �
 
 ## ドキュメントを更新する場合の注意
 
-`docs/*.md` は `.github/workflows/sync-wiki.yml` によって GitHub Wiki に自動同期されます。同じ `docs/` から公開サイト(`website/`)もビルドされます(`.github/workflows/docs-site.yml`)。**Wiki側を直接編集しても同期時に上書きされる**ため、ドキュメントの変更は必ず `docs/` 配下のファイルに対して行ってください。
+ドキュメントの公開先は、公開サイト(<https://floatsoda.sumx21t.com>)です。サイトは `docs/*.md` から `.github/workflows/docs-site.yml` でビルドされます(`website/`)。ドキュメントの変更は必ず `docs/` 配下のファイルに対して行ってください。GitHub Wiki への同期は #319 で止めたため、Wiki は更新されません。
 
 ## ドキュメントのトンマナ
 
@@ -493,7 +493,7 @@ XML ドキュメントコメントと例外メッセージは、この節では�
 - [ ] 該当するテストプロジェクトにテストを追加・更新した
 - [ ] `dotnet test` が通る
 - [ ] 追加した `public` プロパティに XML ドキュメントコメントを付けた
-- [ ] Wiki同期対象の `docs/*.md` を直接編集した(Wiki側は編集していない)
+- [ ] ドキュメントの変更は `docs/*.md` に対して行った
 - [ ] 散文は敬体、箇条書きは常体で書いた(→ [ドキュメントのトンマナ](#ドキュメントのトンマナ) の「文体」)
 - [ ] プリミティブ層(basic.dart相当)を超える複合ウィジェットを追加していない
 - [ ] **新しいウィジェットを追加した場合**、サンプル(README + `checks/items.jsonl`)を追加した(→ [サンプルを追加する場合の規約](#サンプルを追加する場合の規約))。`items.jsonl` は [`floatsoda-device-test-gen`](.agents/skills/floatsoda-device-test-gen/SKILL.md) スキルで生成する

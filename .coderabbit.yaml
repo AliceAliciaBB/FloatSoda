@@ -59,7 +59,7 @@ reviews:
     - path: "docs/**/*.md"
       instructions: |
         - 日本語がニュートラル言語という設計判断(LOCALIZATION.md)。英語化を提案しない
-        - docs/ は GitHub Wiki に自動同期される一次情報。Wiki 側の編集を提案しない
+        - docs/ は公開サイトの一次情報。GitHub Wiki は同期を止めたので、Wiki 側の編集を提案しない
     - path: ".claude/skills/**"
       instructions: |
         このディレクトリは .agents/skills/ の派生スタブ(frontmatter + 一次情報へのポインタのみ)。

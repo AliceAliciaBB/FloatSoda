@@ -42,7 +42,7 @@
 
 ランディングのコード例(「欲しいのは画面のレイアウト」の節)は、`samples/FloatSoda.Samples.GettingStarted/Program.cs` をビルド時に読み込んで表示します。サンプルを直せばランディングも追従します。
 
-同じ「`docs/` を読み取り専用ソースにする」型は、GitHub Wiki 同期(`scripts/sync-docs-to-wiki.js`)と共通です。Wiki 同期は移行期間中そのまま残します。
+ドキュメントの公開先は、このサイトだけです。以前は同じ `docs/` を GitHub Wiki にも同期していましたが、#319 で止めました。
 
 ## コマンド
 

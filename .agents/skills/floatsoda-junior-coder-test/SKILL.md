@@ -50,7 +50,7 @@ docs/API の品質を測っておらず、それが目的のすべてだった�
   しなければならない** — 必要な変形手順は `references/prompts.md` の「🧩 Phase 2」節を見る。
   こちらの方がレバレッジが高い: 誤用されやすい API を、まだ変えられるうちに、public になって
   固定される前に捕まえる。失敗は設計シグナルとして読む:
-  - *見つけられない* → 発見性 / docs のギャップ(WidgetSystem に無い、直感的でない名前)
+  - *見つけられない* → 発見性 / docs のギャップ(「部品を目的から探す」に無い、直感的でない名前)
   - *誤って使う* → API が misuse-proof でないか、docs が曖昧
   - *別の形をハルシネーションする* → モデルは実装より自然な API を書いた。実 API をその直感へ
     寄せることを強く検討する。これはプロジェクトの「LLM がこの API を誤用できないこと」という
@@ -93,9 +93,13 @@ docs/API の品質を測っておらず、それが目的のすべてだった�
 モデルであって、フラッグシップではない)。プロンプトには、趣旨として逐語的に次を含めること:
 
 - タスク。VRChatter の声で。
-- **docs へのポインタのみ**: GitHub Wiki(`https://github.com/sumx21t-3310/FloatSoda/wiki`、
-  入口は `Home`)またはリポジトリの `docs/` フォルダ。まず `Home / GettingStarted / WidgetSystem /
-  OVRIntegration` を読むよう指示する。
+- **docs へのポインタのみ**: 検証するコミットの `docs/` フォルダ(入口は `docs/Home.md`)。PR と
+  リリース前のゲートでは必ずこれを渡す。公開サイト(`https://floatsoda.sumx21t.com/`)はタグを
+  push したときにしか更新されず、新しい API や今回のリリース向けの docs がまだ載っていないため、
+  公開済みのバージョンを検証するときだけ使う。まず `docs/Home.md`(FloatSoda ドキュメント)、
+  `docs/tutorials/first-overlay.md`(最初のオーバーレイを作る)、`docs/reference/find-widgets.md`
+  (部品を目的から探す)、`docs/guide/4-build/mechanics/overlay-types.md`(オーバーレイの種類と
+  選び方)を読むよう指示する。
 - **ブラックボックス指示**: 「FloatSoda をブラックボックスとして扱うこと。上記 docs だけを使う。
   `src/` 配下は開かない・読まない・grep しない・推測の材料にしない。docs がカバーしていなければ、
   推測せずそう言うこと。」

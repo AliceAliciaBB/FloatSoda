@@ -6,8 +6,9 @@
 
 すべてのプロンプトに同じ3つのガードレールを載せる(docs の URL とスクラッチパスは埋める):
 
-- **docs を先に読む**: `https://github.com/sumx21t-3310/FloatSoda/wiki` — 何か書く前に
-  `Home / GettingStarted / WidgetSystem / OVRIntegration` を読む。
+- **docs を先に読む**: 検証するコミットの `docs/`(公開済みのバージョンを検証するときだけ
+  `https://floatsoda.sumx21t.com/`) — 何か書く前に `docs/Home.md`、`docs/tutorials/first-overlay.md`、
+  `docs/reference/find-widgets.md`、`docs/guide/4-build/mechanics/overlay-types.md` を読む。
 - **ブラックボックス**: docs だけを使う。`src/` 配下は開かない・読まない・grep しない。
   docs がカバーしていなければ、推測せずそう言う。
 - **制約**: C# のみ。Unity のシーンや prefab は禁止。docs にある正確な API/NuGet 名だけを使い、
