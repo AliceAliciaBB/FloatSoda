@@ -9,6 +9,7 @@
 
 ### Fixed (fork)
 
+- オーバーレイのサイズが実行中に大きくなると、広がった部分が表示されない問題への対策(実機確認待ち)。リサイズ時に `ClearOverlayTexture` で SteamVR に古いテクスチャを手放させ、`GLView.Resize` は新しいテクスチャを作ってから古いものを破棄してテクスチャ番号が変わるようにした。`OverlayTexture.Clear()` を追加
 - ウィンドウ作成時に、レンダースレッドが先に動くと GLFW のウィンドウを 0x0 で作ろうとして失敗する(`Invalid window size 0x0`)競合を修正。`WidgetBinding.EnsureInitialized` で描画パイプラインを先に作り、初期サイズを確定してからレンダースレッドへ渡す
 
 ### Added

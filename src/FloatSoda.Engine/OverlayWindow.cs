@@ -78,6 +78,10 @@ public class OverlayWindow : IEngineWindow
     public void Resize(SkiaSharp.SKSizeI size)
     {
         renderer.Resize(size.Width, size.Height);
+
+        // リサイズ後もGLのテクスチャ番号は同じ値が再利用されることがあり、SteamVR が以前のサイズのまま
+        // 取り込んだテクスチャを使い続けて、広がった部分が表示されない。古いテクスチャを手放させてから次の Present で渡し直す。
+        Overlay.Texture.Clear();
         Overlay.WidthInMeters.Value = dpm.ToMeters(size.Width);
 
         if (PointerSource is OverlayMouseRawPointerSource)

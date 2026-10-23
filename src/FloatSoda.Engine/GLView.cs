@@ -127,15 +127,19 @@ public class GLView : IDisposable
 
         GrContext.ResetContext();
 
-        // 古いリソースを破棄
-        Surface.Dispose();
-        if (TextureHandle != 0)
-        {
-            GL.DeleteTexture(TextureHandle);
-        }
+        // 新しいテクスチャを先に作ってから古いものを破棄する。先に破棄すると同じテクスチャ番号が再利用され、
+        // 番号でテクスチャを取り込む側(SteamVR)がサイズの変化に気づけない。
+        var oldSurface = Surface;
+        var oldTextureHandle = TextureHandle;
 
         Size = new SKSizeI(width, height);
         (var newTextureHandle, var newSurface) = CreateTextureAndSurface(Size);
+
+        oldSurface.Dispose();
+        if (oldTextureHandle != 0)
+        {
+            GL.DeleteTexture(oldTextureHandle);
+        }
 
         TextureHandle = newTextureHandle;
         Surface = newSurface;
