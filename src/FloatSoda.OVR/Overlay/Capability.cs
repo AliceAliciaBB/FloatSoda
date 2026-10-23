@@ -193,12 +193,6 @@ public sealed class OverlayTexture(ulong overlayHandle)
     /// <param name="texture">The texture descriptor to submit.</param>
     public void FromTexture_t(Texture_t texture) =>
         OpenVR.Overlay.SetOverlayTexture(overlayHandle, ref texture).ThrowIfError();
-
-    /// <summary>
-    /// Releases the texture currently held by the compositor for this overlay.
-    /// Call this before submitting a texture whose size changed under the same handle, so that the compositor imports it again.
-    /// </summary>
-    public void Clear() => OpenVR.Overlay.ClearOverlayTexture(overlayHandle).ThrowIfError();
 }
 
 /// <summary>Shows, hides, or queries an overlay.</summary>
