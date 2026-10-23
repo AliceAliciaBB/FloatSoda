@@ -77,7 +77,7 @@ public class WidgetBindingTest
     }
 
     [Fact]
-    public void SetOverlayTransform_DoesNothingWhenUninitialized()
+    public void SetOverlayTransform_未初期化_例外を投げない()
     {
         var binding = new WidgetBinding();
 
@@ -87,7 +87,7 @@ public class WidgetBindingTest
     }
 
     [Fact]
-    public void SetOverlayTransform_OnlyPostsTaskBeforeWindowIsCreated()
+    public void SetOverlayTransform_ウィンドウ生成前_例外を投げない()
     {
         // レンダースレッドは起動しないため、ウィンドウ生成もTransformの適用（OpenVR呼び出し）も走らない。
         var binding = CreateInitializedBinding();
