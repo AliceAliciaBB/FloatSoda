@@ -111,8 +111,18 @@ public abstract record OverlayWindow : WindowWidget
 /// </summary>
 public record DashboardWindow : OverlayWindow
 {
+    /// <summary>
+    /// SteamVR ダッシュボードのドックに表示するアイコン画像(サムネイル)のファイルパス。
+    /// PNG / JPG / TGA を指定できます。<see langword="null"/> の場合は SteamVR 既定のアイコンになります。
+    /// </summary>
+    public string? ThumbnailPath { get; init; }
+
     internal override IOverlay CreateOverlay()
-        => new DashboardOverlay(new DashboardOverlayIdentity(Key, Title));
+    {
+        var overlay = new DashboardOverlay(new DashboardOverlayIdentity(Key, Title));
+        if (ThumbnailPath is { } path) overlay.Thumbnail.FromFile(path);
+        return overlay;
+    }
 }
 
 
