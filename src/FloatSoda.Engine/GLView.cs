@@ -62,7 +62,12 @@ public class GLView : IDisposable
             GLFW.WindowHint(WindowHintBool.Visible, visible);
 
             _window = GLFW.CreateWindow(Size.Width, Size.Height, title, null, null);
-            if (_window is null) throw new InvalidOperationException("GLFWウィンドウの作成に失敗しました。");
+            if (_window is null)
+            {
+                // 失敗の理由は GLFW のエラーとして残っているので、メッセージに含める。
+                var error = GLFW.GetError(out var description);
+                throw new InvalidOperationException($"GLFWウィンドウの作成に失敗しました。({error}: {description})");
+            }
 
             GLFW.MakeContextCurrent(_window);
 
