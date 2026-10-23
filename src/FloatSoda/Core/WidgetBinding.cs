@@ -172,6 +172,25 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
         });
     }
 
+    /// <summary>このウィンドウが移動可能なオーバーレイを持つ場合、表示・非表示を切り替えます。</summary>
+    /// <param name="visible">表示する場合は <see langword="true"/>。</param>
+    /// <remarks>
+    /// 変更はレンダースレッドで適用されます。非表示の間も描画とレーザー入力の交差判定は続くため、
+    /// 非表示中の入力を無視するかどうかは呼び出し側で判断します。
+    /// 移動できないオーバーレイ（ダッシュボード等）やデスクトップウィンドウでは何もしません。
+    /// </remarks>
+    public void SetOverlayVisible(bool visible)
+    {
+        RenderThreadRunner?.PostTask(() =>
+        {
+            // Window はレンダースレッドで生成されるため、レンダースレッド上で参照する。
+            if (Window is not OverlayWindow { Overlay: IMovableOverlay overlay }) return;
+
+            if (visible) overlay.Visibility.Show();
+            else overlay.Visibility.Hide();
+        });
+    }
+
     /// <summary>指定されたWidgetをこのウィンドウのRenderViewへルートとして接続します。</summary>
     /// <param name="rootWidget">接続または更新するルートWidget。</param>
     /// <remarks>初回接続では視覚更新を予約します。接続済みの場合は既存Elementを再利用して更新します。</remarks>

@@ -153,6 +153,31 @@ public class FloatSodaApp : IDisposable
         });
     }
 
+    /// <summary>
+    /// <see cref="WindowWidget.Title"/> で指定したウィンドウの表示・非表示を切り替えます。
+    /// <see cref="DeviceTrackedWindow"/> と <see cref="WorldSpaceWindow"/> は作成時に表示状態になります。
+    /// </summary>
+    /// <param name="title">対象ウィンドウのタイトル。</param>
+    /// <param name="visible">表示する場合は <see langword="true"/>。</param>
+    /// <remarks>
+    /// 任意のスレッドから呼び出せます。変更はメインループで受け付けられ、レンダースレッドで適用されます。
+    /// 指定したタイトルのウィンドウが無い場合は警告をログに出して何もしません。
+    /// 非表示の間も <see cref="OverlayWindow.LaserPointer"/> の交差判定は続きます。
+    /// </remarks>
+    public void SetWindowVisible(string title, bool visible)
+    {
+        _pendingTasks.Enqueue(() =>
+        {
+            if (!_bindings.TryGetValue(title, out var binding))
+            {
+                _logger?.LogWarning("{Title}が見つからないため表示を切り替えられません", title);
+                return;
+            }
+
+            binding.SetOverlayVisible(visible);
+        });
+    }
+
     /// <summary>アプリケーションを初期化し、停止要求を受けるまでメインループを実行します。</summary>
     /// <remarks>メインループ終了時には、このインスタンスが保持するOpenVRおよびレンダースレッドのリソースを解放します。</remarks>
     [STAThread]

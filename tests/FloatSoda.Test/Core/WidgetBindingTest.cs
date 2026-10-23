@@ -77,6 +77,26 @@ public class WidgetBindingTest
     }
 
     [Fact]
+    public void SetOverlayVisible_未初期化_例外を投げない()
+    {
+        var binding = new WidgetBinding();
+
+        var exception = Record.Exception(() => binding.SetOverlayVisible(false));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void SetOverlayVisible_ウィンドウ生成前_例外を投げない()
+    {
+        var binding = CreateInitializedBinding();
+
+        var exception = Record.Exception(() => binding.SetOverlayVisible(false));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void SetOverlayTransform_未初期化_例外を投げない()
     {
         var binding = new WidgetBinding();
