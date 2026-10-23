@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Fixed (fork)
+
+- ウィンドウ作成時に、レンダースレッドが先に動くと GLFW のウィンドウを 0x0 で作ろうとして失敗する(`Invalid window size 0x0`)競合を修正。`WidgetBinding.EnsureInitialized` で描画パイプラインを先に作り、初期サイズを確定してからレンダースレッドへ渡す
+
 ### Added
 
 - `FloatSodaApp.SetWindowTransform(title, position, rotation)` を追加。作成済みの `DeviceTrackedWindow` / `WorldSpaceWindow` の位置と回転を実行時に変更できる。任意のスレッドから呼べ、変更後の値はデバイス再接続時の再適用でも保たれる

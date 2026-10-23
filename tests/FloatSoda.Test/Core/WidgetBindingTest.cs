@@ -77,6 +77,15 @@ public class WidgetBindingTest
     }
 
     [Fact]
+    public void EnsureInitialized_呼び出し直後_ウィンドウ作成に渡すサイズが0ではない()
+    {
+        // レンダースレッドへ送ったウィンドウ作成は、このサイズで GLView を作る。0x0 だと GLFW が失敗する。
+        var binding = CreateInitializedBinding();
+
+        Assert.True(binding.Size is { Width: > 0, Height: > 0 }, $"Size={binding.Size}");
+    }
+
+    [Fact]
     public void SetOverlayVisible_未初期化_例外を投げない()
     {
         var binding = new WidgetBinding();

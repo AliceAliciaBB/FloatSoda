@@ -111,17 +111,9 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
 
         RenderThreadRunner = renderPostTaskRunner;
 
-        RenderThreadRunner.PostTask(() =>
-        {
-            var renderer = new Renderer
-            {
-                GLView = new GLView(Size, visible, windowName)
-            };
-
-            Window = windowFactory(renderer);
-        });
-
-
+        // パイプラインを先に作り、初期サイズをメインスレッドで確定してからレンダースレッドへ渡す。
+        // 以前は PostTask の後でパイプラインを作っており、レンダースレッドが先に動くと Size が
+        // Pipeline == null の既定値（0x0）になって GLFW のウィンドウ作成が失敗していた。
         Pipeline = new RenderPipeline
         {
             OnNeedVisualUpdate = EnsureVisualUpdate,
@@ -129,6 +121,18 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
         };
 
         Pipeline.RenderView.PrepareInitialFrame();
+
+        var initialSize = Size;
+
+        RenderThreadRunner.PostTask(() =>
+        {
+            var renderer = new Renderer
+            {
+                GLView = new GLView(initialSize, visible, windowName)
+            };
+
+            Window = windowFactory(renderer);
+        });
     }
 
     /// <summary>次のフレームで視覚更新が必要であることを記録します。</summary>
