@@ -1,3 +1,4 @@
+﻿using System.Numerics;
 using FloatSoda.Core;
 using FloatSoda.Engine;
 
@@ -73,5 +74,26 @@ public class WidgetBindingTest
         binding.BeginFrame(TimeSpan.FromMilliseconds(10));
 
         Assert.False(invoked);
+    }
+
+    [Fact]
+    public void SetOverlayTransform_DoesNothingWhenUninitialized()
+    {
+        var binding = new WidgetBinding();
+
+        var exception = Record.Exception(() => binding.SetOverlayTransform(Vector3.One, Quaternion.Identity));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void SetOverlayTransform_OnlyPostsTaskBeforeWindowIsCreated()
+    {
+        // レンダースレッドは起動しないため、ウィンドウ生成もTransformの適用（OpenVR呼び出し）も走らない。
+        var binding = CreateInitializedBinding();
+
+        var exception = Record.Exception(() => binding.SetOverlayTransform(Vector3.One, Quaternion.Identity));
+
+        Assert.Null(exception);
     }
 }

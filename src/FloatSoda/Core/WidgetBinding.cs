@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Numerics;
 using FloatSoda.Abstractions.Engine;
 using FloatSoda.Abstractions.Geometries;
 using FloatSoda.Abstractions.Input;
@@ -143,6 +144,29 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
         if (overlayWindow.Overlay is not IMovableOverlay { Transform: DeviceTrackedOverlayTransform transform }) return;
 
         RenderThreadRunner?.PostTask(transform.Apply);
+    }
+
+    /// <summary>
+    /// このウィンドウが移動可能なオーバーレイを持つ場合、その位置と回転を変更します。
+    /// <see cref="DeviceTrackedOverlayTransform"/> ではデバイス基準、<see cref="WorldOverlayTransform"/> ではワールド座標の値です。
+    /// </summary>
+    /// <param name="position">新しい位置（メートル）。</param>
+    /// <param name="rotation">新しい回転。</param>
+    /// <remarks>
+    /// 変更はレンダースレッドで適用されます。値はオーバーレイの Transform に保持されるため、
+    /// デバイス再接続時の <see cref="ReapplyDeviceTrackedTransform"/> でも変更後の値が使われます。
+    /// 移動できないオーバーレイ（ダッシュボード等）やデスクトップウィンドウでは何もしません。
+    /// </remarks>
+    public void SetOverlayTransform(Vector3 position, Quaternion rotation)
+    {
+        RenderThreadRunner?.PostTask(() =>
+        {
+            // Window はレンダースレッドで生成されるため、レンダースレッド上で参照する。
+            if (Window is not OverlayWindow { Overlay: IMovableOverlay overlay }) return;
+
+            overlay.Transform.Position = position;
+            overlay.Transform.Rotation = rotation;
+        });
     }
 
     /// <summary>指定されたWidgetをこのウィンドウのRenderViewへルートとして接続します。</summary>

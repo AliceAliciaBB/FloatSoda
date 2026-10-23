@@ -1,6 +1,7 @@
 ﻿using FloatSoda.OVR;
 using FloatSoda.OVR.Exceptions;
 using System.Collections.Concurrent;
+using System.Numerics;
 using FloatSoda.Abstractions.Scheduling;
 using FloatSoda.Core;
 using FloatSoda.Engine;
@@ -117,6 +118,32 @@ public class FloatSodaApp : IDisposable
         });
     }
 
+
+    /// <summary>
+    /// <see cref="WindowWidget.Title"/> で指定したウィンドウの位置と回転を変更します。
+    /// <see cref="DeviceTrackedWindow"/> では追従デバイス基準のオフセット、<see cref="WorldSpaceWindow"/> ではワールド座標です。
+    /// </summary>
+    /// <param name="title">対象ウィンドウのタイトル。</param>
+    /// <param name="position">新しい位置（メートル）。</param>
+    /// <param name="rotation">新しい回転。</param>
+    /// <remarks>
+    /// 任意のスレッドから呼び出せます。変更はメインループで受け付けられ、レンダースレッドで適用されます。
+    /// 指定したタイトルのウィンドウが無い場合は警告をログに出して何もしません。
+    /// <see cref="DashboardWindow"/> と <see cref="DesktopWindow"/> は移動できないため、何もしません。
+    /// </remarks>
+    public void SetWindowTransform(string title, Vector3 position, Quaternion rotation)
+    {
+        _pendingTasks.Enqueue(() =>
+        {
+            if (!_bindings.TryGetValue(title, out var binding))
+            {
+                _logger?.LogWarning("{Title}が見つからないため位置を変更できません", title);
+                return;
+            }
+
+            binding.SetOverlayTransform(position, rotation);
+        });
+    }
 
     /// <summary>アプリケーションを初期化し、停止要求を受けるまでメインループを実行します。</summary>
     /// <remarks>メインループ終了時には、このインスタンスが保持するOpenVRおよびレンダースレッドのリソースを解放します。</remarks>

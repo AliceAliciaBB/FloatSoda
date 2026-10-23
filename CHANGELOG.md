@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `FloatSodaApp.SetWindowTransform(title, position, rotation)` を追加。作成済みの `DeviceTrackedWindow` / `WorldSpaceWindow` の位置と回転を実行時に変更できる。任意のスレッドから呼べ、変更後の値はデバイス再接続時の再適用でも保たれる
+
 ### Changed (Breaking)
 
 - `Container` の `Decoration` に `Border` があるとき、ボーダーの太さを `Padding` に加算するようにした。`Padding` を省略しても、子がボーダーの内側に収まる。Flutter の `Container` と同じ挙動で、`Border` 付きの `Container` では子のレイアウト領域がボーダーの太さぶん狭くなる(#267)
