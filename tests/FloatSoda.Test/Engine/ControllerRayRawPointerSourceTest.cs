@@ -20,11 +20,19 @@ public class ControllerRayRawPointerSourceTest
     }
 
     [Fact]
-    public void ToLocalPosition_UVが左下_原点左上のピクセル座標で左下端を返す()
+    public void ToLocalPosition_UVが原点_左上端を返す()
     {
         var position = ControllerRayRawPointerSource.ToLocalPosition(new PointerData(0f, 0f, PointerChange.Hover), TextureSize);
 
-        Assert.Equal(new Offset(0, 600), position);
+        Assert.Equal(new Offset(0, 0), position);
+    }
+
+    [Fact]
+    public void ToLocalPosition_UVが右下_右下端を返す()
+    {
+        var position = ControllerRayRawPointerSource.ToLocalPosition(new PointerData(1f, 1f, PointerChange.Hover), TextureSize);
+
+        Assert.Equal(new Offset(800, 600), position);
     }
 
     [Fact]

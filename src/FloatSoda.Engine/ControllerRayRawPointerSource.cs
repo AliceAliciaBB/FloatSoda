@@ -103,10 +103,12 @@ public sealed class ControllerRayRawPointerSource : IRawPointerSource
 
     /// <summary>
     /// UV（0〜1）を描画先ローカル座標（原点左上のピクセル）へ換算します。
-    /// OpenVR の交差判定の V は下端が 0 のため反転します。
+    /// 本プロジェクトの OpenGL テクスチャ（ボトムアップ格納）では SteamVR の表示時 v 軸反転と相殺され、
+    /// V は上端が 0 で届くことを実機で確認済みのため反転しません（反転すると上下鏡映になる）。
+    /// <see cref="OverlayMouseRawPointerSource"/> のマウス座標と同じ事情です。
     /// </summary>
     internal static Offset ToLocalPosition(PointerData data, SkiaSharp.SKSizeI textureSize) =>
-        new(data.X * textureSize.Width, (1 - data.Y) * textureSize.Height);
+        new(data.X * textureSize.Width, data.Y * textureSize.Height);
 
     private void Raise(RawPointerKind kind, Offset position) =>
         OnPointerEvent?.Invoke(new RawPointerEvent(kind, position));
