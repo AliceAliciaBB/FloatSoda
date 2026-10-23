@@ -101,7 +101,8 @@ public class FloatSodaApp : IDisposable
         Action<WidgetBinding> initialize = window switch
         {
             OverlayWindow overlayWindow => binding => binding.EnsureInitialized(window.Title, _renderPostTaskRunner,
-                renderer => new EngineOverlayWindow(overlayWindow.CreateOverlay(), renderer, overlayWindow.Dpm)),
+                renderer => new EngineOverlayWindow(overlayWindow.CreateOverlay(), renderer, overlayWindow.Dpm,
+                    overlayWindow.LaserPointer)),
             DesktopWindow => binding => binding.EnsureInitialized(window.Title, _renderPostTaskRunner,
                 renderer => new EngineDesktopWindow(renderer), visible: true),
             _ => throw new NotSupportedException($"{window.GetType().Name} は未対応のウィンドウ種別です。")
@@ -113,11 +114,18 @@ public class FloatSodaApp : IDisposable
             var widgetBinding = new WidgetBinding();
             _bindings.TryAdd(title, widgetBinding);
             initialize(widgetBinding);
+            widgetBinding.LaserRayCast = (device, hit) => OnLaserPointer?.Invoke(new LaserPointerHit(title, device, hit));
             widgetBinding.AttachRootWidget(window);
             _logger?.LogInformation("{Title}を作成しました", title);
         });
     }
 
+
+    /// <summary>
+    /// <see cref="OverlayWindow.LaserPointer"/> を指定したウィンドウで、交差判定を行うたび（毎フレーム）に通知されます。
+    /// メインスレッドで発火するため、ハンドラー内から <c>SetState()</c> を呼べます。
+    /// </summary>
+    public event Action<LaserPointerHit>? OnLaserPointer;
 
     /// <summary>
     /// <see cref="WindowWidget.Title"/> で指定したウィンドウの位置と回転を変更します。

@@ -81,6 +81,15 @@ public abstract record OverlayWindow : WindowWidget
     public Dpm Dpm { get; init; } = Dpm.Default;
 
     /// <summary>
+    /// レーザー入力に使うコントローラー。指定すると、そのコントローラーのレイがこのウィンドウに当たった位置へ
+    /// ポインターイベントが届き、<c>Listener</c> や <c>PointerRegion</c> などが反応します。トリガーは主ボタンとして扱います。
+    /// 交差判定の結果は <see cref="FloatSodaApp.OnLaserPointer"/> でも受け取れます。
+    /// 既定は <see langword="null"/>（レーザー入力を受けない）。
+    /// <see cref="DashboardWindow"/> では使われず、SteamVR のレーザーポインターが常に使われます。
+    /// </summary>
+    public TrackedDevice? LaserPointer { get; init; }
+
+    /// <summary>
     /// このウィンドウ定義に対応する <see cref="IOverlay"/> を生成します。レンダースレッド上で呼ばれます。
     /// </summary>
     internal abstract IOverlay CreateOverlay();

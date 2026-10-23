@@ -92,6 +92,9 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
 
     private bool _hasScheduledFrame;
 
+    /// <summary>レーザー入力を持つウィンドウで、交差判定のたびに呼ばれる処理。メインスレッドで呼ばれます。</summary>
+    internal Action<TrackedDevice, OverlayHit?>? LaserRayCast { get; set; }
+
     /// <summary>このバインディングの描画パイプラインとエンジンウィンドウを初回だけ初期化します。</summary>
     /// <param name="windowName">作成するウィンドウの識別名。</param>
     /// <param name="renderPostTaskRunner">ウィンドウ作成と描画処理を実行するレンダースレッド。</param>
@@ -299,6 +302,11 @@ public class WidgetBinding : IFrameScheduler, IHitTestTarget, IGestureBinding
         {
             _pointerController = new PointerController(pointerSource);
             _pointerController.OnPointerEvent += HandlePointerEvent;
+
+            if (pointerSource is ControllerRayRawPointerSource ray)
+            {
+                ray.OnRayCast += hit => LaserRayCast?.Invoke(ray.Device, hit);
+            }
         }
 
         _pointerController?.Flush();

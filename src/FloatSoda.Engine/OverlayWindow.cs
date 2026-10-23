@@ -21,12 +21,15 @@ public class OverlayWindow : IEngineWindow
     /// <param name="overlay">描画先となるOpenVRオーバーレイ。</param>
     /// <param name="renderer">レイヤーツリーをテクスチャへ描画するレンダラー。</param>
     /// <param name="dpm">ピクセルサイズをオーバーレイの物理幅へ換算する際に使用する密度。</param>
+    /// <param name="laserPointer">
+    /// ダッシュボード以外のオーバーレイで、レーザー入力に使うコントローラー。<see langword="null"/> の場合はレーザー入力を受けません。
+    /// </param>
     /// <remarks>
     /// <paramref name="overlay"/>がダッシュボードオーバーレイの場合、入力方式をマウスへ設定し、
     /// SteamVRのレーザーポインター入力を受け取る<see cref="PointerSource"/>を生成します。
     /// それ以外のオーバーレイでは<see cref="PointerSource"/>は<see langword="null"/>のままです。
     /// </remarks>
-    public OverlayWindow(IOverlay overlay, Renderer renderer, Dpm dpm)
+    public OverlayWindow(IOverlay overlay, Renderer renderer, Dpm dpm, TrackedDevice? laserPointer = null)
     {
         Overlay = overlay;
         this.renderer = renderer;
@@ -39,6 +42,10 @@ public class OverlayWindow : IEngineWindow
             overlay.Input.Method = VROverlayInputMethod.Mouse;
             overlay.Input.SetMouseScale(renderer.GLView.Size.Width, renderer.GLView.Size.Height);
             PointerSource = new OverlayMouseRawPointerSource(overlay.EventDispatcher);
+        }
+        else if (overlay is IMovableOverlay movable && laserPointer is { } device)
+        {
+            PointerSource = new ControllerRayRawPointerSource(movable.Intersection, device);
         }
     }
 
@@ -71,14 +78,17 @@ public class OverlayWindow : IEngineWindow
         renderer.Resize(size.Width, size.Height);
         Overlay.WidthInMeters.Value = dpm.ToMeters(size.Width);
 
-        if (PointerSource != null)
+        if (PointerSource is OverlayMouseRawPointerSource)
         {
             Overlay.Input.SetMouseScale(size.Width, size.Height);
         }
     }
 
     /// <summary>このウィンドウの生ポインター入力源を取得します。</summary>
-    /// <value>ダッシュボードオーバーレイの場合はレーザーポインター入力源。それ以外では<see langword="null"/>です。</value>
+    /// <value>
+    /// ダッシュボードオーバーレイの場合は SteamVR のレーザーポインター入力源、レーザー入力を指定したオーバーレイの場合は
+    /// <see cref="ControllerRayRawPointerSource"/>。それ以外では<see langword="null"/>です。
+    /// </value>
     public IRawPointerSource? PointerSource { get; }
 
     /// <summary>
@@ -87,9 +97,15 @@ public class OverlayWindow : IEngineWindow
     /// </summary>
     public void PollInputEvents()
     {
-        if (PointerSource == null) return;
-
-        Overlay.EventDispatcher.PollEvents();
+        switch (PointerSource)
+        {
+            case OverlayMouseRawPointerSource:
+                Overlay.EventDispatcher.PollEvents();
+                break;
+            case ControllerRayRawPointerSource ray:
+                ray.Poll(renderer.GLView.Size);
+                break;
+        }
     }
 
     /// <summary>このウィンドウの生ポインター入力源とオーバーレイを破棄します。</summary>

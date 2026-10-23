@@ -16,6 +16,9 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
 
     private bool _wasPressed;
 
+    /// <summary>直近の <see cref="Poll"/> での交差結果を取得します。外れた場合やデバイスが無効な場合は <see langword="null"/> です。</summary>
+    public OverlayHit? LastHit { get; private set; }
+
     /// <summary>
     /// 指定コントローラーのレイをオーバーレイに向けて交差判定を行い、
     /// ヒットした場合は UV 座標とフェーズを持つ <see cref="PointerData"/> を返します。
@@ -26,6 +29,7 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
     /// <returns>Pointer data for a hit, or <see langword="null"/> when the device is unavailable or the ray misses.</returns>
     public PointerData? Poll(TrackedDevice device, ETrackingUniverseOrigin trackingOrigin = ETrackingUniverseOrigin.TrackingUniverseStanding)
     {
+        LastHit = null;
         var deviceIndex = device.ResolveIndex();
         if (deviceIndex == OpenVR.k_unTrackedDeviceIndexInvalid)
         {
@@ -54,6 +58,8 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
             _wasPressed = false;
             return null;
         }
+
+        LastHit = hit;
 
         var state = new VRControllerState_t();
         OpenVR.System.GetControllerState(deviceIndex, ref state, ControllerStateSize);
