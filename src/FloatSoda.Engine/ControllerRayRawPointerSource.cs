@@ -34,9 +34,14 @@ public sealed class ControllerRayRawPointerSource : IRawPointerSource
     /// <summary>指定したオーバーレイを、指定コントローラーのレイで判定する入力源を作成します。</summary>
     /// <param name="intersection">判定対象オーバーレイの交差判定。</param>
     /// <param name="device">レイを飛ばすコントローラー。</param>
-    public ControllerRayRawPointerSource(OverlayIntersection intersection, TrackedDevice device)
+    /// <param name="aimRotation">コントローラー基準でレイの向きを回転させる補正。<see cref="ControllerPointerSystem.AimRotation"/> を参照。</param>
+    public ControllerRayRawPointerSource(OverlayIntersection intersection, TrackedDevice device,
+        System.Numerics.Quaternion aimRotation = default)
     {
-        _pointerSystem = new ControllerPointerSystem(intersection);
+        _pointerSystem = new ControllerPointerSystem(intersection)
+        {
+            AimRotation = aimRotation == default ? System.Numerics.Quaternion.Identity : aimRotation
+        };
         Device = device;
     }
 

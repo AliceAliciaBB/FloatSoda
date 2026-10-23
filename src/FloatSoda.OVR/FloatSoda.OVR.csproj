@@ -12,6 +12,10 @@
 
 
   <ItemGroup>
+    <InternalsVisibleTo Include="FloatSoda.Test" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="openvr_api.dll"
           Pack="true"
           PackagePath="runtimes/win-x64/native/"

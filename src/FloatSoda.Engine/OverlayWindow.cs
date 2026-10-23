@@ -24,12 +24,14 @@ public class OverlayWindow : IEngineWindow
     /// <param name="laserPointer">
     /// ダッシュボード以外のオーバーレイで、レーザー入力に使うコントローラー。<see langword="null"/> の場合はレーザー入力を受けません。
     /// </param>
+    /// <param name="laserAimRotation">レーザーのレイをコントローラー基準で傾ける補正。既定（<c>default</c>）は無回転。</param>
     /// <remarks>
     /// <paramref name="overlay"/>がダッシュボードオーバーレイの場合、入力方式をマウスへ設定し、
     /// SteamVRのレーザーポインター入力を受け取る<see cref="PointerSource"/>を生成します。
     /// それ以外のオーバーレイでは<see cref="PointerSource"/>は<see langword="null"/>のままです。
     /// </remarks>
-    public OverlayWindow(IOverlay overlay, Renderer renderer, Dpm dpm, TrackedDevice? laserPointer = null)
+    public OverlayWindow(IOverlay overlay, Renderer renderer, Dpm dpm, TrackedDevice? laserPointer = null,
+        System.Numerics.Quaternion laserAimRotation = default)
     {
         Overlay = overlay;
         this.renderer = renderer;
@@ -45,7 +47,7 @@ public class OverlayWindow : IEngineWindow
         }
         else if (overlay is IMovableOverlay movable && laserPointer is { } device)
         {
-            PointerSource = new ControllerRayRawPointerSource(movable.Intersection, device);
+            PointerSource = new ControllerRayRawPointerSource(movable.Intersection, device, laserAimRotation);
         }
     }
 

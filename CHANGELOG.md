@@ -13,6 +13,7 @@
 - `DeviceTrackedWindow` / `WorldSpaceWindow` に `LaserPointer` を追加。指定したコントローラーのレイ(SteamVRの入力横取りなし)が当たった位置へポインターイベントが届き、`Listener` / `PointerRegion` / `GestureDetector` が反応する。トリガーは主ボタンとして扱う
 - `FloatSodaApp.OnLaserPointer` を追加。`LaserPointer` を指定したウィンドウで、交差判定の結果(当たったか・距離)を毎フレームメインスレッドで通知する
 - `ControllerPointerSystem.LastHit` を追加。直近の交差結果を取得できる
+- `DeviceTrackedWindow` / `WorldSpaceWindow` に `LaserAimRotation` を、`ControllerPointerSystem` に `AimRotation` を追加。レーザーのレイをコントローラー基準で傾けられる
 
 ### Changed (Breaking)
 

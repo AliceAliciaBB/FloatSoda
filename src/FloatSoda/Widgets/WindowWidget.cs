@@ -90,6 +90,12 @@ public abstract record OverlayWindow : WindowWidget
     public TrackedDevice? LaserPointer { get; init; }
 
     /// <summary>
+    /// <see cref="LaserPointer"/> のレイの向きを、コントローラー基準で回転させる補正。既定は無回転（コントローラー前方 = -Z）。
+    /// 例: <c>Quaternion.CreateFromAxisAngle(Vector3.UnitX, -MathF.PI / 4)</c> でレイを45°下へ傾け、指の向きに近づけます。
+    /// </summary>
+    public Quaternion LaserAimRotation { get; init; } = Quaternion.Identity;
+
+    /// <summary>
     /// このウィンドウ定義に対応する <see cref="IOverlay"/> を生成します。レンダースレッド上で呼ばれます。
     /// </summary>
     internal abstract IOverlay CreateOverlay();

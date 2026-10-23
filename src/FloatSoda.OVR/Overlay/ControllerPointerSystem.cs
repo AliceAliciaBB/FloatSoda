@@ -16,6 +16,12 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
 
     private bool _wasPressed;
 
+    /// <summary>
+    /// コントローラー基準でレイの向きを回転させる補正を取得または設定します。既定は無回転（コントローラー前方 = -Z）。
+    /// 例: <c>Quaternion.CreateFromAxisAngle(Vector3.UnitX, -MathF.PI / 4)</c> でレイを45°下へ傾けます。
+    /// </summary>
+    public Quaternion AimRotation { get; set; } = Quaternion.Identity;
+
     /// <summary>直近の <see cref="Poll"/> での交差結果を取得します。外れた場合やデバイスが無効な場合は <see langword="null"/> です。</summary>
     public OverlayHit? LastHit { get; private set; }
 
@@ -48,9 +54,8 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
 
         var matrix = pose.mDeviceToAbsoluteTracking.ToMatrix4x4();
 
-        // OpenVR の行列では列 2 (M?3) が -Z = コントローラー前方
         var origin = new Vector3(matrix.M41, matrix.M42, matrix.M43);
-        var forward = Vector3.Normalize(new Vector3(-matrix.M13, -matrix.M23, -matrix.M33));
+        var forward = ComputeRayDirection(matrix, AimRotation);
 
         var hit = intersection.TryIntersect(new IntersectionParams(origin, forward, trackingOrigin));
         if (hit is null)
@@ -77,6 +82,20 @@ public sealed class ControllerPointerSystem(OverlayIntersection intersection)
     }
 
 
+
+    /// <summary>コントローラーの姿勢と補正から、ワールド座標でのレイの向きを求めます。</summary>
+    /// <param name="matrix"><see cref="Math.MatrixExtension.ToMatrix4x4"/> で変換したコントローラーの姿勢。</param>
+    /// <param name="aimRotation">コントローラー基準でレイの向きを回転させる補正。</param>
+    internal static Vector3 ComputeRayDirection(Matrix4x4 matrix, Quaternion aimRotation)
+    {
+        // ToMatrix4x4 の行列では列 0/1/2 (M?1/M?2/M?3) がコントローラーの X/Y/Z 軸。既定のレイは -Z = コントローラー前方。
+        // 補正で傾けたコントローラー基準の向きを、各軸の線形結合でワールドへ変換する。
+        var local = Vector3.Transform(-Vector3.UnitZ, aimRotation);
+        return Vector3.Normalize(
+            new Vector3(matrix.M11, matrix.M21, matrix.M31) * local.X +
+            new Vector3(matrix.M12, matrix.M22, matrix.M32) * local.Y +
+            new Vector3(matrix.M13, matrix.M23, matrix.M33) * local.Z);
+    }
 
     private static readonly ulong TriggerMask = 1UL << (int)EVRButtonId.k_EButton_SteamVR_Trigger;
 }

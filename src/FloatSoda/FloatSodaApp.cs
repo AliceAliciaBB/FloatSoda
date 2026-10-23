@@ -102,7 +102,7 @@ public class FloatSodaApp : IDisposable
         {
             OverlayWindow overlayWindow => binding => binding.EnsureInitialized(window.Title, _renderPostTaskRunner,
                 renderer => new EngineOverlayWindow(overlayWindow.CreateOverlay(), renderer, overlayWindow.Dpm,
-                    overlayWindow.LaserPointer)),
+                    overlayWindow.LaserPointer, overlayWindow.LaserAimRotation)),
             DesktopWindow => binding => binding.EnsureInitialized(window.Title, _renderPostTaskRunner,
                 renderer => new EngineDesktopWindow(renderer), visible: true),
             _ => throw new NotSupportedException($"{window.GetType().Name} は未対応のウィンドウ種別です。")
